@@ -200,6 +200,10 @@ const obciSampleRateCmdGang400= '6';
 const obciSampleRateCmdGang200 = '7';
 const obciSampleRateCmdaGetCur = '~';
 
+/** Accel enable/disable commands */
+const obciAccelStart = 'n';
+const obciAccelStop = 'N';
+
 /** Wifi Stuff */
 const obciWifiAttach = '{';
 const obciWifiRemove = '}';
@@ -241,8 +245,22 @@ const obciSimulatorFragmentationOneByOne = 'oneByOne';
 const obciSimulatorFragmentationNone = 'none';
 
 /** Possible Sample Rates */
+const obciSampleRate1000 = 1000;
 const obciSampleRate125 = 125;
+const obciSampleRate12800 = 12800;
+const obciSampleRate1600 = 1600;
+const obciSampleRate16000 = 16000;
+const obciSampleRate200 = 200;
+const obciSampleRate2000 = 2000;
 const obciSampleRate250 = 250;
+const obciSampleRate25600 = 25600;
+const obciSampleRate3200 = 3200;
+const obciSampleRate400 = 400;
+const obciSampleRate4000 = 4000;
+const obciSampleRate500 = 500;
+const obciSampleRate6400 = 6400;
+const obciSampleRate800 = 800;
+const obciSampleRate8000 = 8000;
 
 /** Max sample number */
 const obciSampleNumberMax = 255;
@@ -790,6 +808,9 @@ module.exports = {
   /** Stream Data Commands */
   OBCIStreamStart: obciStreamStart,
   OBCIStreamStop: obciStreamStop,
+  /** Accel enable/disable commands */
+  OBCIAccelStart: obciAccelStart,
+  OBCIAccelStop: obciAccelStop,
   /** Miscellaneous */
   OBCIMiscQueryRegisterSettings: obciMiscQueryRegisterSettings,
   OBCIMiscQueryRegisterSettingsChannel1: obciMiscQueryRegisterSettingsChannel1,
@@ -867,8 +888,22 @@ module.exports = {
     }
   },
   /** Possible Sample Rates */
+  OBCISampleRate1000: obciSampleRate1000,
   OBCISampleRate125: obciSampleRate125,
+  OBCISampleRate12800: obciSampleRate12800,
+  OBCISampleRate1600: obciSampleRate1600,
+  OBCISampleRate16000: obciSampleRate16000,
+  OBCISampleRate200: obciSampleRate200,
+  OBCISampleRate2000: obciSampleRate2000,
   OBCISampleRate250: obciSampleRate250,
+  OBCISampleRate25600: obciSampleRate25600,
+  OBCISampleRate3200: obciSampleRate3200,
+  OBCISampleRate400: obciSampleRate400,
+  OBCISampleRate4000: obciSampleRate4000,
+  OBCISampleRate500: obciSampleRate500,
+  OBCISampleRate6400: obciSampleRate6400,
+  OBCISampleRate800: obciSampleRate800,
+  OBCISampleRate8000: obciSampleRate8000,
   /** Max sample number */
   OBCISampleNumberMax: obciSampleNumberMax,
   /** Packet Size */
@@ -1495,12 +1530,66 @@ function commandSampleRateForCmdGanglion (sampleRate) {
   });
 }
 
+/**
+ * @description Get a list of local names from an array of peripherals
+ */
+function getPeripheralLocalNames (pArray) {
+  return new Promise((resolve, reject) => {
+    var list = [];
+    _.forEach(pArray, (perif) => {
+      list.push(perif.advertisement.localName);
+    });
+    if (list.length > 0) {
+      return resolve(list);
+    } else {
+      return reject(`No peripherals discovered with prefix equal to ${k.OBCIGanglionPrefix}`);
+    }
+  });
+}
 
 /**
-* @description This function is used to extract the major version from a github
-*  version string.
-* @returns {Number} The major version number
-*/
+ * @description Get a peripheral with a local name
+ * @param `pArray` {Array} - Array of peripherals
+ * @param `localName` {String} - The local name of the BLE device.
+ */
+function getPeripheralWithLocalName (pArray, localName) {
+  return new Promise((resolve, reject) => {
+    if (typeof (pArray) !== 'object') return reject(`pArray must be of type Object`);
+    _.forEach(pArray, (perif) => {
+      if (perif.advertisement.hasOwnProperty('localName')) {
+        if (perif.advertisement.localName === localName) {
+          return resolve(perif);
+        }
+      }
+    });
+    return reject(`No peripheral found with localName: ${localName}`);
+  });
+}
+
+/**
+ * @description This function is used to extract the major version from a github
+ *  version string.
+ * @returns {Number} The major version number
+ */
 function getVersionNumber (versionStr) {
   return Number(versionStr[1]);
+}
+
+/**
+ * @description Very safely checks to see if the noble peripheral is a
+ *  ganglion by way of checking the local name property.
+ */
+function isPeripheralGanglion (peripheral) {
+  if (peripheral) {
+    if (peripheral.hasOwnProperty('advertisement')) {
+      if (peripheral.advertisement !== null && peripheral.advertisement.hasOwnProperty('localName')) {
+        if (peripheral.advertisement.localName !== undefined && peripheral.advertisement.localName !== null) {
+          if (peripheral.advertisement.localName.indexOf(obciGanglionPrefix) > -1) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
 }
