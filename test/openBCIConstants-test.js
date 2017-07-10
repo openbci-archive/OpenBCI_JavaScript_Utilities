@@ -1589,13 +1589,13 @@ describe('OpenBCIConstants', function () {
       expect(k.OBCIGanglionByteId18Bit).to.deep.equal({
         max: 100,
         min: 1
-      })
+      });
     });
     it('should have correct values for 18 bit', function () {
       expect(k.OBCIGanglionByteId19Bit).to.deep.equal({
         max: 200,
         min: 101
-      })
+      });
     });
     it('Impedance channel 1', function () {
       assert.equal(201, k.OBCIGanglionByteIdImpedanceChannel1);
@@ -1735,5 +1735,4 @@ describe('OpenBCIConstants', function () {
       expect(k.isPeripheralGanglion(perif)).to.equal(false);
     });
   });
-
 });

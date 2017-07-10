@@ -1,18 +1,18 @@
 {
-  "name": "openbci-ganglion",
-  "version": "0.4.2",
-  "description": "The official Node.js SDK for the OpenBCI Ganglion Biosensor Board.",
+  "name": "openbci-utilites",
+  "version": "0.0.1",
+  "description": "The official utility package of Node.js SDK for the OpenBCI Biosensor Boards.",
   "main": "index.js",
   "scripts": {
-    "connect-test": "node examples/ganglionConnectionTest/ganglionConnectionTest.js",
-    "server": "node examples/ganglionServer/ganglionServer.js",
     "test": "semistandard | snazzy && mocha test",
     "test-cov": "istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec && codecov"
   },
   "keywords": [
     "openbci",
     "openbci-node",
-    "ganglion"
+    "ganglion",
+    "cyton",
+    "utilities"
   ],
   "author": "AJ Keller <aj@pushtheworld.us> (www.openbci.com)",
   "license": "MIT",
@@ -22,9 +22,6 @@
     "gaussian": "^1.0.0",
     "lodash": "^4.16.6",
     "mathjs": "^3.3.0",
-    "noble": "^1.7.0",
-    "performance-now": "^0.2.0",
-    "sntp": "^2.0.0",
     "streamsearch": "^0.1.2"
   },
   "directories": {
@@ -45,14 +42,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/openbci/openbci_nodejs_ganglion.git"
+    "url": "git+https://github.com/openbci/openbci_nodejs_utilities.git"
   },
   "bugs": {
-    "url": "https://github.com/openbci/openbci_nodejs_ganglion/issues"
+    "url": "https://github.com/openbci/openbci_nodejs_utilities/issues"
   },
-  "homepage": "https://github.com/openbci/openbci_nodejs_ganglion#readme",
+  "homepage": "https://github.com/openbci/openbci_nodejs_utilities#readme",
   "engines": {
-    "node": "4 | 5 | 6"
+    "node": ">=4"
   },
   "semistandard": {
     "globals": [

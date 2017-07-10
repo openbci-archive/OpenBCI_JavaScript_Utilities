@@ -4,6 +4,8 @@
 *     OpenBCI Board
 */
 'use strict';
+const _ = require('lodash');
+
 /** Turning channels off */
 const obciChannelOff1 = '1';
 const obciChannelOff2 = '2';
@@ -1127,6 +1129,8 @@ module.exports = {
   SimbleeUuidReceive: simbleeUuidReceive,
   SimbleeUuidSend: simbleeUuidSend,
   SimbleeUuidDisconnect: simbleeUuidDisconnect,
+  /** Accel scale factor */
+  OBCIGanglionAccelScaleFactor: obciGanglionAccelScaleFactor,
   /** Noble */
   OBCINobleEmitterPeripheralConnect: obciNobleEmitterPeripheralConnect,
   OBCINobleEmitterPeripheralDisconnect: obciNobleEmitterPeripheralDisconnect,

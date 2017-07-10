@@ -15,7 +15,7 @@ chai.use(chaiAsPromised);
 chai.use(sinonChai);
 var bufferEqual = require('buffer-equal');
 
-var k = openBCISample.k;
+var k = require('../openBCIConstants');
 
 const defaultChannelSettingsArray = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDefault);
 
