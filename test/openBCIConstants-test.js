@@ -718,6 +718,131 @@ describe('OpenBCIConstants', function () {
       return expect(result).to.be.rejected;
     });
   });
+  describe('should return the right command for each sample rate for cyton', function () {
+    it('sample rate 16000', function () {
+      var expectation = '0';
+      var result = k.commandSampleRateForCmdCyton(16000);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('sample rate 8000', function () {
+      var expectation = '1';
+      var result = k.commandSampleRateForCmdCyton(8000);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('sample rate 4000', function () {
+      var expectation = '2';
+      var result = k.commandSampleRateForCmdCyton(4000);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('sample rate 2000', function () {
+      var expectation = '3';
+      var result = k.commandSampleRateForCmdCyton(2000);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('sample rate 1000', function () {
+      var expectation = '4';
+      var result = k.commandSampleRateForCmdCyton(1000);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('sample rate 500', function () {
+      var expectation = '5';
+      var result = k.commandSampleRateForCmdCyton(500);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('sample rate 250', function () {
+      var expectation = '6';
+      var result = k.commandSampleRateForCmdCyton(250);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('Invalid sample rate', function () {
+      var result = k.commandSampleRateForCmdCyton(17);
+      return expect(result).to.be.rejected;
+    });
+    it('Invalid sample rate type', function () {
+      var result = k.commandSampleRateForCmdCyton('taco');
+      return expect(result).to.be.rejected;
+    });
+  });
+  describe('should return the right command for each sample rate for ganglion', function () {
+    it('sample rate 25600', function () {
+      var expectation = '0';
+      var result = k.commandSampleRateForCmdGanglion(25600);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('sample rate 12800', function () {
+      var expectation = '1';
+      var result = k.commandSampleRateForCmdGanglion(12800);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('sample rate 6400', function () {
+      var expectation = '2';
+      var result = k.commandSampleRateForCmdGanglion(6400);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('sample rate 3200', function () {
+      var expectation = '3';
+      var result = k.commandSampleRateForCmdGanglion(3200);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('sample rate 1600', function () {
+      var expectation = '4';
+      var result = k.commandSampleRateForCmdGanglion(1600);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('sample rate 800', function () {
+      var expectation = '5';
+      var result = k.commandSampleRateForCmdGanglion(800);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('sample rate 400', function () {
+      var expectation = '6';
+      var result = k.commandSampleRateForCmdGanglion(400);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('sample rate 200', function () {
+      var expectation = '7';
+      var result = k.commandSampleRateForCmdGanglion(200);
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('Invalid sample rate', function () {
+      var result = k.commandSampleRateForCmdGanglion(17);
+      return expect(result).to.be.rejected;
+    });
+    it('Invalid sample rate type', function () {
+      var result = k.commandSampleRateForCmdGanglion('taco');
+      return expect(result).to.be.rejected;
+    });
+  });
+  describe('should return the right command for each board mode', function () {
+    it('board mode default', function () {
+      var expectation = '0';
+      var result = k.commandBoardModeForMode('default');
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('board mode debug', function () {
+      var expectation = '1';
+      var result = k.commandBoardModeForMode('debug');
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('board mode 2', function () {
+      var expectation = '2';
+      var result = k.commandBoardModeForMode('analog');
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('board mode 3', function () {
+      var expectation = '3';
+      var result = k.commandBoardModeForMode('digital');
+      return expect(result).to.eventually.equal(expectation);
+    });
+    it('Invalid board mode', function () {
+      var result = k.commandBoardModeForMode(10);
+      return expect(result).to.be.rejected;
+    });
+    it('Invalid board mode', function () {
+      var result = k.commandBoardModeForMode('taco');
+      return expect(result).to.be.rejected;
+    });
+  });
   describe('should return correct channel on command for number', function () {
     it('Channel 1', function () {
       var expectation = '!';
@@ -1441,6 +1566,52 @@ describe('OpenBCIConstants', function () {
           done(err);
         });
       });
+    });
+  });
+  describe('sampleRateSetter', function () {
+    it('Works for ganglion', function (done) {
+      k.getSampleRateSetter('ganglion', 200).then(function (arrayOfCommands) {
+        arrayOfCommands[0].should.equal('~');
+        arrayOfCommands[1].should.equal('7');
+        done();
+      }).catch(function (err) {
+        done(err);
+      });
+    });
+    it('Works for cyton', function (done) {
+      k.getSampleRateSetter('cyton', 250).then(function (arrayOfCommands) {
+        arrayOfCommands[0].should.equal('~');
+        arrayOfCommands[1].should.equal('6');
+        done();
+      }).catch(function (err) {
+        done(err);
+      });
+    });
+    it('Invalid board type', function (done) {
+      k.getSampleRateSetter('daisy', 1600).should.be.rejected.and.notify(done);
+    });
+    it('Invalid board type type', function (done) {
+      k.getSampleRateSetter(10, 1600).should.be.rejected.and.notify(done);
+    });
+    it('Invalid sample rate type', function (done) {
+      k.getSampleRateSetter('daisy', 'taco').should.be.rejected.and.notify(done);
+    });
+  });
+  describe('boardModeSetter', function () {
+    it('Works for good args', function (done) {
+      k.getBoardModeSetter('default').then(function (arrayOfCommands) {
+        arrayOfCommands[0].should.equal('/');
+        arrayOfCommands[1].should.equal('0');
+        done();
+      }).catch(function (err) {
+        done(err);
+      });
+    });
+    it('bad board mode', function (done) {
+      k.getBoardModeSetter('daisy').should.be.rejected.and.notify(done);
+    });
+    it('Invalid board mode type', function (done) {
+      k.getBoardModeSetter(10).should.be.rejected.and.notify(done);
     });
   });
   describe('fun funcs', function () {

@@ -182,6 +182,10 @@ const obciBoardModeCmdDebug = '1';
 const obciBoardModeCmdAnalog = '2';
 const obciBoardModeCmdDigital = '3';
 const obciBoardModeCmdGetCur = '/';
+const obciBoardModeAnalog = 'analog';
+const obciBoardModeDefault = 'default';
+const obciBoardModeDebug = 'debug';
+const obciBoardModeDigital = 'digital';
 
 /** Set sample rate */
 const obciSampleRateSet = '~';
@@ -198,7 +202,7 @@ const obciSampleRateCmdGang6400 = '2';
 const obciSampleRateCmdGang3200 = '3';
 const obciSampleRateCmdGang1600 = '4';
 const obciSampleRateCmdGang800 = '5';
-const obciSampleRateCmdGang400= '6';
+const obciSampleRateCmdGang400 = '6';
 const obciSampleRateCmdGang200 = '7';
 const obciSampleRateCmdaGetCur = '~';
 
@@ -351,6 +355,7 @@ const obciAccelAxisZ = 9;
 /** Firmware version indicator */
 const obciFirmwareV1 = 'v1';
 const obciFirmwareV2 = 'v2';
+const obciFirmwareV3 = 'v3';
 
 /** Parse */
 const obciParseDaisy = 'Daisy';
@@ -929,6 +934,10 @@ module.exports = {
   getChannelSetter: channelSetter,
   /** Impedance Setter Maker */
   getImpedanceSetter: impedanceSetter,
+  /** Sample Rate Setter Maker */
+  getSampleRateSetter: sampleRateSetter,
+  /** Board Mode Setter Maker */
+  getBoardModeSetter: boardModeSetter,
   /** Command send delay */
   OBCIWriteIntervalDelayMSLong: obciWriteIntervalDelayMSLong,
   OBCIWriteIntervalDelayMSNone: obciWriteIntervalDelayMSNone,
@@ -1008,6 +1017,7 @@ module.exports = {
   /** Firmware version indicator */
   OBCIFirmwareV1: obciFirmwareV1,
   OBCIFirmwareV2: obciFirmwareV2,
+  OBCIFirmwareV3: obciFirmwareV3,
   /** Time synced accel packet */
   OBCIAccelAxisX: obciAccelAxisX,
   OBCIAccelAxisY: obciAccelAxisY,
@@ -1048,6 +1058,10 @@ module.exports = {
   OBCIBoardModeCmdAnalog: obciBoardModeCmdAnalog,
   OBCIBoardModeCmdDigital: obciBoardModeCmdDigital,
   OBCIBoardModeCmdGetCur: obciBoardModeCmdGetCur,
+  OBCIBoardModeAnalog: obciBoardModeAnalog,
+  OBCIBoardModeDefault: obciBoardModeDefault,
+  OBCIBoardModeDebug: obciBoardModeDebug,
+  OBCIBoardModeDigital: obciBoardModeDigital,
 
   /** Set sample rate */
   OBCISampleRateSet: obciSampleRateSet,
@@ -1146,7 +1160,10 @@ module.exports = {
   getPeripheralLocalNames,
   getPeripheralWithLocalName,
   getVersionNumber,
-  isPeripheralGanglion
+  isPeripheralGanglion,
+  commandSampleRateForCmdCyton,
+  commandSampleRateForCmdGanglion,
+  commandBoardModeForMode
 };
 
 /**
@@ -1285,23 +1302,57 @@ function impedanceSetter (channelNumber, pInputApplied, nInputApplied) {
 }
 
 /**
- * @description To build the array of commands to send to the board to measure impedance
+ * @description To build the array of commands to send to the board to set the sample rate
  * @param boardType {String} - The type of board, either cyton or ganglion. Default is Cyton
+ * @param sampleRate {Number} - The sample rate you want to set to. Please see docs for possible sample rates.
  * @returns {Promise} - fulfilled will contain an array of commands
  */
-function sampleRateSetter (boardType) {
+function sampleRateSetter (boardType, sampleRate) {
   return new Promise((resolve, reject) => {
     // validate inputs
-    if (!isString(boardType)) reject("board type must be of type 'string' ");
+    if (!isString(boardType)) return reject("board type must be of type 'string' ");
+
+    if (!isNumber(sampleRate)) return reject("sampleRate must be of type 'number' ");
+
+    sampleRate = Math.floor(sampleRate);
+
+    let func;
+    if (boardType === obciBoardCyton) {
+      func = commandSampleRateForCmdCyton;
+    } else if (boardType === obciBoardGanglion) {
+      func = commandSampleRateForCmdGanglion;
+    } else {
+      return reject(`boardType must be either ${obciBoardCyton} or ${obciBoardGanglion}`);
+    }
 
     // Set Channel Number
-    commandChannelForCmd(channelNumber).then(command => {
+    func(sampleRate).then(command => {
       var outputArray = [
-        obciChannelImpedanceSet,
-        command,
-        cmdPInputApplied,
-        cmdNInputApplied,
-        obciChannelImpedanceLatch
+        obciSampleRateSet,
+        command
+      ];
+      // console.log(outputArray)
+      resolve(outputArray);
+    }).catch(err => reject(err));
+  });
+}
+
+/**
+ * @description To build the array of commands to send to the board t
+ * @param boardMode {String} - The type of board mode:
+ *  `default`: Board will use Accel
+ *  `
+ * @returns {Promise} - fulfilled will contain an array of commands
+ */
+function boardModeSetter (boardMode) {
+  return new Promise((resolve, reject) => {
+    // validate inputs
+    if (!isString(boardMode)) return reject("board mode must be of type 'string' ");
+    // Set Channel Number
+    commandBoardModeForMode(boardMode).then(command => {
+      var outputArray = [
+        obciBoardModeSet,
+        command
       ];
       // console.log(outputArray)
       resolve(outputArray);
@@ -1467,25 +1518,25 @@ function channelSettingsObjectDefault (channelNumber) {
 function commandSampleRateForCmdCyton (sampleRate) {
   return new Promise(function (resolve, reject) {
     switch (sampleRate) {
-      case 16000:
+      case obciSampleRate16000:
         resolve(obciSampleRateCmdCyton16000);
         break;
-      case 8000:
+      case obciSampleRate8000:
         resolve(obciSampleRateCmdCyton8000);
         break;
-      case 4000:
+      case obciSampleRate4000:
         resolve(obciSampleRateCmdCyton4000);
         break;
-      case 2000:
+      case obciSampleRate2000:
         resolve(obciSampleRateCmdCyton2000);
         break;
-      case 1000:
+      case obciSampleRate1000:
         resolve(obciSampleRateCmdCyton1000);
         break;
-      case 500:
+      case obciSampleRate500:
         resolve(obciSampleRateCmdCyton500);
         break;
-      case 250:
+      case obciSampleRate250:
         resolve(obciSampleRateCmdCyton250);
         break;
       default:
@@ -1503,29 +1554,56 @@ function commandSampleRateForCmdCyton (sampleRate) {
 function commandSampleRateForCmdGanglion (sampleRate) {
   return new Promise(function (resolve, reject) {
     switch (sampleRate) {
-      case 25600:
+      case obciSampleRate25600:
         resolve(obciSampleRateCmdGang25600);
         break;
-      case 12800:
+      case obciSampleRate12800:
         resolve(obciSampleRateCmdGang12800);
         break;
-      case 6400:
+      case obciSampleRate6400:
         resolve(obciSampleRateCmdGang6400);
         break;
-      case 3200:
+      case obciSampleRate3200:
         resolve(obciSampleRateCmdGang3200);
         break;
-      case 1600:
+      case obciSampleRate1600:
         resolve(obciSampleRateCmdGang1600);
         break;
-      case 800:
+      case obciSampleRate800:
         resolve(obciSampleRateCmdGang800);
         break;
-      case 40:
+      case obciSampleRate400:
         resolve(obciSampleRateCmdGang400);
         break;
-      case 200:
+      case obciSampleRate200:
         resolve(obciSampleRateCmdGang200);
+        break;
+      default:
+        reject('Invalid sample rate');
+        break;
+    }
+  });
+}
+
+/**
+ * Get's the command for sample rate Cyton
+ * @param boardMode {String} - The desired sample rate
+ * @return {Promise}
+ */
+function commandBoardModeForMode (boardMode) {
+  return new Promise(function (resolve, reject) {
+    switch (boardMode) {
+      case obciBoardModeDefault:
+        resolve(obciBoardModeCmdDefault);
+        break;
+      case obciBoardModeDebug:
+        resolve(obciBoardModeCmdDebug);
+        break;
+      case obciBoardModeAnalog:
+        resolve(obciBoardModeCmdAnalog);
+        break;
+      case obciBoardModeDigital:
+        resolve(obciBoardModeCmdDigital);
         break;
       default:
         reject('Invalid sample rate');
@@ -1546,7 +1624,7 @@ function getPeripheralLocalNames (pArray) {
     if (list.length > 0) {
       return resolve(list);
     } else {
-      return reject(`No peripherals discovered with prefix equal to ${k.OBCIGanglionPrefix}`);
+      return reject(`No peripherals discovered with prefix equal to ${obciGanglionPrefix}`);
     }
   });
 }
