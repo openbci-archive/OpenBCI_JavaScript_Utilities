@@ -20,13 +20,20 @@ var utilitiesModule = {
    * @property {Array} rawDataPackets The extracted raw data packets
    */
   /**
+   * @typedef {Object} Sample
+   * @property {Array} accelData of floats of accel data. not always present in object.
+   * @property {Number} sampleNumber The sample number
+   * @property {Array} channelData The extracted channel data
+   * @property {Buffer} rawDataPacket The raw data packet
+   */
+  /**
    * @description Used to extract samples out of a buffer of unknown length
    * @param dataBuffer {Buffer} - A buffer to parse for samples
    * @returns {ProcessedBuffer} - Object with parsed raw packets and remaining buffer. Calling function shall maintain
    *  the buffer in it's scope.
    * @author AJ Keller (@pushtheworldllc)
    */
-  processRawDataBuffer:(dataBuffer) => {
+  extractRawDataPackets:(dataBuffer) => {
     if (!dataBuffer) return {
       'buffer': dataBuffer,
       'rawDataPackets': []
@@ -95,49 +102,13 @@ var utilitiesModule = {
     };
   },
 
-  /**
-   * @description This takes a 33 byte packet and converts it based on the last four bits.
-   *                  0000 - Standard OpenBCI V3 Sample Packet
-   * @param dataBuf {Buffer} - A 33 byte buffer
-   * @param channelSettingsArray (optional) - An array of channel settings that is an Array that has shape similar to the one
-   *                  calling OpenBCIConstans.channelSettingsArrayInit(). The most important rule here is that it is
-   *                  Array of objects that have key-value pair {gain:NUMBER}
-   * @param convertAuxToAccel (optional) {Boolean} - Do you want to convert to g's? (Defaults to true)*
-   * @returns {Object} - A standard sample object.
-   */
-  parseRawPacketStandard: (dataBuf, channelSettingsArray, convertAuxToAccel) => {
-    const defaultChannelSettingsArray = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDefault);
-
-    // channelSettingsArray is optional, defaults to CHANNEL_SETTINGS_ARRAY_DEFAULT
-    channelSettingsArray = channelSettingsArray || defaultChannelSettingsArray;
-    // By default convert to g's
-    if (convertAuxToAccel === undefined || convertAuxToAccel === null) convertAuxToAccel = true;
-
-    // Check to make sure data is not null.
-    if (k.isUndefined(dataBuf) || k.isNull(dataBuf)) {
-      throw new Error(k.OBCIErrorUndefinedOrNullInput);
-    }
-
-    // Check to make sure the buffer is the right size.
-    if (dataBuf.byteLength !== k.OBCIPacketSize) {
-      throw new Error(k.OBCIErrorInvalidByteLength);
-    }
-
-    // Verify the correct stop byte.
-    if (dataBuf[0] !== k.OBCIByteStart) {
-      throw new Error(k.OBCIErrorInvalidByteStart);
-    }
-
-    if (convertAuxToAccel) {
-      return parsePacketStandardAccel(dataBuf, channelSettingsArray);
-    } else {
-      return parsePacketStandardRawAux(dataBuf, channelSettingsArray);
-    }
-  },
+  transformRawDataPacketsToSample,
   getRawPacketType,
   getFromTimePacketAccel,
   getFromTimePacketTime,
   getFromTimePacketRawAux,
+  parsePacketStandardAccel,
+  parsePacketStandardRawAux,
   parsePacketTimeSyncedAccel,
   parsePacketTimeSyncedRawAux,
   /**
@@ -901,162 +872,254 @@ function newSyncObject () {
 }
 
 /**
-* @description This method parses a 33 byte OpenBCI V3 packet and converts to a sample object
-* @param dataBuf - 33 byte packet that has bytes:
-* 0:[startByte] | 1:[sampleNumber] | 2:[Channel-1.1] | 3:[Channel-1.2] | 4:[Channel-1.3] | 5:[Channel-2.1] | 6:[Channel-2.2] | 7:[Channel-2.3] | 8:[Channel-3.1] | 9:[Channel-3.2] | 10:[Channel-3.3] | 11:[Channel-4.1] | 12:[Channel-4.2] | 13:[Channel-4.3] | 14:[Channel-5.1] | 15:[Channel-5.2] | 16:[Channel-5.3] | 17:[Channel-6.1] | 18:[Channel-6.2] | 19:[Channel-6.3] | 20:[Channel-7.1] | 21:[Channel-7.2] | 22:[Channel-7.3] | 23:[Channel-8.1] | 24:[Channel-8.2] | 25:[Channel-8.3] | 26:[Aux-1.1] | 27:[Aux-1.2] | 28:[Aux-2.1] | 29:[Aux-2.2] | 30:[Aux-3.1] | 31:[Aux-3.2] | 32:StopByte
-* @param channelSettingsArray {Array} - An array of channel settings that is an Array that has shape similar to the one
-*                  calling OpenBCIConstans.channelSettingsArrayInit(). The most important rule here is that it is
-*                  Array of objects that have key-value pair {gain:NUMBER}
-* @returns {object} Sample.
- *                  `sample` Object with:
-*                   {
-*                     channelData: {Array}, // of floats
-*                     accelData: {Array}, // of floats of accel data
-*                     sampleNumber: {Number} // The sample number
-*                   }
-*/
-function parsePacketStandardAccel (dataBuf, channelSettingsArray) {
-  var sampleObject = {};
+ * @description Used transform raw data packets into fully qualified packets
+ * @param o {Object}
+ * @param o.rawDataPackets {Array} - An array of rawDataPackets
+ * @param o.gains {Array}
+ * @param o.timeOffset {Number} (optional) for non time stamp use cases i.e. 0xC0 or 0xC1 (default and raw aux)
+ * @param o.accelArray {Array} (optional) for non time stamp use cases
+ * @param o.verbose {Boolean} (optional) for verbose output
+ * @param o.scale {Boolean} (optional) Default `true`. A gain of 24 for Cyton will be used and 51 for ganglion by default.
+ * @author AJ Keller (@pushtheworldllc)
+ */
+function transformRawDataPacketsToSample(o) {
 
-  sampleObject.accelData = getDataArrayAccel(dataBuf.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+  if (o.rawDataPackets.byteLength !== k.OBCIPacketSize) return;
+  let samples = [];
+  const packetType = getRawPacketType(o.rawDataPacketBuffer[k.OBCIPacketPositionStopByte]);
+  for (let i = 0; i < o.rawDataPackets.length; i++) {
+    const rawDataPacket = o.rawDataPackets[i];
+    let sample;
+    try {
+      switch (packetType) {
+        case k.OBCIStreamPacketStandardAccel:
+          sample = parsePacketStandardAccel({
+            rawDataPacket,
+            gains: o.gains,
+            scale: o.scale
+          });
+          break;
+        case k.OBCIStreamPacketStandardRawAux:
+          sample = parsePacketStandardRawAux({
+            rawDataPacket,
+            gains: o.gains,
+            scale: o.scale
+          });
+          break;
+        case k.OBCIStreamPacketAccelTimeSyncSet:
+        case k.OBCIStreamPacketAccelTimeSynced:
+          sample = parsePacketTimeSyncedAccel({
+            rawDataPacket,
+            gains: o.gains,
+            timeOffset: o.timeOffset,
+            accelArray: o.accelArray
+          });
+          break;
+        case k.OBCIStreamPacketRawAuxTimeSyncSet:
+        case k.OBCIStreamPacketRawAuxTimeSynced:
+          sample = parsePacketTimeSyncedRawAux({
+            rawDataPacket,
+            gains: o.gains,
+            timeOffset: o.timeOffset
+          });
+          break;
+        default:
+          // Don't do anything if the packet is not defined
+          break;
+      }
+      sample.push(sample);
+    } catch (err) {
+      samples.push({
+        rawDataPacket
+      });
+      if (o.verbose) console.log(err);
+    }
+  }
 
-  sampleObject.channelData = getChannelDataArray(dataBuf, channelSettingsArray);
+}
+
+/**
+ * @description This method parses a 33 byte OpenBCI V3 packet and converts to a sample object
+ * @param o {Object} - The input object
+ * @param o.rawDataPacket {Buffer} - The 33byte raw packet
+ * @param o.gains {Array} - An array of channel settings that is an Array that has shape similar to the one
+ *                  calling k.channelSettingsArrayInit(). The most important rule here is that it is
+ *                  Array of objects that have key-value pair {gain:NUMBER}
+ * @param o.scale {Boolean} - Do you want to scale the results? Default true
+ * @returns {Sample} - A sample object. NOTE: Only has accelData if this is a Z axis packet.
+ */
+function parsePacketStandardAccel (o) {
+  // Check to make sure data is not null.
+  if (k.isUndefined(o) || k.isUndefined(o.rawDataPacket) || k.isNull(o.rawDataPacket)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  // Check to make sure the buffer is the right size.
+  if (o.rawDataPacket.byteLength !== k.OBCIPacketSize) throw new Error(k.OBCIErrorInvalidByteLength);
+  // Verify the correct stop byte.
+  if (o.rawDataPacket[0] !== k.OBCIByteStart) throw new Error(k.OBCIErrorInvalidByteStart);
+
+  const sampleObject = {};
+  sampleObject.accelData = getDataArrayAccel(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+
+  if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
+  if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.gains);
+  else sampleObject.channelData = getChannelDataArrayNoScale(o.rawDataPacket);
 
   if (k.getVersionNumber(process.version) >= 6) {
     // From introduced in node version 6.x.x
-    sampleObject.auxData = Buffer.from(dataBuf.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+    sampleObject.auxData = Buffer.from(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
   } else {
-    sampleObject.auxData = new Buffer(dataBuf.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+    sampleObject.auxData = new Buffer(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
   }
   // Get the sample number
-  sampleObject.sampleNumber = dataBuf[k.OBCIPacketPositionSampleNumber];
+  sampleObject.sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
   // Get the start byte
-  sampleObject.startByte = dataBuf[0];
+  sampleObject.startByte = o.rawDataPacket[0];
   // Get the stop byte
-  sampleObject.stopByte = dataBuf[k.OBCIPacketPositionStopByte];
+  sampleObject.stopByte = o.rawDataPacket[k.OBCIPacketPositionStopByte];
 
   return sampleObject;
 }
 
 /**
-* @description This method parses a 33 byte OpenBCI V3 packet and converts to a sample object
-* @param dataBuf - 33 byte packet that has bytes:
-* 0:[startByte] | 1:[sampleNumber] | 2:[Channel-1.1] | 3:[Channel-1.2] | 4:[Channel-1.3] | 5:[Channel-2.1] | 6:[Channel-2.2] | 7:[Channel-2.3] | 8:[Channel-3.1] | 9:[Channel-3.2] | 10:[Channel-3.3] | 11:[Channel-4.1] | 12:[Channel-4.2] | 13:[Channel-4.3] | 14:[Channel-5.1] | 15:[Channel-5.2] | 16:[Channel-5.3] | 17:[Channel-6.1] | 18:[Channel-6.2] | 19:[Channel-6.3] | 20:[Channel-7.1] | 21:[Channel-7.2] | 22:[Channel-7.3] | 23:[Channel-8.1] | 24:[Channel-8.2] | 25:[Channel-8.3] | 26:[Aux-1.1] | 27:[Aux-1.2] | 28:[Aux-2.1] | 29:[Aux-2.2] | 30:[Aux-3.1] | 31:[Aux-3.2] | 32:StopByte
-* @param channelSettingsArray - An array of channel settings that is an Array that has shape similar to the one
-*                  calling OpenBCIConstans.channelSettingsArrayInit(). The most important rule here is that it is
-*                  Array of objects that have key-value pair {gain:NUMBER}
-* @returns {Promise} - Fulfilled with a sample object that has form:
-*                  {
-*                      channelData: Array of floats
-*                      auxData: 6 byte long buffer of raw aux data
-*                      sampleNumber: a Number that is the sample
-*                  }
-*/
-function parsePacketStandardRawAux (dataBuf, channelSettingsArray) {
-  var sampleObject = {};
+ * @description This method parses a 33 byte OpenBCI V3 packet and converts to a sample object
+ * @param o {Object} - The input object
+ * @param o.rawDataPacket {Buffer} - The 33byte raw packet
+ * @param o.gains {Array} - An array of channel settings that is an Array that has shape similar to the one
+ *                  calling k.channelSettingsArrayInit(). The most important rule here is that it is
+ *                  Array of objects that have key-value pair {gain:NUMBER}
+ * @param o.scale {Boolean} - Do you want to scale the results? Default is true
+ * @returns {Sample} - A sample object. NOTE: Only has accelData if this is a Z axis packet.
+ */
+function parsePacketStandardRawAux (o) {
+  // Check to make sure data is not null.
+  if (k.isUndefined(o) || k.isUndefined(o.rawDataPacket) || k.isNull(o.rawDataPacket)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  // Check to make sure the buffer is the right size.
+  if (o.rawDataPacket.byteLength !== k.OBCIPacketSize) throw new Error(k.OBCIErrorInvalidByteLength);
+  // Verify the correct stop byte.
+  if (o.rawDataPacket[0] !== k.OBCIByteStart) throw new Error(k.OBCIErrorInvalidByteStart);
+
+  const sampleObject = {};
 
   // Store the channel data
-  sampleObject.channelData = getChannelDataArray(dataBuf, channelSettingsArray);
+  if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
+  if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.gains);
+  else sampleObject.channelData = getChannelDataArrayNoScale(o.rawDataPacket);
 
   // Slice the buffer for the aux data
   if (k.getVersionNumber(process.version) >= 6) {
     // From introduced in node version 6.x.x
-    sampleObject.auxData = Buffer.from(dataBuf.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+    sampleObject.auxData = Buffer.from(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
   } else {
-    sampleObject.auxData = new Buffer(dataBuf.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+    sampleObject.auxData = new Buffer(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
   }
   // Get the sample number
-  sampleObject.sampleNumber = dataBuf[k.OBCIPacketPositionSampleNumber];
+  sampleObject.sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
   // Get the start byte
-  sampleObject.startByte = dataBuf[0];
+  sampleObject.startByte = o.rawDataPacket[0];
   // Get the stop byte
-  sampleObject.stopByte = dataBuf[k.OBCIPacketPositionStopByte];
+  sampleObject.stopByte = o.rawDataPacket[k.OBCIPacketPositionStopByte];
 
   return sampleObject;
 }
 
 /**
-* @description Grabs an accel value from a raw but time synced packet. Important that this utilizes the fact that:
-*      X axis data is sent with every sampleNumber % 10 === 0
-*      Y axis data is sent with every sampleNumber % 10 === 1
-*      Z axis data is sent with every sampleNumber % 10 === 2
-* @param dataBuf {Buffer} - The 33byte raw time synced accel packet
-* @param channelSettingsArray {Array} - An array of channel settings that is an Array that has shape similar to the one
-*                  calling OpenBCIConstans.channelSettingsArrayInit(). The most important rule here is that it is
-*                  Array of objects that have key-value pair {gain:NUMBER}
-* @param boardOffsetTime {Number} - The difference between board time and current time calculated with sync methods.
-* @param accelArray {Array} - A 3 element array that allows us to have inter packet memory of x and y axis data and emit only on the z axis packets.
-* @returns {Object} - A sample object. NOTE: Only has accelData if this is a Z axis packet.
-*/
-function parsePacketTimeSyncedAccel (dataBuf, channelSettingsArray, boardOffsetTime, accelArray) {
+ * @description Grabs an accel value from a raw but time synced packet. Important that this utilizes the fact that:
+ *      X axis data is sent with every sampleNumber % 10 === 0
+ *      Y axis data is sent with every sampleNumber % 10 === 1
+ *      Z axis data is sent with every sampleNumber % 10 === 2
+ * @param o {Object} - The input object
+ * @param o.rawDataPacket {Buffer} - The 33byte raw time synced accel packet
+ * @param o.gains {Array} - An array of channel settings that is an Array that has shape similar to the one
+ *                  calling OpenBCIConstans.channelSettingsArrayInit(). The most important rule here is that it is
+ *                  Array of objects that have key-value pair {gain:NUMBER}
+ * @param o.timeOffset {Number} - The difference between board time and current time calculated with sync methods.
+ * @param o.accelArray {Array} - A 3 element array that allows us to have inter packet memory of x and y axis data and emit only on the z axis packets.
+ * @param o.scale {Boolean} - Do you want to scale the results? Default is true
+ * @returns {Sample} - A sample object. NOTE: Only has accelData if this is a Z axis packet.
+ */
+function parsePacketTimeSyncedAccel (o) {
   // Ths packet has 'A0','00'....,'AA','AA','FF','FF','FF','FF','C4'
   //  where the 'AA's form an accel 16bit num and 'FF's form a 32 bit time in ms
   // The sample object we are going to build
-  var sampleObject = {};
+  // Check to make sure data is not null.
+  if (k.isUndefined(o) || k.isUndefined(o.rawDataPacket) || k.isNull(o.rawDataPacket)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  // Check to make sure the buffer is the right size.
+  if (o.rawDataPacket.byteLength !== k.OBCIPacketSize) throw new Error(k.OBCIErrorInvalidByteLength);
+  // Verify the correct stop byte.
+  if (o.rawDataPacket[0] !== k.OBCIByteStart) throw new Error(k.OBCIErrorInvalidByteStart);
+
+  let sampleObject = {};
 
   // Get the sample number
-  sampleObject.sampleNumber = dataBuf[k.OBCIPacketPositionSampleNumber];
+  sampleObject.sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
   // Get the start byte
-  sampleObject.startByte = dataBuf[0];
+  sampleObject.startByte = o.rawDataPacket[0];
   // Get the stop byte
-  sampleObject.stopByte = dataBuf[k.OBCIPacketPositionStopByte];
+  sampleObject.stopByte = o.rawDataPacket[k.OBCIPacketPositionStopByte];
 
   // Get the board time
-  sampleObject.boardTime = getFromTimePacketTime(dataBuf);
-  sampleObject.timeStamp = sampleObject.boardTime + boardOffsetTime;
+  sampleObject.boardTime = getFromTimePacketTime(o.rawDataPacket);
+  sampleObject.timeStamp = sampleObject.boardTime + o.timeOffset;
 
   // Extract the aux data
-  sampleObject.auxData = getFromTimePacketRawAux(dataBuf);
+  sampleObject.auxData = getFromTimePacketRawAux(o.rawDataPacket);
 
   // Grab the accelData only if `getFromTimePacketAccel` returns true.
-  if (getFromTimePacketAccel(dataBuf, accelArray)) {
-    sampleObject.accelData = accelArray;
+  if (getFromTimePacketAccel(o.rawDataPacket, o.accelArray)) {
+    sampleObject.accelData = o.accelArray;
   }
 
-  // Grab the channel data.
-  sampleObject.channelData = getChannelDataArray(dataBuf, channelSettingsArray);
+  if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
+  if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.gains);
+  else sampleObject.channelData = getChannelDataArrayNoScale(o.rawDataPacket);
 
   return sampleObject;
 }
 
 /**
-* @description Grabs an accel value from a raw but time synced packet. Important that this utilizes the fact that:
-*      X axis data is sent with every sampleNumber % 10 === 0
-*      Y axis data is sent with every sampleNumber % 10 === 1
-*      Z axis data is sent with every sampleNumber % 10 === 2
-* @param dataBuf {Buffer} - The 33byte raw time synced accel packet
-* @param channelSettingsArray {Array} - An array of channel settings that is an Array that has shape similar to the one
-*                  calling OpenBCIConstans.channelSettingsArrayInit(). The most important rule here is that it is
-*                  Array of objects that have key-value pair {gain:NUMBER}
-* @param boardOffsetTime {Number} - The difference between board time and current time calculated with sync methods.
-* @returns {Object} - A sample object. NOTE: The aux data is placed in a 2 byte buffer
-*/
-function parsePacketTimeSyncedRawAux (dataBuf, channelSettingsArray, boardOffsetTime) {
+ * @description Grabs an accel value from a raw but time synced packet. Important that this utilizes the fact that:
+ *      X axis data is sent with every sampleNumber % 10 === 0
+ *      Y axis data is sent with every sampleNumber % 10 === 1
+ *      Z axis data is sent with every sampleNumber % 10 === 2
+ * @param o {Object} - The input object
+ * @param o.rawDataPacket {Buffer} - The 33byte raw time synced accel packet
+ * @param o.gains {Array} - An array of channel settings that is an Array that has shape similar to the one
+ *                  calling k.channelSettingsArrayInit(). The most important rule here is that it is
+ *                  Array of objects that have key-value pair {gain:NUMBER}
+ * @param o.timeOffset {Number} - The difference between board time and current time calculated with sync methods.
+ * @param o.scale {Boolean} - Do you want to scale the results? Default is true
+ * @returns {Sample} - A sample object. NOTE: The aux data is placed in a 2 byte buffer
+ */
+function parsePacketTimeSyncedRawAux (o) {
   // Ths packet has 'A0','00'....,'AA','AA','FF','FF','FF','FF','C4'
   //  where the 'AA's form an accel 16bit num and 'FF's form a 32 bit time in ms
-  if (dataBuf.byteLength !== k.OBCIPacketSize) {
-    throw new Error(k.OBCIErrorInvalidByteLength);
-  }
+  // Check to make sure data is not null.
+  if (k.isUndefined(o) || k.isUndefined(o.rawDataPacket) || k.isNull(o.rawDataPacket)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  // Check to make sure the buffer is the right size.
+  if (o.rawDataPacket.byteLength !== k.OBCIPacketSize) throw new Error(k.OBCIErrorInvalidByteLength);
+  // Verify the correct stop byte.
+  if (o.rawDataPacket[0] !== k.OBCIByteStart) throw new Error(k.OBCIErrorInvalidByteStart);
 
   // The sample object we are going to build
   var sampleObject = {};
 
   // Get the sample number
-  sampleObject.sampleNumber = dataBuf[k.OBCIPacketPositionSampleNumber];
+  sampleObject.sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
   // Get the start byte
-  sampleObject.startByte = dataBuf[0];
+  sampleObject.startByte = o.rawDataPacket[0];
   // Get the stop byte
-  sampleObject.stopByte = dataBuf[k.OBCIPacketPositionStopByte];
+  sampleObject.stopByte = o.rawDataPacket[k.OBCIPacketPositionStopByte];
 
   // Get the board time
-  sampleObject.boardTime = getFromTimePacketTime(dataBuf);
-  sampleObject.timeStamp = sampleObject.boardTime + boardOffsetTime;
+  sampleObject.boardTime = getFromTimePacketTime(o.rawDataPacket);
+  sampleObject.timeStamp = sampleObject.boardTime + o.timeOffset;
 
   // Extract the aux data
-  sampleObject.auxData = getFromTimePacketRawAux(dataBuf);
+  sampleObject.auxData = getFromTimePacketRawAux(o.rawDataPacket);
 
   // Grab the channel data.
-  sampleObject.channelData = getChannelDataArray(dataBuf, channelSettingsArray);
+  if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
+  if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.gains);
+  else sampleObject.channelData = getChannelDataArrayNoScale(o.rawDataPacket);
 
   return sampleObject;
 }
@@ -1177,6 +1240,24 @@ function getChannelDataArray (dataBuf, channelSettingsArray) {
     }
     // Convert the three byte signed integer and convert it
     channelData.push(scaleFactor * utilitiesModule.interpret24bitAsInt32(dataBuf.slice((i * 3) + k.OBCIPacketPositionChannelDataStart, (i * 3) + k.OBCIPacketPositionChannelDataStart + 3)));
+  }
+  return channelData;
+}
+
+/**
+ * @description Takes a buffer filled with 24 bit signed integers from an OpenBCI device with gain settings in
+ *                  channelSettingsArray[index].gain and converts based on settings of ADS1299... spits out an
+ *                  array of floats in VOLTS
+ * @param dataBuf {Buffer} - Buffer with 33 bit signed integers, number of elements is same as channelSettingsArray.length * 3
+ * @returns {Array} - Array filled with floats for each channel's voltage in VOLTS
+ * @author AJ Keller (@pushtheworldllc)
+ */
+function getChannelDataArrayNoScale (dataBuf) {
+  var channelData = [];
+  // Channel data arrays are always 8 long
+  for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
+    // Convert the three byte signed integer and convert it
+    channelData.push(utilitiesModule.interpret24bitAsInt32(dataBuf.slice((i * 3) + k.OBCIPacketPositionChannelDataStart, (i * 3) + k.OBCIPacketPositionChannelDataStart + 3)));
   }
   return channelData;
 }
