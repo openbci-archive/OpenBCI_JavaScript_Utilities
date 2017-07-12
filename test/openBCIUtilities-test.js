@@ -2,18 +2,19 @@
 * Created by ajk on 12/15/15.
 */
 'use strict';
-let bluebirdChecks = require('./bluebirdChecks');
-let openBCIUtilities = require('../openBCIUtilities');
-let chai = require('chai');
-let expect = chai.expect;
-let assert = chai.assert;
-let should = chai.should(); // eslint-disable-line no-unused-lets
+const bluebirdChecks = require('./bluebirdChecks');
+const openBCIUtilities = require('../openBCIUtilities');
+const sinon = require('sinon');
+const chai = require('chai');
+const expect = chai.expect;
+const assert = chai.assert;
+const should = chai.should(); // eslint-disable-line no-unused-lets
 
-let chaiAsPromised = require('chai-as-promised');
-let sinonChai = require('sinon-chai');
+const chaiAsPromised = require('chai-as-promised');
+const sinonChai = require('sinon-chai');
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
-let bufferEqual = require('buffer-equal');
+const bufferEqual = require('buffer-equal');
 
 let k = require('../openBCIConstants');
 
@@ -1784,28 +1785,20 @@ describe('#extractRawDataPackets', function () {
  * Test the function that routes raw packets for processing
  */
 describe('#transformRawDataPacketsToSamples', function () {
-  var ourBoard;
-  var funcSpyTimeSyncSet, funcSpyTimeSyncedAccel, funcSpyTimeSyncedRawAux, funcSpyStandardRawAux, funcSpyStandardAccel;
+  var funcSpyTimeSyncedAccel, funcSpyTimeSyncedRawAux, funcSpyStandardRawAux, funcSpyStandardAccel;
 
   before(function () {
-    ourBoard = new openBCIBoard.OpenBCIBoard({
-      verbose: true
-    });
     // Put watchers on all functions
-    funcSpyStandardAccel = sinon.spy(ourBoard, '_processPacketStandardAccel');
-    funcSpyStandardRawAux = sinon.spy(ourBoard, '_processPacketStandardRawAux');
-    funcSpyTimeSyncSet = sinon.spy(ourBoard, '_processPacketTimeSyncSet');
-    funcSpyTimeSyncedAccel = sinon.spy(ourBoard, '_processPacketTimeSyncedAccel');
-    funcSpyTimeSyncedRawAux = sinon.spy(ourBoard, '_processPacketTimeSyncedRawAux');
+    funcSpyStandardAccel = sinon.spy(openBCIUtilities, 'parsePacketStandardAccel');
+    funcSpyStandardRawAux = sinon.spy(openBCIUtilities, 'parsePacketStandardRawAux');
+    funcSpyTimeSyncedAccel = sinon.spy(openBCIUtilities, 'parsePacketTimeSyncedAccel');
+    funcSpyTimeSyncedRawAux = sinon.spy(openBCIUtilities, 'parsePacketTimeSyncedRawAux');
   });
   beforeEach(function () {
     funcSpyStandardAccel.reset();
     funcSpyStandardRawAux.reset();
-    funcSpyTimeSyncSet.reset();
     funcSpyTimeSyncedAccel.reset();
     funcSpyTimeSyncedRawAux.reset();
-
-    ourBoard.sync.curSyncObj = openBCISample.newSyncObject();
   });
   after(function () {
     // ourBoard = null
@@ -1813,127 +1806,116 @@ describe('#transformRawDataPacketsToSamples', function () {
   after(() => bluebirdChecks.noPendingPromises());
 
   it('should process a standard packet', function () {
-    var buffer = openBCISample.samplePacket(0);
+    var buffer = openBCIUtilities.samplePacket(0);
 
     // Call the function under test
-    ourBoard._processQualifiedPacket(buffer);
+    const samples = openBCIUtilities.transformRawDataPacketsToSample({
+      rawDataPackets: [buffer],
+      gains: defaultChannelSettingsArray
+    });
 
     // Ensure that we extracted only one buffer
     funcSpyStandardAccel.should.have.been.calledOnce;
+    expect(samples.length).to.equal(1);
+  });
+
+  it('should process a standard packet', function () {
+    // Call the function under test
+    const samples = openBCIUtilities.transformRawDataPacketsToSample({
+      rawDataPackets: [
+        openBCIUtilities.samplePacket(0),
+        openBCIUtilities.samplePacket(1),
+        openBCIUtilities.samplePacket(2)
+      ],
+      gains: defaultChannelSettingsArray
+    });
+
+    // Ensure that we extracted only one buffer
+    funcSpyStandardAccel.should.have.been.calledThrice;
   });
   it('should process a standard packet with raw aux', function () {
-    var buffer = openBCISample.samplePacketStandardRawAux(0);
+    var buffer = openBCIUtilities.samplePacketStandardRawAux(0);
 
     // Call the function under test
-    ourBoard._processQualifiedPacket(buffer);
+    openBCIUtilities.transformRawDataPacketsToSample({
+      rawDataPackets: [buffer]
+    });
 
     // Ensure that we extracted only one buffer
     funcSpyStandardRawAux.should.have.been.calledOnce;
   });
   it('should call nothing for a user defined packet type ', function () {
-    var buffer = openBCISample.samplePacketUserDefined();
+    var buffer = openBCIUtilities.samplePacketUserDefined();
 
     // Call the function under test
-    ourBoard._processQualifiedPacket(buffer);
+    openBCIUtilities.transformRawDataPacketsToSample({
+      rawDataPackets: [buffer]
+    });
 
     // Nothing should be called
     funcSpyStandardAccel.should.not.have.been.called;
     funcSpyStandardRawAux.should.not.have.been.called;
-    funcSpyTimeSyncSet.should.not.have.been.called;
     funcSpyTimeSyncedAccel.should.not.have.been.called;
     funcSpyTimeSyncedRawAux.should.not.have.been.called;
   });
   it('should process a time sync set packet with accel', function () {
-    var buffer = openBCISample.samplePacketAccelTimeSyncSet();
+    var buffer = openBCIUtilities.samplePacketAccelTimeSyncSet();
 
     // Call the function under test
-    ourBoard._processQualifiedPacket(buffer);
+    openBCIUtilities.transformRawDataPacketsToSample({
+      rawDataPackets: [buffer]
+    });
 
-    // We should call to sync up
-    funcSpyTimeSyncSet.should.have.been.calledOnce;
-    funcSpyTimeSyncSet.should.have.been.calledWith(buffer);
     // we should call to get a packet
     funcSpyTimeSyncedAccel.should.have.been.calledOnce;
-    funcSpyTimeSyncedAccel.should.have.been.calledWith(buffer);
   });
   it('should process a time synced packet with accel', function () {
-    var buffer = openBCISample.samplePacketAccelTimeSynced(0);
+    var buffer = openBCIUtilities.samplePacketAccelTimeSynced(0);
 
     // Call the function under test
-    ourBoard._processQualifiedPacket(buffer);
+    openBCIUtilities.transformRawDataPacketsToSample({
+      rawDataPackets: [buffer]
+    });
 
     // Ensure that we extracted only one buffer
     funcSpyTimeSyncedAccel.should.have.been.calledOnce;
   });
   it('should process a time sync set packet with raw aux', function () {
-    var buffer = openBCISample.samplePacketRawAuxTimeSyncSet(0);
+    var buffer = openBCIUtilities.samplePacketRawAuxTimeSyncSet(0);
 
     // Call the function under test
-    ourBoard._processQualifiedPacket(buffer);
+    openBCIUtilities.transformRawDataPacketsToSample({
+      rawDataPackets: [buffer]
+    });
 
-    // We should call to sync up
-    funcSpyTimeSyncSet.should.have.been.calledOnce;
-    funcSpyTimeSyncSet.should.have.been.calledWith(buffer);
-    // we should call to get a packet
     funcSpyTimeSyncedRawAux.should.have.been.calledOnce;
-    funcSpyTimeSyncedRawAux.should.have.been.calledWith(buffer);
   });
   it('should process a time synced packet with raw aux', function () {
-    var buffer = openBCISample.samplePacketRawAuxTimeSynced(0);
+    var buffer = openBCIUtilities.samplePacketRawAuxTimeSynced(0);
 
     // Call the function under test
-    ourBoard._processQualifiedPacket(buffer);
+    openBCIUtilities.transformRawDataPacketsToSample({
+      rawDataPackets: [buffer]
+    });
 
     // Ensure that we extracted only one buffer
     funcSpyTimeSyncedRawAux.should.have.been.calledOnce;
   });
   it('should not identify any packet', function () {
-    var buffer = openBCISample.samplePacket(0);
+    var buffer = openBCIUtilities.samplePacket(0);
 
     // Set the stop byte to some number not yet defined
     buffer[k.OBCIPacketPositionStopByte] = 0xCF;
 
     // Call the function under test
-    ourBoard._processDataBuffer(buffer);
+    openBCIUtilities.transformRawDataPacketsToSample({
+      rawDataPackets: [buffer]
+    });
 
     // Nothing should be called
     funcSpyStandardAccel.should.not.have.been.called;
     funcSpyStandardRawAux.should.not.have.been.called;
-    funcSpyTimeSyncSet.should.not.have.been.called;
     funcSpyTimeSyncedAccel.should.not.have.been.called;
     funcSpyTimeSyncedRawAux.should.not.have.been.called;
-  });
-  it('should emit a dropped packet on dropped packet', function (done) {
-    // Set to default state
-    ourBoard.previousSampleNumber = -1;
-    var sampleNumber0 = openBCISample.samplePacket(0);
-    ourBoard.once('droppedPacket', () => {
-      done();
-    });
-    var sampleNumber2 = openBCISample.samplePacket(2);
-    // Call the function under test
-    ourBoard._processDataBuffer(sampleNumber0);
-    ourBoard._processDataBuffer(sampleNumber2);
-  });
-  it('should emit a dropped packet on dropped packet with edge', function (done) {
-    // Set to default state
-    var count = 0;
-    ourBoard.previousSampleNumber = 253;
-    var buf1 = openBCISample.samplePacket(254);
-    var countFunc = arr => {
-      count++;
-    };
-    ourBoard.on('droppedPacket', countFunc);
-    var buf2 = openBCISample.samplePacket(0);
-    var buf3 = openBCISample.samplePacket(1);
-    // Call the function under test
-    ourBoard._processDataBuffer(buf1);
-    ourBoard._processDataBuffer(buf2);
-    ourBoard._processDataBuffer(buf3);
-    setTimeout(() => {
-      ourBoard.removeListener('droppedPacket', countFunc);
-      expect(count).to.equal(1);
-      done();
-    }, 10);
   });
 });

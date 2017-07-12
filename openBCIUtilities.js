@@ -884,23 +884,22 @@ function newSyncObject () {
  */
 function transformRawDataPacketsToSample(o) {
 
-  if (o.rawDataPackets.byteLength !== k.OBCIPacketSize) return;
   let samples = [];
-  const packetType = getRawPacketType(o.rawDataPacketBuffer[k.OBCIPacketPositionStopByte]);
   for (let i = 0; i < o.rawDataPackets.length; i++) {
     const rawDataPacket = o.rawDataPackets[i];
+    const packetType = getRawPacketType(rawDataPacket[k.OBCIPacketPositionStopByte]);
     let sample;
     try {
       switch (packetType) {
         case k.OBCIStreamPacketStandardAccel:
-          sample = parsePacketStandardAccel({
+          sample = utilitiesModule.parsePacketStandardAccel({
             rawDataPacket,
             gains: o.gains,
             scale: o.scale
           });
           break;
         case k.OBCIStreamPacketStandardRawAux:
-          sample = parsePacketStandardRawAux({
+          sample = utilitiesModule.parsePacketStandardRawAux({
             rawDataPacket,
             gains: o.gains,
             scale: o.scale
@@ -908,7 +907,7 @@ function transformRawDataPacketsToSample(o) {
           break;
         case k.OBCIStreamPacketAccelTimeSyncSet:
         case k.OBCIStreamPacketAccelTimeSynced:
-          sample = parsePacketTimeSyncedAccel({
+          sample = utilitiesModule.parsePacketTimeSyncedAccel({
             rawDataPacket,
             gains: o.gains,
             timeOffset: o.timeOffset,
@@ -917,7 +916,7 @@ function transformRawDataPacketsToSample(o) {
           break;
         case k.OBCIStreamPacketRawAuxTimeSyncSet:
         case k.OBCIStreamPacketRawAuxTimeSynced:
-          sample = parsePacketTimeSyncedRawAux({
+          sample = utilitiesModule.parsePacketTimeSyncedRawAux({
             rawDataPacket,
             gains: o.gains,
             timeOffset: o.timeOffset
@@ -936,6 +935,7 @@ function transformRawDataPacketsToSample(o) {
     }
   }
 
+  return samples;
 }
 
 /**
