@@ -13,7 +13,87 @@ const SCALE_FACTOR_ACCEL = 0.002 / Math.pow(2, 4);
 const ACCEL_NUMBER_AXIS = 3;
 // Default ADS1299 gains array
 
-var sampleModule = {
+var utilitiesModule = {
+  /**
+   * @typedef {Object} ProcessedBuffer
+   * @property {Buffer} buffer The remaining buffer. Can be null.
+   * @property {Array} rawDataPackets The extracted raw data packets
+   */
+  /**
+   * @description Used to extract samples out of a buffer of unknown length
+   * @param dataBuffer {Buffer} - A buffer to parse for samples
+   * @returns {ProcessedBuffer} - Object with parsed raw packets and remaining buffer. Calling function shall maintain
+   *  the buffer in it's scope.
+   * @author AJ Keller (@pushtheworldllc)
+   */
+  processRawDataBuffer:(dataBuffer) => {
+    if (!dataBuffer) return {
+      'buffer': dataBuffer,
+      'rawDataPackets': []
+    };
+    let bytesToParse = dataBuffer.length;
+    let rawDataPackets = [];
+    // Exit if we have a buffer with less data than a packet
+    if (bytesToParse < k.OBCIPacketSize) return {
+      'buffer': dataBuffer,
+      'rawDataPackets': rawDataPackets
+    };
+
+    let parsePosition = 0;
+    // Begin parseing
+    while (parsePosition <= bytesToParse - k.OBCIPacketSize) {
+      // Is the current byte a head byte that looks like 0xA0
+      if (dataBuffer[parsePosition] === k.OBCIByteStart) {
+        // Now that we know the first is a head byte, let's see if the last one is a
+        //  tail byte 0xCx where x is the set of numbers from 0-F (hex)
+        if (isStopByte(dataBuffer[parsePosition + k.OBCIPacketSize - 1])) {
+          // console.log(dataBuffer[parsePosition+1]);
+          /** We just qualified a raw packet */
+          // This could be a time set packet!
+          // this.timeOfPacketArrival = this.time();
+          // Grab the raw packet, make a copy of it.
+          let rawPacket;
+          if (k.getVersionNumber(process.version) >= 6) {
+            // From introduced in node version 6.x.x
+            rawPacket = Buffer.from(dataBuffer.slice(parsePosition, parsePosition + k.OBCIPacketSize));
+          } else {
+            rawPacket = new Buffer(dataBuffer.slice(parsePosition, parsePosition + k.OBCIPacketSize));
+          }
+
+          // Emit that buffer
+          // this.emit('rawDataPacket', rawPacket);
+          rawDataPackets.push(rawPacket);
+          // Submit the packet for processing
+          // this._processQualifiedPacket(rawPacket);
+          // Overwrite the dataBuffer with a new buffer
+          let tempBuf;
+          if (parsePosition > 0) {
+            tempBuf = Buffer.concat([dataBuffer.slice(0, parsePosition), dataBuffer.slice(parsePosition + k.OBCIPacketSize)], dataBuffer.byteLength - k.OBCIPacketSize);
+          } else {
+            tempBuf = dataBuffer.slice(k.OBCIPacketSize);
+          }
+          if (tempBuf.length === 0) {
+            dataBuffer = null;
+          } else {
+            if (k.getVersionNumber(process.version) >= 6) {
+              dataBuffer = Buffer.from(tempBuf);
+            } else {
+              dataBuffer = new Buffer(tempBuf);
+            }
+          }
+          // Move the parse position up one packet
+          parsePosition = -1;
+          bytesToParse -= k.OBCIPacketSize;
+        }
+      }
+      parsePosition++;
+    }
+
+    return  {
+      'buffer': dataBuffer,
+      'rawDataPackets': rawDataPackets
+    };
+  },
 
   /**
    * @description This takes a 33 byte packet and converts it based on the last four bits.
@@ -788,7 +868,7 @@ function decompressDeltas19Bit (buffer) {
   return receivedDeltas;
 }
 
-module.exports = sampleModule;
+module.exports = utilitiesModule;
 
 function newImpedanceObject (channelNumber) {
   return {
@@ -1018,13 +1098,13 @@ function getFromTimePacketAccel (dataBuf, accelArray) {
   var sampleNumber = dataBuf[k.OBCIPacketPositionSampleNumber];
   switch (sampleNumber % 10) { // The accelerometer is on a 25Hz sample rate, so every ten channel samples, we can get new data
     case k.OBCIAccelAxisX:
-      accelArray[0] = sampleModule.interpret16bitAsInt32(dataBuf.slice(lastBytePosition, lastBytePosition + 2)) * SCALE_FACTOR_ACCEL; // slice is not inclusive on the right
+      accelArray[0] = utilitiesModule.interpret16bitAsInt32(dataBuf.slice(lastBytePosition, lastBytePosition + 2)) * SCALE_FACTOR_ACCEL; // slice is not inclusive on the right
       return false;
     case k.OBCIAccelAxisY:
-      accelArray[1] = sampleModule.interpret16bitAsInt32(dataBuf.slice(lastBytePosition, lastBytePosition + 2)) * SCALE_FACTOR_ACCEL; // slice is not inclusive on the right
+      accelArray[1] = utilitiesModule.interpret16bitAsInt32(dataBuf.slice(lastBytePosition, lastBytePosition + 2)) * SCALE_FACTOR_ACCEL; // slice is not inclusive on the right
       return false;
     case k.OBCIAccelAxisZ:
-      accelArray[2] = sampleModule.interpret16bitAsInt32(dataBuf.slice(lastBytePosition, lastBytePosition + 2)) * SCALE_FACTOR_ACCEL; // slice is not inclusive on the right
+      accelArray[2] = utilitiesModule.interpret16bitAsInt32(dataBuf.slice(lastBytePosition, lastBytePosition + 2)) * SCALE_FACTOR_ACCEL; // slice is not inclusive on the right
       return true;
     default:
       return false;
@@ -1058,7 +1138,7 @@ function getDataArrayAccel (dataBuf) {
   var accelData = [];
   for (var i = 0; i < ACCEL_NUMBER_AXIS; i++) {
     var index = i * 2;
-    accelData.push(sampleModule.interpret16bitAsInt32(dataBuf.slice(index, index + 2)) * SCALE_FACTOR_ACCEL);
+    accelData.push(utilitiesModule.interpret16bitAsInt32(dataBuf.slice(index, index + 2)) * SCALE_FACTOR_ACCEL);
   }
   return accelData;
 }
@@ -1096,7 +1176,7 @@ function getChannelDataArray (dataBuf, channelSettingsArray) {
       scaleFactor = ADS1299_VREF / channelSettingsArray[i].gain / (Math.pow(2, 23) - 1);
     }
     // Convert the three byte signed integer and convert it
-    channelData.push(scaleFactor * sampleModule.interpret24bitAsInt32(dataBuf.slice((i * 3) + k.OBCIPacketPositionChannelDataStart, (i * 3) + k.OBCIPacketPositionChannelDataStart + 3)));
+    channelData.push(scaleFactor * utilitiesModule.interpret24bitAsInt32(dataBuf.slice((i * 3) + k.OBCIPacketPositionChannelDataStart, (i * 3) + k.OBCIPacketPositionChannelDataStart + 3)));
   }
   return channelData;
 }
