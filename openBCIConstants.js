@@ -5,6 +5,7 @@
 */
 'use strict';
 const _ = require('lodash');
+const Buffer = require('safe-buffer').Buffer;
 
 /** Turning channels off */
 const obciChannelOff1 = '1';
@@ -556,7 +557,7 @@ module.exports = {
           resolve(obciChannelOff16);
           break;
         default:
-          reject('Error [commandChannelOff]: Invalid Channel Number');
+          reject(Error('Error [commandChannelOff]: Invalid Channel Number'));
           break;
       }
     });
@@ -630,7 +631,7 @@ module.exports = {
           resolve(obciChannelOn16);
           break;
         default:
-          reject('Error [commandChannelOn]: Invalid Channel Number');
+          reject(Error('Error [commandChannelOn]: Invalid Channel Number'));
           break;
       }
     });
@@ -667,7 +668,7 @@ module.exports = {
           resolve(obciChannelDefaultAllSet);
           break;
         default:
-          reject('Invalid selection! Check your spelling.');
+          reject(Error('Invalid selection! Check your spelling.'));
           break;
       }
     });
@@ -806,9 +807,8 @@ module.exports = {
           resolve(obciSDLogForSec14);
           break;
         default:
-          reject(new Error(TypeError));
+          reject(Error(TypeError));
           break;
-
       }
     });
   },
@@ -856,7 +856,7 @@ module.exports = {
           resolve(new Buffer(obciMiscQueryRegisterSettingsChannel8));
           break;
         default:
-          reject('Invalid channel number');
+          reject(Error('Invalid channel number'));
           break;
       }
     });
@@ -1203,13 +1203,13 @@ function channelSetter (channelNumber, powerDown, gain, inputType, bias, srb2, s
 
   return new Promise(function (resolve, reject) {
     // Validate the input
-    if (!isNumber(channelNumber)) reject("channelNumber must be of type 'number' ");
-    if (!isBoolean(powerDown)) reject("powerDown must be of type 'boolean' ");
-    if (!isNumber(gain)) reject("gain must be of type 'number' ");
-    if (!isString(inputType)) reject("inputType must be of type 'string' ");
-    if (!isBoolean(bias)) reject("bias must be of type 'boolean' ");
-    if (!isBoolean(srb2)) reject("srb1 must be of type 'boolean' ");
-    if (!isBoolean(srb1)) reject("srb2 must be of type 'boolean' ");
+    if (!isNumber(channelNumber)) reject(Error("channelNumber must be of type 'number' "));
+    if (!isBoolean(powerDown)) reject(Error("powerDown must be of type 'boolean' "));
+    if (!isNumber(gain)) reject(Error("gain must be of type 'number' "));
+    if (!isString(inputType)) reject(Error("inputType must be of type 'string' "));
+    if (!isBoolean(bias)) reject(Error("bias must be of type 'boolean' "));
+    if (!isBoolean(srb2)) reject(Error("srb1 must be of type 'boolean' "));
+    if (!isBoolean(srb1)) reject(Error("srb2 must be of type 'boolean' "));
 
     // Set Channel Number
     var p1 = commandChannelForCmd(channelNumber)
@@ -1276,9 +1276,9 @@ function impedanceSetter (channelNumber, pInputApplied, nInputApplied) {
     cmdPInputApplied;
   return new Promise((resolve, reject) => {
     // validate inputs
-    if (!isNumber(channelNumber)) reject("channelNumber must be of type 'number' ");
-    if (!isBoolean(pInputApplied)) reject("pInputApplied must be of type 'boolean' ");
-    if (!isBoolean(nInputApplied)) reject("nInputApplied must be of type 'boolean' ");
+    if (!isNumber(channelNumber)) reject(Error("channelNumber must be of type 'number' "));
+    if (!isBoolean(pInputApplied)) reject(Error("pInputApplied must be of type 'boolean' "));
+    if (!isBoolean(nInputApplied)) reject(Error("nInputApplied must be of type 'boolean' "));
 
     // Set pInputApplied
     cmdPInputApplied = pInputApplied ? obciChannelImpedanceTestSignalApplied : obciChannelImpedanceTestSignalAppliedNot;
@@ -1310,9 +1310,9 @@ function impedanceSetter (channelNumber, pInputApplied, nInputApplied) {
 function sampleRateSetter (boardType, sampleRate) {
   return new Promise((resolve, reject) => {
     // validate inputs
-    if (!isString(boardType)) return reject("board type must be of type 'string' ");
+    if (!isString(boardType)) return reject(Error("board type must be of type 'string' "));
 
-    if (!isNumber(sampleRate)) return reject("sampleRate must be of type 'number' ");
+    if (!isNumber(sampleRate)) return reject(Error("sampleRate must be of type 'number' "));
 
     sampleRate = Math.floor(sampleRate);
 
@@ -1322,7 +1322,7 @@ function sampleRateSetter (boardType, sampleRate) {
     } else if (boardType === obciBoardGanglion) {
       func = commandSampleRateForCmdGanglion;
     } else {
-      return reject(`boardType must be either ${obciBoardCyton} or ${obciBoardGanglion}`);
+      return reject(Error(`boardType must be either ${obciBoardCyton} or ${obciBoardGanglion}`));
     }
 
     // Set Channel Number
@@ -1347,7 +1347,7 @@ function sampleRateSetter (boardType, sampleRate) {
 function boardModeSetter (boardMode) {
   return new Promise((resolve, reject) => {
     // validate inputs
-    if (!isString(boardMode)) return reject("board mode must be of type 'string' ");
+    if (!isString(boardMode)) return reject(Error("board mode must be of type 'string' "));
     // Set Channel Number
     commandBoardModeForMode(boardMode).then(command => {
       var outputArray = [
@@ -1404,7 +1404,7 @@ function commandForADCString (adcString) {
         resolve(obciChannelCmdADCBiasDRN);
         break;
       default:
-        reject('Invalid ADC string');
+        reject(Error('Invalid ADC string'));
         break;
     }
   });
@@ -1435,7 +1435,7 @@ function commandForGain (gainSetting) {
         resolve(obciChannelCmdGain24);
         break;
       default:
-        reject('Invalid gain setting of ' + gainSetting + ' tisk tisk, gain must be (1,2,4,6,8,12,24)');
+        reject(Error('Invalid gain setting of ' + gainSetting + ' tisk tisk, gain must be (1,2,4,6,8,12,24)'));
         break;
     }
   });
@@ -1493,7 +1493,7 @@ function commandChannelForCmd (channelNumber) {
         resolve(obciChannelCmdChannel16);
         break;
       default:
-        reject('Invalid channel number');
+        reject(Error('Invalid channel number'));
         break;
     }
   });
@@ -1540,7 +1540,7 @@ function commandSampleRateForCmdCyton (sampleRate) {
         resolve(obciSampleRateCmdCyton250);
         break;
       default:
-        reject('Invalid sample rate');
+        reject(Error('Invalid sample rate'));
         break;
     }
   });
@@ -1579,7 +1579,7 @@ function commandSampleRateForCmdGanglion (sampleRate) {
         resolve(obciSampleRateCmdGang200);
         break;
       default:
-        reject('Invalid sample rate');
+        reject(Error('Invalid sample rate'));
         break;
     }
   });
@@ -1606,7 +1606,7 @@ function commandBoardModeForMode (boardMode) {
         resolve(obciBoardModeCmdDigital);
         break;
       default:
-        reject('Invalid sample rate');
+        reject(Error('Invalid sample rate'));
         break;
     }
   });
@@ -1624,7 +1624,7 @@ function getPeripheralLocalNames (pArray) {
     if (list.length > 0) {
       return resolve(list);
     } else {
-      return reject(`No peripherals discovered with prefix equal to ${obciGanglionPrefix}`);
+      return reject(Error(`No peripherals discovered with prefix equal to ${obciGanglionPrefix}`));
     }
   });
 }
@@ -1636,7 +1636,7 @@ function getPeripheralLocalNames (pArray) {
  */
 function getPeripheralWithLocalName (pArray, localName) {
   return new Promise((resolve, reject) => {
-    if (typeof (pArray) !== 'object') return reject(`pArray must be of type Object`);
+    if (typeof (pArray) !== 'object') return reject(Error(`pArray must be of type Object`));
     _.forEach(pArray, (perif) => {
       if (perif.advertisement.hasOwnProperty('localName')) {
         if (perif.advertisement.localName === localName) {
@@ -1644,7 +1644,7 @@ function getPeripheralWithLocalName (pArray, localName) {
         }
       }
     });
-    return reject(`No peripheral found with localName: ${localName}`);
+    return reject(Error(`No peripheral found with localName: ${localName}`));
   });
 }
 

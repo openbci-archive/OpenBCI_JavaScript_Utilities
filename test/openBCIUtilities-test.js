@@ -2,19 +2,23 @@
 * Created by ajk on 12/15/15.
 */
 'use strict';
+// jshint expr: true
 const bluebirdChecks = require('./bluebirdChecks');
 const openBCIUtilities = require('../openBCIUtilities');
 const sinon = require('sinon');
 const chai = require('chai');
 const expect = chai.expect;
 const assert = chai.assert;
-const should = chai.should(); // eslint-disable-line no-unused-lets
+let should = chai.should(); // eslint-disable-line no-unused-lets
 
 const chaiAsPromised = require('chai-as-promised');
+const dirtyChai = require('dirty-chai');
 const sinonChai = require('sinon-chai');
 chai.use(chaiAsPromised);
+chai.use(dirtyChai);
 chai.use(sinonChai);
 const bufferEqual = require('buffer-equal');
+const Buffer = require('safe-buffer').Buffer;
 
 let k = require('../openBCIConstants');
 
@@ -40,7 +44,7 @@ describe('openBCIUtilities', function () {
         gains: defaultChannelSettingsArray,
         rawDataPacket: sampleBuf,
         scale: true
-      })).to.not.be.null;
+      })).to.not.equal(null);
     });
     it('should have the correct sample number', function () {
       let sample = openBCIUtilities.parsePacketStandardAccel({
@@ -114,7 +118,7 @@ describe('openBCIUtilities', function () {
         rawDataPacket: temp,
         scale: true
       });
-      sample.accelData[0].should.be.approximately(-32512 * openBCIUtilities.scaleFactorAux, 1);
+      expect(sample.accelData[0]).to.be.approximately(-32512 * openBCIUtilities.scaleFactorAux, 1);
     });
     it('should work on 200 samples', function () {
       let numberOfSamplesToTest = 200;
@@ -141,7 +145,7 @@ describe('openBCIUtilities', function () {
         rawDataPacket: sampleBuf,
         scale: true
       });
-      sample.sampleNumber.should.equal(expectedSampleNumber);
+      expect(sample.sampleNumber).to.equal(expectedSampleNumber);
     });
     it('has the right stop byte', function () {
       let sample = openBCIUtilities.parsePacketStandardAccel({
@@ -149,7 +153,7 @@ describe('openBCIUtilities', function () {
         rawDataPacket: sampleBuf,
         scale: true
       });
-      sample.stopByte.should.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketStandardAccel));
+      expect(sample.stopByte).to.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketStandardAccel));
     });
     it('has the right start byte', function () {
       let sample = openBCIUtilities.parsePacketStandardAccel({
@@ -157,7 +161,7 @@ describe('openBCIUtilities', function () {
         rawDataPacket: sampleBuf,
         scale: true
       });
-      sample.startByte.should.equal(0xA0);
+      expect(sample.startByte).to.equal(0xA0);
     });
     describe('#errorConditions', function () {
       it('send non data buffer', function () {
@@ -194,7 +198,7 @@ describe('openBCIUtilities', function () {
         gains: defaultChannelSettingsArray,
         scale: true
       });
-      Buffer.isBuffer(sample.auxData).should.equal(true);
+      expect(Buffer.isBuffer(sample.auxData)).to.be.true();
     });
     it('gets the correct 6-byte buffer', function () {
       // Get a packet
@@ -207,7 +211,7 @@ describe('openBCIUtilities', function () {
         scale: true
       });
       for (let i = 0; i < 6; i++) {
-        sample.auxData[i].should.equal(i);
+        expect(sample.auxData[i]).to.equal(i);
       }
     });
     it('all the channels should have the same number value as their (index + 1) * scaleFactor', function () {
@@ -218,7 +222,7 @@ describe('openBCIUtilities', function () {
         scale: true
       });
       sample.channelData.forEach((channelValue, index) => {
-        channelValue.should.equal(channelScaleFactor * (index + 1));
+        expect(channelValue).to.equal(channelScaleFactor * (index + 1));
       });
     });
     it('all the channels should have the same number value as their (index + 1)', function () {
@@ -229,7 +233,7 @@ describe('openBCIUtilities', function () {
         scale: false
       });
       sample.channelData.forEach((channelValue, index) => {
-        channelValue.should.equal(index + 1);
+        expect(channelValue).to.equal(index + 1);
       });
     });
     it('has the right sample number', function () {
@@ -240,7 +244,7 @@ describe('openBCIUtilities', function () {
         gains: defaultChannelSettingsArray,
         scale: true
       });
-      sample.sampleNumber.should.equal(expectedSampleNumber);
+      expect(sample.sampleNumber).to.equal(expectedSampleNumber);
     });
     it('has the right stop byte', function () {
       packet = openBCIUtilities.samplePacketStandardRawAux(0);
@@ -249,7 +253,7 @@ describe('openBCIUtilities', function () {
         gains: defaultChannelSettingsArray,
         scale: true
       });
-      sample.stopByte.should.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketStandardRawAux));
+      expect(sample.stopByte).to.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketStandardRawAux));
     });
     it('has the right start byte', function () {
       packet = openBCIUtilities.samplePacketStandardRawAux(0);
@@ -258,7 +262,7 @@ describe('openBCIUtilities', function () {
         gains: defaultChannelSettingsArray,
         scale: true
       });
-      sample.startByte.should.equal(0xA0);
+      expect(sample.startByte).to.equal(0xA0);
     });
     describe('#errorConditions', function () {
       it('send non data buffer', function () {
@@ -284,7 +288,7 @@ describe('openBCIUtilities', function () {
     it('should extract the proper time value from packet', function () {
       let sampleWithTime = openBCIUtilities.samplePacketAccelTimeSynced(0);
       let time = openBCIUtilities.getFromTimePacketTime(sampleWithTime);
-      time.should.equal(1);
+      expect(time).to.equal(1);
     });
     describe('#errorConditions', function () {
       it('wrong number of bytes', function () {
@@ -299,25 +303,25 @@ describe('openBCIUtilities', function () {
       // Make a packet with a sample number that represents z axis
       packet = openBCIUtilities.samplePacketAccelTimeSynced(9);
       let isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
-      isZAxis.should.equal(true);
+      expect(isZAxis).to.be.false();
     });
     it(`false if sample number is not sampleNumber % 10 === ${k.OBCIAccelAxisZ}`, function () {
       // Make a packet that is anything but the z axis
       packet = openBCIUtilities.samplePacketAccelTimeSynced(k.OBCIAccelAxisX);
       let isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
-      isZAxis.should.equal(false);
+      expect(isZAxis).to.be.false();
 
       packet = openBCIUtilities.samplePacketAccelTimeSynced(k.OBCIAccelAxisY);
       isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
-      isZAxis.should.equal(false);
+      expect(isZAxis).to.be.false();
 
       packet = openBCIUtilities.samplePacketAccelTimeSynced(34);
       isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
-      isZAxis.should.equal(false);
+      expect(isZAxis).to.be.false();
 
       packet = openBCIUtilities.samplePacketAccelTimeSynced(100);
       isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
-      isZAxis.should.equal(false);
+      expect(isZAxis).to.be.false();
     });
     describe('#errorConditions', function () {
       it('wrong number of bytes', function () {
@@ -344,7 +348,7 @@ describe('openBCIUtilities', function () {
         timeOffset: 0,
         accelArray
       });
-      sample.should.not.have.property('accelData');
+      sample.does.not.have.property('accelData');
 
       sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet2,
@@ -352,7 +356,7 @@ describe('openBCIUtilities', function () {
         timeOffset: 0,
         accelArray
       });
-      sample.should.not.have.property('accelData');
+      sample.does.not.have.property('accelData');
 
       sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet3,
@@ -360,7 +364,7 @@ describe('openBCIUtilities', function () {
         timeOffset: 0,
         accelArray
       });
-      sample.should.have.property('accelData');
+      sample.does.have.property('accelData');
     });
     it("should convert raw numbers into g's with scale factor", function () {
       // Generate three packets, packets only get one axis value per packet
@@ -390,7 +394,7 @@ describe('openBCIUtilities', function () {
         accelArray
       });
       sample.accelData.forEach((accelValue, index) => {
-        accelValue.should.equal(openBCIUtilities.scaleFactorAux);
+        expect(accelValue).to.equal(openBCIUtilities.scaleFactorAux);
       });
     });
     it('with scale all the channels should have the same number value as their (index + 1) * scaleFactor', function () {
@@ -403,7 +407,7 @@ describe('openBCIUtilities', function () {
         accelArray
       }); // sampleBuf has its channel number for each 3 byte integer. See line 20...
       sample.channelData.forEach((channelValue, index) => {
-        channelValue.should.equal(channelScaleFactor * (index + 1));
+        expect(channelValue).to.equal(channelScaleFactor * (index + 1));
       });
     });
     it('without scale all the channels should have the same number value as their (index + 1)', function () {
@@ -416,7 +420,7 @@ describe('openBCIUtilities', function () {
         accelArray
       }); // sampleBuf has its channel number for each 3 byte integer. See line 20...
       sample.channelData.forEach((channelValue, index) => {
-        channelValue.should.equal(index + 1);
+        expect(channelValue).to.equal(index + 1);
       });
     });
     it('has the right sample number', function () {
@@ -428,7 +432,7 @@ describe('openBCIUtilities', function () {
         timeOffset: 0,
         accelArray
       }); // sampleBuf has its channel number for each 3 byte integer. See line 20...
-      sample.sampleNumber.should.equal(expectedSampleNumber);
+      expect(sample.sampleNumber).to.equal(expectedSampleNumber);
     });
     it('has the right stop byte', function () {
       packet1 = openBCIUtilities.samplePacketAccelTimeSynced(0);
@@ -438,7 +442,7 @@ describe('openBCIUtilities', function () {
         timeOffset: 0,
         accelArray
       }); // sampleBuf has its channel number for each 3 byte integer. See line 20...
-      sample.stopByte.should.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketAccelTimeSynced));
+      expect(sample.stopByte).to.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketAccelTimeSynced));
     });
     it('has the right start byte', function () {
       packet1 = openBCIUtilities.samplePacketAccelTimeSynced(0);
@@ -448,7 +452,7 @@ describe('openBCIUtilities', function () {
         timeOffset: 0,
         accelArray
       }); // sampleBuf has its channel number for each 3 byte integer. See line 20...
-      sample.startByte.should.equal(0xA0);
+      expect(sample.startByte).to.equal(0xA0);
     });
     describe('#errorConditions', function () {
       it('wrong number of bytes', function () {
@@ -523,7 +527,7 @@ describe('openBCIUtilities', function () {
         rawDataPacket: packet,
         timeOffset: 0
       });
-      sample.sampleNumber.should.equal(expectedSampleNumber);
+      expect(sample.sampleNumber).to.equal(expectedSampleNumber);
     });
     it('has the right stop byte', function () {
       packet = openBCIUtilities.samplePacketRawAuxTimeSynced(0);
@@ -532,7 +536,7 @@ describe('openBCIUtilities', function () {
         rawDataPacket: packet,
         timeOffset: 0
       });
-      sample.stopByte.should.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketRawAuxTimeSynced));
+      expect(sample.stopByte).to.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketRawAuxTimeSynced));
     });
     it('has the right start byte', function () {
       packet = openBCIUtilities.samplePacketRawAuxTimeSynced(0);
@@ -541,7 +545,7 @@ describe('openBCIUtilities', function () {
         rawDataPacket: packet,
         timeOffset: 0
       });
-      sample.startByte.should.equal(0xA0);
+      expect(sample.startByte).to.equal(0xA0);
     });
     describe('#errorConditions', function () {
       it('wrong number of bytes', function () {
@@ -625,8 +629,8 @@ describe('openBCIUtilities', function () {
         rawDataPacket: packetBuffer,
         gains: defaultChannelSettingsArray
       });
-      expect(sample.auxData).to.exist;
-      expect(bufferEqual(rawBuffer, sample.auxData)).to.be.true;
+      expect(sample.auxData).to.exist();
+      expect(bufferEqual(rawBuffer, sample.auxData)).to.be.true();
     });
   });
   describe('#convertSampleToPacketAccelTimeSynced', function () {
@@ -674,7 +678,7 @@ describe('openBCIUtilities', function () {
         timeOffset: 0,
         accelArray
       });
-      expect(sample.boardTime).to.exist;
+      expect(sample.boardTime).to.exist();
       expect(sample.boardTime).to.equal(time);
     });
     it('should get time stamp with offset', function () {
@@ -685,7 +689,7 @@ describe('openBCIUtilities', function () {
         timeOffset: timeOffset,
         accelArray
       });
-      expect(sample.timeStamp).to.exist;
+      expect(sample.timeStamp).to.exist();
       expect(sample.timeStamp).to.equal(time + timeOffset);
     });
   });
@@ -732,8 +736,8 @@ describe('openBCIUtilities', function () {
         timeOffset: 0,
         scale: false
       });
-      expect(sample.auxData).to.exist;
-      expect(bufferEqual(rawAux, sample.auxData)).to.be.true;
+      expect(sample.auxData).to.exist();
+      expect(bufferEqual(rawAux, sample.auxData)).to.be.true();
     });
     it('should get board time', function () {
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
@@ -741,7 +745,7 @@ describe('openBCIUtilities', function () {
         timeOffset: 0,
         scale: false
       });
-      expect(sample.boardTime).to.exist;
+      expect(sample.boardTime).to.exist();
       expect(sample.boardTime).to.equal(time);
     });
     it('should get time stamp with offset', function () {
@@ -751,7 +755,7 @@ describe('openBCIUtilities', function () {
         timeOffset: timeOffset,
         scale: false
       });
-      expect(sample.timeStamp).to.exist;
+      expect(sample.timeStamp).to.exist();
       expect(sample.timeStamp).to.equal(time + timeOffset);
     });
   });
@@ -941,8 +945,8 @@ describe('openBCIUtilities', function () {
       daisySampleObject.sampleNumber.should.equal(upperSampleObject.sampleNumber / 2);
     });
     it('should put the aux packets in an object', function () {
-      daisySampleObject.auxData.hasOwnProperty('lower').should.be.true;
-      daisySampleObject.auxData.hasOwnProperty('upper').should.be.true;
+      daisySampleObject.auxData.hasOwnProperty('lower').should.be.true();
+      daisySampleObject.auxData.hasOwnProperty('upper').should.be.true();
     });
     it('should put the aux packets in an object in the right order', function () {
       for (let i = 0; i < 3; i++) {
@@ -964,18 +968,18 @@ describe('openBCIUtilities', function () {
   });
   describe('#isEven', function () {
     it('should return true for even number', function () {
-      openBCIUtilities.isEven(2).should.be.true;
+      openBCIUtilities.isEven(2).should.be.true();
     });
     it('should return false for odd number', function () {
-      openBCIUtilities.isEven(1).should.be.false;
+      openBCIUtilities.isEven(1).should.be.false();
     });
   });
   describe('#isOdd', function () {
     it('should return true for odd number', function () {
-      openBCIUtilities.isOdd(1).should.be.true;
+      openBCIUtilities.isOdd(1).should.be.true();
     });
     it('should return false for even number', function () {
-      openBCIUtilities.isOdd(2).should.be.false;
+      openBCIUtilities.isOdd(2).should.be.false();
     });
   });
   describe('#getChannelDataArray', function () {
@@ -1185,16 +1189,16 @@ $$$`);
 
   describe('#isStopByte', function () {
     it('should return true for a normal stop byte', () => {
-      expect(openBCIUtilities.isStopByte(0xC0)).to.be.true;
+      expect(openBCIUtilities.isStopByte(0xC0)).to.be.true();
     });
     it('should return true for a good stop byte with a different end nibble', () => {
-      expect(openBCIUtilities.isStopByte(0xCF)).to.be.true;
+      expect(openBCIUtilities.isStopByte(0xCF)).to.be.true();
     });
     it('should return false for a bad stop byte', () => {
-      expect(openBCIUtilities.isStopByte(0xF0)).to.be.false;
+      expect(openBCIUtilities.isStopByte(0xF0)).to.be.false();
     });
     it('should return false for a bad stop byte', () => {
-      expect(openBCIUtilities.isStopByte(0x00)).to.be.false;
+      expect(openBCIUtilities.isStopByte(0x00)).to.be.false();
     });
   });
 
@@ -1206,42 +1210,42 @@ $$$`);
     });
     it('should find with just 0x2C', function () {
       let buffer = new Buffer([comma]);
-      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'just comma').to.be.true;
+      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'just comma').to.be.true();
     });
     it('should find even at start of buffer', function () {
       // Start of buffer
       let buffer = new Buffer([comma, k.OBCIByteStart]);
-      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'before packet').to.be.true;
+      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'before packet').to.be.true();
     });
     it('should find even at back of buffer', function () {
       // Back of buffer
       let buffer = new Buffer([0xC0, comma]);
-      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'after packet').to.be.true;
+      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'after packet').to.be.true();
     });
     it('should find wedged beween two packets', function () {
       // / wedged
       let buffer = new Buffer([0xC0, comma, 0xA0]);
-      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'wedged between packets').to.be.true;
+      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'wedged between packets').to.be.true();
     });
     it('should not find if no comma present', function () {
       // / wedged
       let buffer = new Buffer([0x2D]);
-      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'not comma').to.be.false;
+      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'not comma').to.be.false();
     });
     it('should not find if comma at the front of bad block', function () {
       // Start of buffer
       let buffer = new Buffer([comma, 0xCC]);
-      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'front of buffer').to.be.false;
+      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'front of buffer').to.be.false();
     });
     it('should not find if comma at the back of bad block', function () {
       // Back of buffer
       let buffer = new Buffer([0xD3, comma]);
-      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'end of buffer').to.be.false;
+      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'end of buffer').to.be.false();
     });
     it('should not find is not the comma', function () {
       // Wedged
       let buffer = new Buffer([comma, comma, comma]);
-      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'strictly commas').to.be.false;
+      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer), 'strictly commas').to.be.false();
     });
     it('should find the character in a buffer packed with samples', function () {
       let buf1 = openBCIUtilities.samplePacket(1);
@@ -1252,7 +1256,7 @@ $$$`);
       let bufferLength = buf1.length + buf2.length + buf3.length + buf4.length;
       /* eslint new-cap: ["error", { "properties": false }] */
       let buffer = new Buffer.concat([buf1, buf2, buf3, buf4], bufferLength);
-      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer)).to.be.true;
+      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer)).to.be.true();
     });
     it('should find the character in a buffer packed with samples with comma at end', function () {
       let buf1 = openBCIUtilities.samplePacket(1);
@@ -1263,7 +1267,7 @@ $$$`);
       let bufferLength = buf1.length + buf2.length + buf3.length + buf4.length;
       /* eslint new-cap: ["error", { "properties": false }] */
       let buffer = new Buffer.concat([buf1, buf2, buf3, buf4], bufferLength);
-      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer)).to.be.true;
+      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer)).to.be.true();
     });
     it('should not find the character in a buffer packed with samples', function () {
       let buf1 = openBCIUtilities.samplePacket(1);
@@ -1273,7 +1277,7 @@ $$$`);
       let bufferLength = buf1.length + buf2.length + buf3.length;
       /* eslint new-cap: ["error", { "properties": false }] */
       let buffer = new Buffer.concat([buf1, buf2, buf3], bufferLength);
-      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer)).to.be.false;
+      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(buffer)).to.be.false();
     });
   });
   describe('#makeTailByteFromPacketType', function () {
@@ -1357,12 +1361,12 @@ $$$`);
     it('should roll over when 255 was previous and current is 0', function () {
       let previous = 255;
       let current = 0;
-      expect(openBCIUtilities.droppedPacketCheck(previous, current)).to.be.null;
+      expect(openBCIUtilities.droppedPacketCheck(previous, current)).to.be.null();
     });
     it('should return null when previous is one less then new sample number', function () {
       let previous = 0;
       let current = previous + 1;
-      expect(openBCIUtilities.droppedPacketCheck(previous, current)).to.be.null;
+      expect(openBCIUtilities.droppedPacketCheck(previous, current)).to.be.null();
     });
   });
   describe('#stripToEOTBuffer', function () {
@@ -1621,7 +1625,6 @@ describe('#extractRawDataPackets', function () {
 
     expect(output.buffer).to.equal(null);
     expect(output.rawDataPackets).to.deep.equal([]);
-
   });
   it('should return an unaltered buffer if there is less than a packets worth of data in it', () => {
     let expectedString = 'AJ';
@@ -1631,7 +1634,7 @@ describe('#extractRawDataPackets', function () {
     let output = openBCIUtilities.extractRawDataPackets(buffer);
 
     // Convert the buffer to a string and ensure that it equals the expected string
-    expect(bufferEqual(buffer, output.buffer)).to.be.true;
+    expect(bufferEqual(buffer, output.buffer)).to.be.true();
     expect(output.rawDataPackets).to.deep.equal([]);
   });
   it('should identify a packet', () => {
@@ -1642,7 +1645,7 @@ describe('#extractRawDataPackets', function () {
 
     // The buffer should not have anything in it any more
     expect(output.buffer).to.equal(null);
-    bufferEqual(buffer, output.rawDataPackets[0]).should.be.true;
+    bufferEqual(buffer, output.rawDataPackets[0]).should.be.true();
   });
   it('should extract a buffer and preserve the remaining data in the buffer', () => {
     let expectedString = 'AJ';
@@ -1655,8 +1658,8 @@ describe('#extractRawDataPackets', function () {
     extraBuffer.copy(buffer, k.OBCIPacketSize);
     // Call the function under test
     const output = openBCIUtilities.extractRawDataPackets(buffer);
-    bufferEqual(expectedRawDataPacket, output.rawDataPackets[0]).should.be.true;
-    bufferEqual(output.buffer, extraBuffer).should.be.true; // Should return the extra parts of the buffer
+    bufferEqual(expectedRawDataPacket, output.rawDataPackets[0]).should.be.true();
+    bufferEqual(output.buffer, extraBuffer).should.be.true(); // Should return the extra parts of the buffer
   });
   it('should be able to extract multiple packets from a single buffer', () => {
     // We are going to extract multiple buffers
@@ -1675,9 +1678,9 @@ describe('#extractRawDataPackets', function () {
     // Call the function under test
     const output = openBCIUtilities.extractRawDataPackets(buffer);
     // The buffer should not have anything in it any more
-    expect(output.buffer).to.be.null;
-    for (let i = 0; i< expectedNumberOfBuffers; i++) {
-      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true;
+    expect(output.buffer).to.be.null();
+    for (let i = 0; i < expectedNumberOfBuffers; i++) {
+      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i])).to.be.true(`Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`);
     }
   });
 
@@ -1698,10 +1701,10 @@ describe('#extractRawDataPackets', function () {
     extraBuffer.copy(buffer, k.OBCIPacketSize * 2);
     // Call the function under test
     const output = openBCIUtilities.extractRawDataPackets(buffer);
-    for (let i = 0; i< expectedNumberOfBuffers; i++) {
-      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true;
+    for (let i = 0; i < expectedNumberOfBuffers; i++) {
+      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i])).to.be.true(`Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`);
     }
-    bufferEqual(output.buffer, extraBuffer).should.be.true; // Should return the extra parts of the buffer
+    bufferEqual(output.buffer, extraBuffer).should.be.true(); // Should return the extra parts of the buffer
   });
 
   it('should be able to get multiple packets with junk in the middle', () => {
@@ -1721,10 +1724,10 @@ describe('#extractRawDataPackets', function () {
     expectedRawDataPackets[1].copy(buffer, k.OBCIPacketSize + extraBuffer.byteLength);
 
     const output = openBCIUtilities.extractRawDataPackets(buffer);
-    for (let i = 0; i< expectedNumberOfBuffers; i++) {
-      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true;
+    for (let i = 0; i < expectedNumberOfBuffers; i++) {
+      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true();
     }
-    bufferEqual(output.buffer, extraBuffer).should.be.true; // Should return the extra parts of the buffer
+    bufferEqual(output.buffer, extraBuffer).should.be.true(); // Should return the extra parts of the buffer
   });
 
   it('should be able to get multiple packets with junk in the middle and end', () => {
@@ -1746,11 +1749,11 @@ describe('#extractRawDataPackets', function () {
     extraBuffer.copy(buffer, k.OBCIPacketSize * 2 + extraBuffer.byteLength);
 
     const output = openBCIUtilities.extractRawDataPackets(buffer);
-    for (let i = 0; i< expectedNumberOfBuffers; i++) {
-      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true;
+    for (let i = 0; i < expectedNumberOfBuffers; i++) {
+      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true();
     }
     // The buffer should have everything in it
-    bufferEqual(Buffer.concat([extraBuffer, extraBuffer]), output.buffer).should.be.true;
+    bufferEqual(Buffer.concat([extraBuffer, extraBuffer]), output.buffer).should.be.true();
   });
 
   it('should be able to get multiple packets with junk in the front, middle and end', () => {
@@ -1773,11 +1776,11 @@ describe('#extractRawDataPackets', function () {
     extraBuffer.copy(buffer, k.OBCIPacketSize * 2 + extraBuffer.byteLength * 2);
 
     const output = openBCIUtilities.extractRawDataPackets(buffer);
-    for (let i = 0; i< expectedNumberOfBuffers; i++) {
-      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true;
+    for (let i = 0; i < expectedNumberOfBuffers; i++) {
+      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true();
     }
     // The buffer should have everything in it
-    bufferEqual(Buffer.concat([extraBuffer, extraBuffer, extraBuffer]), output.buffer).should.be.true;
+    bufferEqual(Buffer.concat([extraBuffer, extraBuffer, extraBuffer]), output.buffer).should.be.true();
   });
 });
 
@@ -1815,13 +1818,13 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Ensure that we extracted only one buffer
-    funcSpyStandardAccel.should.have.been.calledOnce;
+    funcSpyStandardAccel.should.have.been.calledOnce();
     expect(samples.length).to.equal(1);
   });
 
   it('should process a standard packet', function () {
     // Call the function under test
-    const samples = openBCIUtilities.transformRawDataPacketsToSample({
+    openBCIUtilities.transformRawDataPacketsToSample({
       rawDataPackets: [
         openBCIUtilities.samplePacket(0),
         openBCIUtilities.samplePacket(1),
@@ -1831,7 +1834,7 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Ensure that we extracted only one buffer
-    funcSpyStandardAccel.should.have.been.calledThrice;
+    funcSpyStandardAccel.should.have.been.calledThrice();
   });
   it('should process a standard packet with raw aux', function () {
     var buffer = openBCIUtilities.samplePacketStandardRawAux(0);
@@ -1842,7 +1845,7 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Ensure that we extracted only one buffer
-    funcSpyStandardRawAux.should.have.been.calledOnce;
+    funcSpyStandardRawAux.should.have.been.calledOnce();
   });
   it('should call nothing for a user defined packet type ', function () {
     var buffer = openBCIUtilities.samplePacketUserDefined();
@@ -1853,10 +1856,10 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Nothing should be called
-    funcSpyStandardAccel.should.not.have.been.called;
-    funcSpyStandardRawAux.should.not.have.been.called;
-    funcSpyTimeSyncedAccel.should.not.have.been.called;
-    funcSpyTimeSyncedRawAux.should.not.have.been.called;
+    funcSpyStandardAccel.should.not.have.been.called();
+    funcSpyStandardRawAux.should.not.have.been.called();
+    funcSpyTimeSyncedAccel.should.not.have.been.called();
+    funcSpyTimeSyncedRawAux.should.not.have.been.called();
   });
   it('should process a time sync set packet with accel', function () {
     var buffer = openBCIUtilities.samplePacketAccelTimeSyncSet();
@@ -1867,7 +1870,7 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // we should call to get a packet
-    funcSpyTimeSyncedAccel.should.have.been.calledOnce;
+    funcSpyTimeSyncedAccel.should.have.been.calledOnce();
   });
   it('should process a time synced packet with accel', function () {
     var buffer = openBCIUtilities.samplePacketAccelTimeSynced(0);
@@ -1878,7 +1881,7 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Ensure that we extracted only one buffer
-    funcSpyTimeSyncedAccel.should.have.been.calledOnce;
+    funcSpyTimeSyncedAccel.should.have.been.calledOnce();
   });
   it('should process a time sync set packet with raw aux', function () {
     var buffer = openBCIUtilities.samplePacketRawAuxTimeSyncSet(0);
@@ -1888,7 +1891,7 @@ describe('#transformRawDataPacketsToSamples', function () {
       rawDataPackets: [buffer]
     });
 
-    funcSpyTimeSyncedRawAux.should.have.been.calledOnce;
+    funcSpyTimeSyncedRawAux.should.have.been.calledOnce();
   });
   it('should process a time synced packet with raw aux', function () {
     var buffer = openBCIUtilities.samplePacketRawAuxTimeSynced(0);
@@ -1899,7 +1902,7 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Ensure that we extracted only one buffer
-    funcSpyTimeSyncedRawAux.should.have.been.calledOnce;
+    funcSpyTimeSyncedRawAux.should.have.been.calledOnce();
   });
   it('should not identify any packet', function () {
     var buffer = openBCIUtilities.samplePacket(0);
@@ -1913,9 +1916,9 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Nothing should be called
-    funcSpyStandardAccel.should.not.have.been.called;
-    funcSpyStandardRawAux.should.not.have.been.called;
-    funcSpyTimeSyncedAccel.should.not.have.been.called;
-    funcSpyTimeSyncedRawAux.should.not.have.been.called;
+    funcSpyStandardAccel.should.not.have.been.called();
+    funcSpyStandardRawAux.should.not.have.been.called();
+    funcSpyTimeSyncedAccel.should.not.have.been.called();
+    funcSpyTimeSyncedRawAux.should.not.have.been.called();
   });
 });

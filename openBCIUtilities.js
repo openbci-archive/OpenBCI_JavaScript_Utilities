@@ -1,7 +1,8 @@
 'use strict';
-var gaussian = require('gaussian');
-var k = require('./openBCIConstants');
-var StreamSearch = require('streamsearch');
+const gaussian = require('gaussian');
+const k = require('./openBCIConstants');
+const StreamSearch = require('streamsearch');
+const Buffer = require('safe-buffer').Buffer;
 
 /** Constants for interpreting the EEG data */
 // Reference voltage for ADC in ADS1299.
@@ -14,6 +15,7 @@ const ACCEL_NUMBER_AXIS = 3;
 // Default ADS1299 gains array
 
 var utilitiesModule = {
+
   /**
    * @typedef {Object} ProcessedBuffer
    * @property {Buffer} buffer The remaining buffer. Can be null.
@@ -33,18 +35,22 @@ var utilitiesModule = {
    *  the buffer in it's scope.
    * @author AJ Keller (@pushtheworldllc)
    */
-  extractRawDataPackets:(dataBuffer) => {
-    if (!dataBuffer) return {
-      'buffer': dataBuffer,
-      'rawDataPackets': []
-    };
+  extractRawDataPackets: (dataBuffer) => {
+    if (!dataBuffer) {
+      return {
+        'buffer': dataBuffer,
+        'rawDataPackets': []
+      };
+    }
     let bytesToParse = dataBuffer.length;
     let rawDataPackets = [];
     // Exit if we have a buffer with less data than a packet
-    if (bytesToParse < k.OBCIPacketSize) return {
-      'buffer': dataBuffer,
-      'rawDataPackets': rawDataPackets
-    };
+    if (bytesToParse < k.OBCIPacketSize) {
+      return {
+        'buffer': dataBuffer,
+        'rawDataPackets': rawDataPackets
+      };
+    }
 
     let parsePosition = 0;
     // Begin parseing
@@ -95,8 +101,7 @@ var utilitiesModule = {
       }
       parsePosition++;
     }
-
-    return  {
+    return {
       'buffer': dataBuffer,
       'rawDataPackets': rawDataPackets
     };
@@ -234,7 +239,7 @@ var utilitiesModule = {
   },
   samplePrintLine: sample => {
     return new Promise((resolve, reject) => {
-      if (sample === null || sample === undefined) reject('undefined sample');
+      if (sample === null || sample === undefined) reject(Error('undefined sample'));
 
       resolve(
         sample.sampleNumber + ',' +
@@ -264,9 +269,9 @@ var utilitiesModule = {
   impedanceCalculationForChannel: (sampleObject, channelNumber) => {
     const sqrt2 = Math.sqrt(2);
     return new Promise((resolve, reject) => {
-      if (sampleObject === undefined || sampleObject === null) reject('Sample Object cannot be null or undefined');
-      if (sampleObject.channelData === undefined || sampleObject.channelData === null) reject('Channel cannot be null or undefined');
-      if (channelNumber < 1 || channelNumber > k.OBCINumberOfChannelsDefault) reject('Channel number invalid.');
+      if (sampleObject === undefined || sampleObject === null) reject(Error('Sample Object cannot be null or undefined'));
+      if (sampleObject.channelData === undefined || sampleObject.channelData === null) reject(Error('Channel cannot be null or undefined'));
+      if (channelNumber < 1 || channelNumber > k.OBCINumberOfChannelsDefault) reject(Error('Channel number invalid.'));
 
       var index = channelNumber - 1;
 
@@ -287,8 +292,8 @@ var utilitiesModule = {
   impedanceCalculationForAllChannels: sampleObject => {
     const sqrt2 = Math.sqrt(2);
     return new Promise((resolve, reject) => {
-      if (sampleObject === undefined || sampleObject === null) reject('Sample Object cannot be null or undefined');
-      if (sampleObject.channelData === undefined || sampleObject.channelData === null) reject('Channel cannot be null or undefined');
+      if (sampleObject === undefined || sampleObject === null) reject(Error('Sample Object cannot be null or undefined'));
+      if (sampleObject.channelData === undefined || sampleObject.channelData === null) reject(Error('Channel cannot be null or undefined'));
 
       var sampleImpedances = [];
       var numChannels = sampleObject.channelData.length;
@@ -882,8 +887,7 @@ function newSyncObject () {
  * @param o.scale {Boolean} (optional) Default `true`. A gain of 24 for Cyton will be used and 51 for ganglion by default.
  * @author AJ Keller (@pushtheworldllc)
  */
-function transformRawDataPacketsToSample(o) {
-
+function transformRawDataPacketsToSample (o) {
   let samples = [];
   for (let i = 0; i < o.rawDataPackets.length; i++) {
     const rawDataPacket = o.rawDataPackets[i];
@@ -1569,7 +1573,6 @@ function isTimeSyncSetConfirmationInBuffer (dataBuffer) {
           }
         }
         return false;
-
     }
   }
 }
