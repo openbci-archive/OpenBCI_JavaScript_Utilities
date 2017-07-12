@@ -1,3 +1,9 @@
+# 0.0.3
+
+### Bug Fixes
+
+* Fix bug where samples were not properly being extracted
+
 # 0.0.2
 
 ### Breaking Changes
