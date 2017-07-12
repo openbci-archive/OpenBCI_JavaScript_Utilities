@@ -9,7 +9,7 @@ const sinon = require('sinon');
 const chai = require('chai');
 const expect = chai.expect;
 const assert = chai.assert;
-let should = chai.should(); // eslint-disable-line no-unused-lets
+// let should = chai.should(); // eslint-disable-line no-unused-lets
 
 const chaiAsPromised = require('chai-as-promised');
 const dirtyChai = require('dirty-chai');
@@ -303,7 +303,7 @@ describe('openBCIUtilities', function () {
       // Make a packet with a sample number that represents z axis
       packet = openBCIUtilities.samplePacketAccelTimeSynced(9);
       let isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
-      expect(isZAxis).to.be.false();
+      expect(isZAxis).to.be.true();
     });
     it(`false if sample number is not sampleNumber % 10 === ${k.OBCIAccelAxisZ}`, function () {
       // Make a packet that is anything but the z axis
@@ -348,7 +348,7 @@ describe('openBCIUtilities', function () {
         timeOffset: 0,
         accelArray
       });
-      sample.does.not.have.property('accelData');
+      expect(sample).to.not.have.property('accelData');
 
       sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet2,
@@ -356,7 +356,7 @@ describe('openBCIUtilities', function () {
         timeOffset: 0,
         accelArray
       });
-      sample.does.not.have.property('accelData');
+      expect(sample).to.not.have.property('accelData');
 
       sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet3,
@@ -364,7 +364,7 @@ describe('openBCIUtilities', function () {
         timeOffset: 0,
         accelArray
       });
-      sample.does.have.property('accelData');
+      expect(sample).to.have.property('accelData');
     });
     it("should convert raw numbers into g's with scale factor", function () {
       // Generate three packets, packets only get one axis value per packet
