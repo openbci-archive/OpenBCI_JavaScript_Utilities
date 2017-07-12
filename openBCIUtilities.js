@@ -18,7 +18,7 @@ var utilitiesModule = {
 
   /**
    * @typedef {Object} ProcessedBuffer
-   * @property {Buffer} buffer The remaining buffer. Can be null.
+   * @property {Buffer|SafeBuffer|Buffer2} buffer The remaining buffer. Can be null.
    * @property {Array} rawDataPackets The extracted raw data packets
    */
   /**
@@ -885,6 +885,7 @@ function newSyncObject () {
  * @param o.accelArray {Array} (optional) for non time stamp use cases
  * @param o.verbose {Boolean} (optional) for verbose output
  * @param o.scale {Boolean} (optional) Default `true`. A gain of 24 for Cyton will be used and 51 for ganglion by default.
+ * @return {Array} samples An array of {Sample}
  * @author AJ Keller (@pushtheworldllc)
  */
 function transformRawDataPacketsToSample (o) {
@@ -930,7 +931,7 @@ function transformRawDataPacketsToSample (o) {
           // Don't do anything if the packet is not defined
           break;
       }
-      sample.push(sample);
+      samples.push(sample);
     } catch (err) {
       samples.push({
         rawDataPacket
