@@ -15,8 +15,8 @@ const chaiAsPromised = require('chai-as-promised');
 const dirtyChai = require('dirty-chai');
 const sinonChai = require('sinon-chai');
 chai.use(chaiAsPromised);
-chai.use(dirtyChai);
 chai.use(sinonChai);
+chai.use(dirtyChai);
 const bufferEqual = require('buffer-equal');
 const Buffer = require('safe-buffer').Buffer;
 
@@ -53,7 +53,7 @@ describe('openBCIUtilities', function () {
         scale: true
       });
 
-      (sample.sampleNumber).should.equal(0x45);
+      expect(sample.sampleNumber).to.equal(0x45);
     });
     it('all the channels should have the same number value as their (index + 1) * scaleFactor', function () {
       // sampleBuf has its channel number for each 3 byte integer. See line 20...
@@ -67,7 +67,7 @@ describe('openBCIUtilities', function () {
       //  be its index + 1 (i.e. channel number) multiplied by the channel scale factor set by the
       //  ADS1299 for a gain of 24 (default)
       sample.channelData.forEach((channelValue, index) => {
-        channelValue.should.equal(channelScaleFactor * (index + 1));
+        expect(channelValue).to.equal(channelScaleFactor * (index + 1));
       });
     });
 
@@ -82,8 +82,8 @@ describe('openBCIUtilities', function () {
       // So parse the sample we created and each value resulting from the channelData array should
       //  be its index + 1 (i.e. channel number) multiplied by the channel scale factor set by the
       //  ADS1299 for a gain of 24 (default)
-      sample.channelData.forEach((channelValue, index) => {
-        channelValue.should.equal(index + 1);
+      sample.channelDataCounts.forEach((channelValue, index) => {
+        expect(channelValue).to.equal(index + 1);
       });
     });
     it('all the auxs should have the same number value as their index * scaleFactor', function () {
@@ -94,7 +94,7 @@ describe('openBCIUtilities', function () {
       });
 
       sample.accelData.forEach((accelValue, index) => {
-        accelValue.should.equal(openBCIUtilities.scaleFactorAux * index);
+        expect(accelValue).to.equal(openBCIUtilities.scaleFactorAux * index);
       });
     });
     it('check to see if negative numbers work on channel data', function () {
@@ -232,7 +232,7 @@ describe('openBCIUtilities', function () {
         gains: defaultChannelSettingsArray,
         scale: false
       });
-      sample.channelData.forEach((channelValue, index) => {
+      sample.channelDataCounts.forEach((channelValue, index) => {
         expect(channelValue).to.equal(index + 1);
       });
     });
@@ -419,7 +419,7 @@ describe('openBCIUtilities', function () {
         scale: false,
         accelArray
       }); // sampleBuf has its channel number for each 3 byte integer. See line 20...
-      sample.channelData.forEach((channelValue, index) => {
+      sample.channelDataCounts.forEach((channelValue, index) => {
         expect(channelValue).to.equal(index + 1);
       });
     });
@@ -472,7 +472,7 @@ describe('openBCIUtilities', function () {
       packet = openBCIUtilities.samplePacketRawAuxTimeSynced(0);
 
       let rawAuxBuffer = openBCIUtilities.getFromTimePacketRawAux(packet);
-      Buffer.isBuffer(rawAuxBuffer).should.equal(true);
+      expect(rawAuxBuffer.byteLength).to.equal(2);
     });
     describe('#errorConditions', function () {
       it('wrong number of bytes', function () {
@@ -491,10 +491,10 @@ describe('openBCIUtilities', function () {
         gains: defaultChannelSettingsArray,
         timeOffset: 0
       });
-      sample.should.have.property('auxData');
-      sample.auxData[0].should.equal(0);
-      sample.auxData[1].should.equal(1);
-      sample.auxData.byteLength.should.equal(2);
+      expect(sample).to.have.property('auxData');
+      expect(sample.auxData[0]).to.equal(0);
+      expect(sample.auxData[1]).to.equal(1);
+      expect(sample.auxData.byteLength).to.equal(2);
     });
     it('with scale all the channels should have the same number value as their (index + 1) * scaleFactor', function () {
       packet = openBCIUtilities.samplePacketRawAuxTimeSynced(0);
@@ -505,7 +505,7 @@ describe('openBCIUtilities', function () {
         scale: true
       });
       sample.channelData.forEach((channelValue, index) => {
-        channelValue.should.equal(channelScaleFactor * (index + 1));
+        expect(channelValue).to.equal(channelScaleFactor * (index + 1));
       });
     });
     it('without scale all the channels should have the same number value as their (index + 1)', function () {
@@ -515,8 +515,8 @@ describe('openBCIUtilities', function () {
         timeOffset: 0,
         scale: false
       });
-      sample.channelData.forEach((channelValue, index) => {
-        channelValue.should.equal(index + 1);
+      sample.channelDataCounts.forEach((channelValue, index) => {
+        expect(channelValue).to.equal(index + 1);
       });
     });
     it('has the right sample number', function () {
@@ -567,13 +567,13 @@ describe('openBCIUtilities', function () {
     let packetBuffer = openBCIUtilities.convertSampleToPacketStandard(newSample);
 
     it('should have correct start byte', function () {
-      packetBuffer[0].should.equal(k.OBCIByteStart, 'confirming start byte');
+      expect(packetBuffer[0]).to.equal(k.OBCIByteStart, 'confirming start byte');
     });
     it('should have correct stop byte', function () {
-      packetBuffer[k.OBCIPacketSize - 1].should.equal(k.OBCIByteStop, 'confirming stop byte');
+      expect(packetBuffer[k.OBCIPacketSize - 1]).to.equal(k.OBCIByteStop, 'confirming stop byte');
     });
     it('should have correct sample number', function () {
-      packetBuffer[1].should.equal(1, 'confirming sample number is 1 more than 0');
+      expect(packetBuffer[1]).to.equal(1, 'confirming sample number is 1 more than 0');
     });
     it('should convert channel data to binary', function () {
       let sample = openBCIUtilities.parsePacketStandardAccel({
@@ -581,7 +581,7 @@ describe('openBCIUtilities', function () {
         gains: defaultChannelSettingsArray
       });
       for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
-        sample.channelData[i].should.be.approximately(newSample.channelData[i], 0.001);
+        expect(sample.channelData[i]).to.be.approximately(newSample.channelData[i], 0.001);
       }
     });
     it('should convert aux data to binary', function () {
@@ -590,7 +590,7 @@ describe('openBCIUtilities', function () {
         gains: defaultChannelSettingsArray
       });
       for (let i = 0; i < 3; i++) {
-        sample.accelData[i].should.be.approximately(newSample.auxData[i], 0.001);
+        expect(sample.accelData[i]).to.be.approximately(newSample.auxData[i], 0.001);
       }
     });
   });
@@ -607,13 +607,13 @@ describe('openBCIUtilities', function () {
     let packetBuffer = openBCIUtilities.convertSampleToPacketRawAux(newSample, rawBuffer);
 
     it('should have correct start byte', function () {
-      packetBuffer[0].should.equal(k.OBCIByteStart, 'confirming start byte');
+      expect(packetBuffer[0]).to.equal(k.OBCIByteStart, 'confirming start byte');
     });
     it('should have correct stop byte', function () {
-      packetBuffer[k.OBCIPacketSize - 1].should.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketStandardRawAux), 'confirming stop byte');
+      expect(packetBuffer[k.OBCIPacketSize - 1]).to.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketStandardRawAux), 'confirming stop byte');
     });
     it('should have correct sample number', function () {
-      packetBuffer[1].should.equal(1, 'confirming sample number is 1 more than 0');
+      expect(packetBuffer[1]).to.equal(1, 'confirming sample number is 1 more than 0');
     });
     it('should convert channel data to binary', function () {
       let sample = openBCIUtilities.parsePacketStandardRawAux({
@@ -621,7 +621,7 @@ describe('openBCIUtilities', function () {
         gains: defaultChannelSettingsArray
       });
       for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
-        sample.channelData[i].should.be.approximately(newSample.channelData[i], 0.001);
+        expect(sample.channelData[i]).to.be.approximately(newSample.channelData[i], 0.001);
       }
     });
     it('should get raw aux buffer', function () {
@@ -652,13 +652,13 @@ describe('openBCIUtilities', function () {
     let packetBuffer = openBCIUtilities.convertSampleToPacketAccelTimeSynced(newSample, time);
 
     it('should have correct start byte', () => {
-      packetBuffer[0].should.equal(k.OBCIByteStart, 'confirming start byte');
+      expect(packetBuffer[0]).to.equal(k.OBCIByteStart, 'confirming start byte');
     });
     it('should have correct stop byte', () => {
-      packetBuffer[k.OBCIPacketSize - 1].should.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketAccelTimeSynced), 'confirming stop byte');
+      expect(packetBuffer[k.OBCIPacketSize - 1]).to.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketAccelTimeSynced), 'confirming stop byte');
     });
     it('should have correct sample number', () => {
-      packetBuffer[1].should.equal(1, 'confirming sample number is 1 more than 0');
+      expect(packetBuffer[1]).to.equal(1, 'confirming sample number is 1 more than 0');
     });
     it('should convert channel data to binary', function () {
       let sample = openBCIUtilities.parsePacketTimeSyncedAccel({
@@ -668,7 +668,7 @@ describe('openBCIUtilities', function () {
         accelArray
       });
       for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
-        sample.channelData[i].should.be.approximately(newSample.channelData[i], 0.001);
+        expect(sample.channelData[i]).to.be.approximately(newSample.channelData[i], 0.001);
       }
     });
     it('should get board time', function () {
@@ -712,13 +712,13 @@ describe('openBCIUtilities', function () {
     let packetBuffer = openBCIUtilities.convertSampleToPacketRawAuxTimeSynced(newSample, time, rawAux);
 
     it('should have correct start byte', () => {
-      packetBuffer[0].should.equal(k.OBCIByteStart, 'confirming start byte');
+      expect(packetBuffer[0]).to.equal(k.OBCIByteStart, 'confirming start byte');
     });
     it('should have correct stop byte', () => {
-      packetBuffer[k.OBCIPacketSize - 1].should.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketRawAuxTimeSynced), 'confirming stop byte');
+      expect(packetBuffer[k.OBCIPacketSize - 1]).to.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketRawAuxTimeSynced), 'confirming stop byte');
     });
     it('should have correct sample number', () => {
-      packetBuffer[1].should.equal(1, 'confirming sample number is 1 more than 0');
+      expect(packetBuffer[1]).to.equal(1, 'confirming sample number is 1 more than 0');
     });
     it('should convert channel data to binary', function () {
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
@@ -727,7 +727,7 @@ describe('openBCIUtilities', function () {
         gains: channelSettingsArray
       });
       for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
-        sample.channelData[i].should.be.approximately(newSample.channelData[i], 0.001);
+        expect(sample.channelData[i]).to.be.approximately(newSample.channelData[i], 0.001);
       }
     });
     it('should get raw aux buffer', function () {
@@ -773,12 +773,12 @@ describe('openBCIUtilities', function () {
     it('converts a small negative number', function () {
       let buf1 = new Buffer([0xFF, 0xFF, 0xFF]); // 0xFFFFFF === -1
       let num = openBCIUtilities.interpret24bitAsInt32(buf1);
-      num.should.be.approximately(-1, 1);
+      expect(num).to.be.approximately(-1, 1);
     });
     it('converts a large negative number', function () {
       let buf1 = new Buffer([0x81, 0xA1, 0x01]); // 0x81A101 === -8281855
       let num = openBCIUtilities.interpret24bitAsInt32(buf1);
-      num.should.be.approximately(-8281855, 1);
+      expect(num).to.be.approximately(-8281855, 1);
     });
   });
   describe('#interpret16bitAsInt32', function () {
@@ -815,7 +815,7 @@ describe('openBCIUtilities', function () {
 
         num = num * channelScaleFactor;
 
-        num.should.be.approximately(newSample.channelData[i], 0.00002);
+        expect(num).to.be.approximately(newSample.channelData[i], 0.00002);
       }
     });
   });
@@ -830,7 +830,7 @@ describe('openBCIUtilities', function () {
 
         num = num * openBCIUtilities.scaleFactorAux;
 
-        num.should.be.approximately(auxData[i], 0.001);
+        expect(num).to.be.approximately(auxData[i], 0.001);
       }
     });
   });
@@ -859,9 +859,9 @@ describe('openBCIUtilities', function () {
         newSample = generateSample(newSample.sampleNumber);
         if (newSample.auxData[0] !== 0 || newSample.auxData[1] !== 0 || newSample.auxData[2] !== 0) {
           passed = true;
-          newSample.auxData[0].should.be.approximately(0, 0.1);
-          newSample.auxData[1].should.be.approximately(0, 0.1);
-          newSample.auxData[2].should.be.approximately(1, 0.4);
+          expect(newSample.auxData[0]).to.be.approximately(0, 0.1);
+          expect(newSample.auxData[1]).to.be.approximately(0, 0.1);
+          expect(newSample.auxData[2]).to.be.approximately(1, 0.4);
         }
       }
       assert(passed, 'a sample with accel data was produced');
@@ -870,14 +870,14 @@ describe('openBCIUtilities', function () {
   describe('#impedanceCalculationForChannel', function () {
     it('rejects when undefined sampleObject', function (done) {
       let bad;
-      openBCIUtilities.impedanceCalculationForChannel(bad, 1).should.be.rejected.and.notify(done);
+      expect(openBCIUtilities.impedanceCalculationForChannel(bad, 1)).to.be.rejected.and.notify(done);
     });
     it('rejects when undefined channel number', function (done) {
       let bad;
-      openBCIUtilities.impedanceCalculationForChannel('taco', bad).should.be.rejected.and.notify(done);
+      expect(openBCIUtilities.impedanceCalculationForChannel('taco', bad)).to.be.rejected.and.notify(done);
     });
     it('rejects when invalid channel number', function (done) {
-      openBCIUtilities.impedanceCalculationForChannel('taco', 69).should.be.rejected.and.notify(done);
+      expect(openBCIUtilities.impedanceCalculationForChannel('taco', 69)).to.be.rejected.and.notify(done);
     });
   });
   describe('#impedanceSummarize', function () {
@@ -891,28 +891,28 @@ describe('openBCIUtilities', function () {
 
       openBCIUtilities.impedanceSummarize(impedanceArray[0].N);
 
-      impedanceArray[0].N.text.should.equal(k.OBCIImpedanceTextGood); // Check the text
+      expect(impedanceArray[0].N.text).to.equal(k.OBCIImpedanceTextGood); // Check the text
     });
     it('should find impedance ok', function () {
       impedanceArray[0].N.raw = 5201.84;
 
       openBCIUtilities.impedanceSummarize(impedanceArray[0].N);
 
-      impedanceArray[0].N.text.should.equal(k.OBCIImpedanceTextOk); // Check the text
+      expect(impedanceArray[0].N.text).to.equal(k.OBCIImpedanceTextOk); // Check the text
     });
     it('should find impedance bad', function () {
       impedanceArray[0].N.raw = 10201.84;
 
       openBCIUtilities.impedanceSummarize(impedanceArray[0].N);
 
-      impedanceArray[0].N.text.should.equal(k.OBCIImpedanceTextBad); // Check the text
+      expect(impedanceArray[0].N.text).to.equal(k.OBCIImpedanceTextBad); // Check the text
     });
     it('should find impedance none', function () {
       impedanceArray[0].N.data = 44194179.09; // A huge number that would be seen if there was no electrode connected
 
       openBCIUtilities.impedanceSummarize(impedanceArray[0].N);
 
-      impedanceArray[0].N.text.should.equal(k.OBCIImpedanceTextNone); // Check the text
+      expect(impedanceArray[0].N.text).to.equal(k.OBCIImpedanceTextNone); // Check the text
     });
   });
   describe('#makeDaisySampleObject', function () {
@@ -934,7 +934,7 @@ describe('openBCIUtilities', function () {
       daisySampleObject = openBCIUtilities.makeDaisySampleObject(lowerSampleObject, upperSampleObject);
     });
     it('should make a channelData array 16 elements long', function () {
-      daisySampleObject.channelData.length.should.equal(k.OBCINumberOfChannelsDaisy);
+      expect(daisySampleObject.channelData).to.have.length(k.OBCINumberOfChannelsDaisy);
     });
     it('should make a channelData array with lower array in front of upper array', function () {
       for (let i = 0; i < 16; i++) {
@@ -942,11 +942,11 @@ describe('openBCIUtilities', function () {
       }
     });
     it('should make the sample number equal to the second packet divided by two', function () {
-      daisySampleObject.sampleNumber.should.equal(upperSampleObject.sampleNumber / 2);
+      expect(daisySampleObject.sampleNumber).to.equal(upperSampleObject.sampleNumber / 2);
     });
     it('should put the aux packets in an object', function () {
-      daisySampleObject.auxData.hasOwnProperty('lower').should.be.true();
-      daisySampleObject.auxData.hasOwnProperty('upper').should.be.true();
+      expect(daisySampleObject.auxData).to.have.property('lower');
+      expect(daisySampleObject.auxData).to.have.property('upper');
     });
     it('should put the aux packets in an object in the right order', function () {
       for (let i = 0; i < 3; i++) {
@@ -956,30 +956,30 @@ describe('openBCIUtilities', function () {
     });
     it('should average the two timestamps together', function () {
       let expectedAverage = (upperSampleObject.timestamp + lowerSampleObject.timestamp) / 2;
-      daisySampleObject.timestamp.should.equal(expectedAverage);
+      expect(daisySampleObject.timestamp).to.equal(expectedAverage);
     });
     it('should place the old timestamps in an object', function () {
-      daisySampleObject._timestamps.lower.should.equal(lowerSampleObject.timestamp);
-      daisySampleObject._timestamps.upper.should.equal(upperSampleObject.timestamp);
+      expect(daisySampleObject._timestamps.lower).to.equal(lowerSampleObject.timestamp);
+      expect(daisySampleObject._timestamps.upper).to.equal(upperSampleObject.timestamp);
     });
     it('should store an accelerometer value if present', function () {
-      daisySampleObject.should.have.property('accelData');
+      expect(daisySampleObject).to.have.property('accelData');
     });
   });
   describe('#isEven', function () {
     it('should return true for even number', function () {
-      openBCIUtilities.isEven(2).should.be.true();
+      expect(openBCIUtilities.isEven(2)).to.be.true();
     });
     it('should return false for odd number', function () {
-      openBCIUtilities.isEven(1).should.be.false();
+      expect(openBCIUtilities.isEven(1)).to.be.false();
     });
   });
   describe('#isOdd', function () {
     it('should return true for odd number', function () {
-      openBCIUtilities.isOdd(1).should.be.true();
+      expect(openBCIUtilities.isOdd(1)).to.be.true();
     });
     it('should return false for even number', function () {
-      openBCIUtilities.isOdd(2).should.be.false();
+      expect(openBCIUtilities.isOdd(2)).to.be.false();
     });
   });
   describe('#getChannelDataArray', function () {
@@ -1068,19 +1068,19 @@ describe('openBCIUtilities', function () {
     it('should not crash on small buff', function () {
       let buf = new Buffer('AJ!');
 
-      openBCIUtilities.countADSPresent(buf).should.equal(0);
+      expect(openBCIUtilities.countADSPresent(buf)).to.equal(0);
     });
     it('should not find any ADS1299 present', function () {
       let buf = new Buffer('AJ Keller is an awesome programmer!\n I know right!');
 
-      openBCIUtilities.countADSPresent(buf).should.equal(0);
+      expect(openBCIUtilities.countADSPresent(buf)).to.equal(0);
     });
     it('should find one ads present', function () {
       let buf = new Buffer(`OpenBCI V3 Simulator
 On Board ADS1299 Device ID: 0x12345
 LIS3DH Device ID: 0x38422$$$`);
 
-      openBCIUtilities.countADSPresent(buf).should.equal(1);
+      expect(openBCIUtilities.countADSPresent(buf)).to.equal(1);
     });
     it('should find two ads1299 present', function () {
       let buf = new Buffer(`OpenBCI V3 Simulator
@@ -1089,14 +1089,14 @@ On Daisy ADS1299 Device ID: 0xFFFFF
 LIS3DH Device ID: 0x38422
 $$$`);
 
-      openBCIUtilities.countADSPresent(buf).should.equal(2);
+      expect(openBCIUtilities.countADSPresent(buf)).to.equal(2);
     });
   });
   describe('#doesBufferHaveEOT', function () {
     it('should not crash on small buff', function () {
       let buf = new Buffer('AJ!');
 
-      openBCIUtilities.doesBufferHaveEOT(buf).should.equal(false);
+      expect(openBCIUtilities.doesBufferHaveEOT(buf)).to.be.false();
     });
     it('should not find any $$$', function () {
       let buf = new Buffer(`OpenBCI V3 Simulator
@@ -1106,11 +1106,11 @@ LIS3DH Device ID: 0x38422
 Firmware: v2
 `);
 
-      openBCIUtilities.doesBufferHaveEOT(buf).should.equal(false);
+      expect(openBCIUtilities.doesBufferHaveEOT(buf)).to.be.false();
 
       buf = Buffer.concat([buf, new Buffer(k.OBCIParseEOT)], buf.length + 3);
 
-      openBCIUtilities.doesBufferHaveEOT(buf).should.equal(true);
+      expect(openBCIUtilities.doesBufferHaveEOT(buf)).to.equal(true);
     });
     it('should find a $$$', function () {
       let buf = new Buffer(`OpenBCI V3 Simulator
@@ -1120,26 +1120,26 @@ LIS3DH Device ID: 0x38422
 Firmware: v2
 $$$`);
 
-      openBCIUtilities.doesBufferHaveEOT(buf).should.equal(true);
+      expect(openBCIUtilities.doesBufferHaveEOT(buf)).to.equal(true);
     });
   });
   describe('#findV2Firmware', function () {
     it('should not crash on small buff', function () {
       let buf = new Buffer('AJ!');
 
-      openBCIUtilities.findV2Firmware(buf).should.equal(false);
+      expect(openBCIUtilities.findV2Firmware(buf)).to.be.false();
     });
     it('should not find any v2', function () {
       let buf = new Buffer('AJ Keller is an awesome programmer!\n I know right!');
 
-      openBCIUtilities.findV2Firmware(buf).should.equal(false);
+      expect(openBCIUtilities.findV2Firmware(buf)).to.be.false();
     });
     it('should not find a v2', function () {
       let buf = new Buffer(`OpenBCI V3 Simulator
 On Board ADS1299 Device ID: 0x12345
 LIS3DH Device ID: 0x38422$$$`);
 
-      openBCIUtilities.findV2Firmware(buf).should.equal(false);
+      expect(openBCIUtilities.findV2Firmware(buf)).to.be.false();
     });
     it('should find a v2', function () {
       let buf = new Buffer(`OpenBCI V3 Simulator
@@ -1149,41 +1149,41 @@ LIS3DH Device ID: 0x38422
 Firmware: v2
 $$$`);
 
-      openBCIUtilities.findV2Firmware(buf).should.equal(true);
+      expect(openBCIUtilities.findV2Firmware(buf)).to.equal(true);
     });
   });
   describe('#isFailureInBuffer', function () {
     it('should not crash on small buff', function () {
       let buf = new Buffer('AJ!');
 
-      openBCIUtilities.isFailureInBuffer(buf).should.equal(false);
+      expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false();
     });
     it('should not find any failure in a success message', function () {
       let buf = new Buffer('Success: Poll time set$$$');
 
-      openBCIUtilities.isFailureInBuffer(buf).should.equal(false);
+      expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false();
     });
     it('should find failure in a failure message', function () {
       let buf = new Buffer('Failure: Could not change Dongle channel number$$$');
 
-      openBCIUtilities.isFailureInBuffer(buf).should.equal(true);
+      expect(openBCIUtilities.isFailureInBuffer(buf)).to.equal(true);
     });
   });
   describe('#isSuccessInBuffer', function () {
     it('should not crash on small buff', function () {
       let buf = new Buffer('AJ!');
 
-      openBCIUtilities.isSuccessInBuffer(buf).should.equal(false);
+      expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false();
     });
     it('should not find any success in a failure message', function () {
       let buf = new Buffer('Failure: Could not change Dongle channel number');
 
-      openBCIUtilities.isSuccessInBuffer(buf).should.equal(false);
+      expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false();
     });
     it('should find success in a success message', function () {
       let buf = new Buffer('Success: Poll time set$$$');
 
-      openBCIUtilities.isSuccessInBuffer(buf).should.equal(true);
+      expect(openBCIUtilities.isSuccessInBuffer(buf)).to.equal(true);
     });
   });
 
@@ -1206,7 +1206,7 @@ $$$`);
     // Attn: 0x2C is ASCII for ','
     let comma = 0x2C;
     it('should not find the character in a buffer without the character', function () {
-      openBCIUtilities.isTimeSyncSetConfirmationInBuffer(openBCIUtilities.samplePacket()).should.equal(false);
+      expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(openBCIUtilities.samplePacket())).to.be.false();
     });
     it('should find with just 0x2C', function () {
       let buffer = new Buffer([comma]);
@@ -1451,12 +1451,12 @@ describe('openBCIGanglionUtils', function () {
     it('converts a small negative number', function () {
       const buf1 = new Buffer([0xFF, 0xFF, 0xFF]); // 0xFFFFFF === -1
       const num = openBCIUtilities.convert18bitAsInt32(buf1);
-      num.should.be.approximately(-1, 1);
+      expect(num).to.be.approximately(-1, 1);
     });
     it('converts a large negative number', function () {
       const buf1 = new Buffer([0x04, 0xA1, 0x01]); // 0x04A101 === -220927
       const num = openBCIUtilities.convert18bitAsInt32(buf1);
-      num.should.be.approximately(-220927, 1);
+      expect(num).to.be.approximately(-220927, 1);
     });
   });
   describe('#convert19bitAsInt32', function () {
@@ -1478,12 +1478,12 @@ describe('openBCIGanglionUtils', function () {
     it('converts a small negative number', function () {
       const buf1 = new Buffer([0xFF, 0xFF, 0xFF]); // 0xFFFFFF === -1
       const num = openBCIUtilities.convert19bitAsInt32(buf1);
-      num.should.be.approximately(-1, 1);
+      expect(num).to.be.approximately(-1, 1);
     });
     it('converts a large negative number', function () {
       const buf1 = new Buffer([0x04, 0xA1, 0x01]); // 0x04A101 === -220927
       const num = openBCIUtilities.convert19bitAsInt32(buf1);
-      num.should.be.approximately(-220927, 1);
+      expect(num).to.be.approximately(-220927, 1);
     });
   });
   describe('decompressDeltas18Bit', function () {
@@ -1513,8 +1513,8 @@ describe('openBCIGanglionUtils', function () {
       let actualValue = openBCIUtilities.decompressDeltas18Bit(buffer);
 
       for (let i = 0; i < 4; i++) {
-        (actualValue[0][i]).should.equal(expectedValue[0][i]);
-        (actualValue[1][i]).should.equal(expectedValue[1][i]);
+        expect(actualValue[0][i]).to.equal(expectedValue[0][i]);
+        expect(actualValue[1][i]).to.equal(expectedValue[1][i]);
       }
     });
     it('should extract the proper values for each channel (neg test)', function () {
@@ -1543,8 +1543,8 @@ describe('openBCIGanglionUtils', function () {
       let actualValue = openBCIUtilities.decompressDeltas18Bit(buffer);
 
       for (let i = 0; i < 4; i++) {
-        (actualValue[0][i]).should.equal(expectedValue[0][i]);
-        (actualValue[1][i]).should.equal(expectedValue[1][i]);
+        expect(actualValue[0][i]).to.equal(expectedValue[0][i]);
+        expect(actualValue[1][i]).to.equal(expectedValue[1][i]);
       }
     });
   });
@@ -1575,8 +1575,8 @@ describe('openBCIGanglionUtils', function () {
       let expectedValue = [[0, 2, 10, 4], [262148, 507910, 393222, 8]];
       let actualValue = openBCIUtilities.decompressDeltas19Bit(buffer);
       for (let i = 0; i < 4; i++) {
-        (actualValue[0][i]).should.equal(expectedValue[0][i]);
-        (actualValue[1][i]).should.equal(expectedValue[1][i]);
+        expect(actualValue[0][i]).to.equal(expectedValue[0][i]);
+        expect(actualValue[1][i]).to.equal(expectedValue[1][i]);
       }
     });
     it('should extract the proper values for each channel (neg test)', function () {
@@ -1606,8 +1606,8 @@ describe('openBCIGanglionUtils', function () {
       let actualValue = openBCIUtilities.decompressDeltas19Bit(buffer);
 
       for (let i = 0; i < 4; i++) {
-        (actualValue[0][i]).should.equal(expectedValue[0][i]);
-        (actualValue[1][i]).should.equal(expectedValue[1][i]);
+        expect(actualValue[0][i]).to.equal(expectedValue[0][i]);
+        expect(actualValue[1][i]).to.equal(expectedValue[1][i]);
       }
     });
   });
@@ -1644,8 +1644,8 @@ describe('#extractRawDataPackets', function () {
     let output = openBCIUtilities.extractRawDataPackets(buffer);
 
     // The buffer should not have anything in it any more
-    expect(output.buffer).to.equal(null);
-    bufferEqual(buffer, output.rawDataPackets[0]).should.be.true();
+    expect(output.buffer).to.be.null();
+    expect(bufferEqual(buffer, output.rawDataPackets[0])).to.be.true();
   });
   it('should extract a buffer and preserve the remaining data in the buffer', () => {
     let expectedString = 'AJ';
@@ -1658,8 +1658,8 @@ describe('#extractRawDataPackets', function () {
     extraBuffer.copy(buffer, k.OBCIPacketSize);
     // Call the function under test
     const output = openBCIUtilities.extractRawDataPackets(buffer);
-    bufferEqual(expectedRawDataPacket, output.rawDataPackets[0]).should.be.true();
-    bufferEqual(output.buffer, extraBuffer).should.be.true(); // Should return the extra parts of the buffer
+    expect(bufferEqual(expectedRawDataPacket, output.rawDataPackets[0])).to.be.true();
+    expect(bufferEqual(output.buffer, extraBuffer)).to.be.true(); // Should return the extra parts of the buffer
   });
   it('should be able to extract multiple packets from a single buffer', () => {
     // We are going to extract multiple buffers
@@ -1704,7 +1704,7 @@ describe('#extractRawDataPackets', function () {
     for (let i = 0; i < expectedNumberOfBuffers; i++) {
       expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i])).to.be.true(`Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`);
     }
-    bufferEqual(output.buffer, extraBuffer).should.be.true(); // Should return the extra parts of the buffer
+    expect(bufferEqual(output.buffer, extraBuffer)).to.be.true(); // Should return the extra parts of the buffer
   });
 
   it('should be able to get multiple packets with junk in the middle', () => {
@@ -1727,7 +1727,7 @@ describe('#extractRawDataPackets', function () {
     for (let i = 0; i < expectedNumberOfBuffers; i++) {
       expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true();
     }
-    bufferEqual(output.buffer, extraBuffer).should.be.true(); // Should return the extra parts of the buffer
+    expect(bufferEqual(output.buffer, extraBuffer)).to.be.true(); // Should return the extra parts of the buffer
   });
 
   it('should be able to get multiple packets with junk in the middle and end', () => {
@@ -1753,7 +1753,7 @@ describe('#extractRawDataPackets', function () {
       expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true();
     }
     // The buffer should have everything in it
-    bufferEqual(Buffer.concat([extraBuffer, extraBuffer]), output.buffer).should.be.true();
+    expect(bufferEqual(Buffer.concat([extraBuffer, extraBuffer]), output.buffer)).to.be.true();
   });
 
   it('should be able to get multiple packets with junk in the front, middle and end', () => {
@@ -1780,7 +1780,7 @@ describe('#extractRawDataPackets', function () {
       expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true();
     }
     // The buffer should have everything in it
-    bufferEqual(Buffer.concat([extraBuffer, extraBuffer, extraBuffer]), output.buffer).should.be.true();
+    expect(bufferEqual(Buffer.concat([extraBuffer, extraBuffer, extraBuffer]), output.buffer)).to.be.true();
   });
 });
 
@@ -1818,7 +1818,7 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Ensure that we extracted only one buffer
-    funcSpyStandardAccel.should.have.been.calledOnce();
+    expect(funcSpyStandardAccel).to.have.been.calledOnce();
     expect(samples.length).to.equal(1);
   });
 
@@ -1834,7 +1834,7 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Ensure that we extracted only one buffer
-    funcSpyStandardAccel.should.have.been.calledThrice();
+    expect(funcSpyStandardAccel).to.have.been.calledThrice();
   });
   it('should process a standard packet with raw aux', function () {
     var buffer = openBCIUtilities.samplePacketStandardRawAux(0);
@@ -1845,7 +1845,7 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Ensure that we extracted only one buffer
-    funcSpyStandardRawAux.should.have.been.calledOnce();
+    expect(funcSpyStandardRawAux).to.have.been.calledOnce();
   });
   it('should call nothing for a user defined packet type ', function () {
     var buffer = openBCIUtilities.samplePacketUserDefined();
@@ -1856,10 +1856,10 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Nothing should be called
-    funcSpyStandardAccel.should.not.have.been.called();
-    funcSpyStandardRawAux.should.not.have.been.called();
-    funcSpyTimeSyncedAccel.should.not.have.been.called();
-    funcSpyTimeSyncedRawAux.should.not.have.been.called();
+    expect(funcSpyStandardAccel).to.not.have.been.called();
+    expect(funcSpyStandardRawAux).to.not.have.been.called();
+    expect(funcSpyTimeSyncedAccel).to.not.have.been.called();
+    expect(funcSpyTimeSyncedRawAux).to.not.have.been.called();
   });
   it('should process a time sync set packet with accel', function () {
     var buffer = openBCIUtilities.samplePacketAccelTimeSyncSet();
@@ -1870,7 +1870,7 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // we should call to get a packet
-    funcSpyTimeSyncedAccel.should.have.been.calledOnce();
+    expect(funcSpyTimeSyncedAccel).to.have.been.calledOnce();
   });
   it('should process a time synced packet with accel', function () {
     var buffer = openBCIUtilities.samplePacketAccelTimeSynced(0);
@@ -1881,7 +1881,7 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Ensure that we extracted only one buffer
-    funcSpyTimeSyncedAccel.should.have.been.calledOnce();
+    expect(funcSpyTimeSyncedAccel).to.have.been.calledOnce();
   });
   it('should process a time sync set packet with raw aux', function () {
     var buffer = openBCIUtilities.samplePacketRawAuxTimeSyncSet(0);
@@ -1891,7 +1891,7 @@ describe('#transformRawDataPacketsToSamples', function () {
       rawDataPackets: [buffer]
     });
 
-    funcSpyTimeSyncedRawAux.should.have.been.calledOnce();
+    expect(funcSpyTimeSyncedRawAux).to.have.been.calledOnce();
   });
   it('should process a time synced packet with raw aux', function () {
     var buffer = openBCIUtilities.samplePacketRawAuxTimeSynced(0);
@@ -1902,7 +1902,7 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Ensure that we extracted only one buffer
-    funcSpyTimeSyncedRawAux.should.have.been.calledOnce();
+    expect(funcSpyTimeSyncedRawAux).to.have.been.calledOnce();
   });
   it('should not identify any packet', function () {
     var buffer = openBCIUtilities.samplePacket(0);
@@ -1916,9 +1916,9 @@ describe('#transformRawDataPacketsToSamples', function () {
     });
 
     // Nothing should be called
-    funcSpyStandardAccel.should.not.have.been.called();
-    funcSpyStandardRawAux.should.not.have.been.called();
-    funcSpyTimeSyncedAccel.should.not.have.been.called();
-    funcSpyTimeSyncedRawAux.should.not.have.been.called();
+    expect(funcSpyStandardAccel).to.not.have.been.called();
+    expect(funcSpyStandardRawAux).to.not.have.been.called();
+    expect(funcSpyTimeSyncedAccel).to.not.have.been.called();
+    expect(funcSpyTimeSyncedRawAux).to.not.have.been.called();
   });
 });
