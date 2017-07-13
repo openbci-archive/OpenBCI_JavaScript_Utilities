@@ -1,3 +1,9 @@
+# 0.0.5
+
+### Bug Fixes
+
+* When not scaling outputs `channelDataCounts` instead of `channelData`
+
 # 0.0.4
 
 ### Bug Fixes

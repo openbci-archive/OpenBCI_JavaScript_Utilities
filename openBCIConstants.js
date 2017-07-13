@@ -414,6 +414,7 @@ const obciEmitterRawDataPacket = 'rawDataPacket';
 const obciEmitterReady = 'ready';
 const obciEmitterSample = 'sample';
 const obciEmitterSynced = 'synced';
+const obciEmitterWifiShield = 'wifiShield';
 
 /** Accel packets */
 const obciGanglionAccelAxisX = 1;
@@ -1109,6 +1110,7 @@ module.exports = {
   OBCIEmitterReady: obciEmitterReady,
   OBCIEmitterSample: obciEmitterSample,
   OBCIEmitterSynced: obciEmitterSynced,
+  OBCIEmitterWifiShield: obciEmitterWifiShield,
   /** Emitters */
   /** Accel packets */
   OBCIGanglionAccelAxisX: obciGanglionAccelAxisX,

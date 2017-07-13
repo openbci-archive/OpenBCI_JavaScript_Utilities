@@ -966,7 +966,7 @@ function parsePacketStandardAccel (o) {
 
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
   if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.gains);
-  else sampleObject.channelData = getChannelDataArrayNoScale(o.rawDataPacket);
+  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
 
   if (k.getVersionNumber(process.version) >= 6) {
     // From introduced in node version 6.x.x
@@ -1007,7 +1007,7 @@ function parsePacketStandardRawAux (o) {
   // Store the channel data
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
   if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.gains);
-  else sampleObject.channelData = getChannelDataArrayNoScale(o.rawDataPacket);
+  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
 
   // Slice the buffer for the aux data
   if (k.getVersionNumber(process.version) >= 6) {
@@ -1075,7 +1075,7 @@ function parsePacketTimeSyncedAccel (o) {
 
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
   if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.gains);
-  else sampleObject.channelData = getChannelDataArrayNoScale(o.rawDataPacket);
+  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
 
   return sampleObject;
 }
@@ -1124,7 +1124,7 @@ function parsePacketTimeSyncedRawAux (o) {
   // Grab the channel data.
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
   if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.gains);
-  else sampleObject.channelData = getChannelDataArrayNoScale(o.rawDataPacket);
+  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
 
   return sampleObject;
 }
@@ -1182,7 +1182,7 @@ function getFromTimePacketAccel (dataBuf, accelArray) {
 /**
 * @description Grabs a raw aux value from a raw but time synced packet.
 * @param dataBuf {Buffer} - The 33byte raw time synced raw aux packet
-* @returns {Promise} - Fulfills a 2 byte buffer
+* @returns {Buffer|SafeBuffer|Buffer2} - Fulfills a 2 byte buffer
 */
 function getFromTimePacketRawAux (dataBuf) {
   if (dataBuf.byteLength !== k.OBCIPacketSize) {
