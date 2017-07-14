@@ -489,6 +489,7 @@ var utilitiesModule = {
     return new Buffer([0xA0, 0x00, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, makeTailByteFromPacketType(k.OBCIStreamPacketUserDefinedType)]);
   },
   makeDaisySampleObject,
+  makeDaisySampleObjectWifi,
   getChannelDataArray,
   isEven,
   isOdd,
@@ -880,7 +881,7 @@ function newSyncObject () {
  * @description Used transform raw data packets into fully qualified packets
  * @param o {Object}
  * @param o.rawDataPackets {Array} - An array of rawDataPackets
- * @param o.gains {Array}
+ * @param o.channelSettings {Array}
  * @param o.timeOffset {Number} (optional) for non time stamp use cases i.e. 0xC0 or 0xC1 (default and raw aux)
  * @param o.accelArray {Array} (optional) for non time stamp use cases
  * @param o.verbose {Boolean} (optional) for verbose output
@@ -899,14 +900,14 @@ function transformRawDataPacketsToSample (o) {
         case k.OBCIStreamPacketStandardAccel:
           sample = utilitiesModule.parsePacketStandardAccel({
             rawDataPacket,
-            gains: o.gains,
+            channelSettings: o.channelSettings,
             scale: o.scale
           });
           break;
         case k.OBCIStreamPacketStandardRawAux:
           sample = utilitiesModule.parsePacketStandardRawAux({
             rawDataPacket,
-            gains: o.gains,
+            channelSettings: o.channelSettings,
             scale: o.scale
           });
           break;
@@ -914,7 +915,7 @@ function transformRawDataPacketsToSample (o) {
         case k.OBCIStreamPacketAccelTimeSynced:
           sample = utilitiesModule.parsePacketTimeSyncedAccel({
             rawDataPacket,
-            gains: o.gains,
+            channelSettings: o.channelSettings,
             timeOffset: o.timeOffset,
             accelArray: o.accelArray
           });
@@ -923,7 +924,7 @@ function transformRawDataPacketsToSample (o) {
         case k.OBCIStreamPacketRawAuxTimeSynced:
           sample = utilitiesModule.parsePacketTimeSyncedRawAux({
             rawDataPacket,
-            gains: o.gains,
+            channelSettings: o.channelSettings,
             timeOffset: o.timeOffset
           });
           break;
@@ -947,7 +948,7 @@ function transformRawDataPacketsToSample (o) {
  * @description This method parses a 33 byte OpenBCI V3 packet and converts to a sample object
  * @param o {Object} - The input object
  * @param o.rawDataPacket {Buffer} - The 33byte raw packet
- * @param o.gains {Array} - An array of channel settings that is an Array that has shape similar to the one
+ * @param o.channelSettings {Array} - An array of channel settings that is an Array that has shape similar to the one
  *                  calling k.channelSettingsArrayInit(). The most important rule here is that it is
  *                  Array of objects that have key-value pair {gain:NUMBER}
  * @param o.scale {Boolean} - Do you want to scale the results? Default true
@@ -965,7 +966,7 @@ function parsePacketStandardAccel (o) {
   sampleObject.accelData = getDataArrayAccel(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
 
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
-  if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.gains);
+  if (o.scale) sampleObject.channelData = getChannelDataArray(o);
   else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
 
   if (k.getVersionNumber(process.version) >= 6) {
@@ -988,7 +989,7 @@ function parsePacketStandardAccel (o) {
  * @description This method parses a 33 byte OpenBCI V3 packet and converts to a sample object
  * @param o {Object} - The input object
  * @param o.rawDataPacket {Buffer} - The 33byte raw packet
- * @param o.gains {Array} - An array of channel settings that is an Array that has shape similar to the one
+ * @param o.channelSettings {Array} - An array of channel settings that is an Array that has shape similar to the one
  *                  calling k.channelSettingsArrayInit(). The most important rule here is that it is
  *                  Array of objects that have key-value pair {gain:NUMBER}
  * @param o.scale {Boolean} - Do you want to scale the results? Default is true
@@ -1006,7 +1007,7 @@ function parsePacketStandardRawAux (o) {
 
   // Store the channel data
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
-  if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.gains);
+  if (o.scale) sampleObject.channelData = getChannelDataArray(o);
   else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
 
   // Slice the buffer for the aux data
@@ -1033,7 +1034,7 @@ function parsePacketStandardRawAux (o) {
  *      Z axis data is sent with every sampleNumber % 10 === 2
  * @param o {Object} - The input object
  * @param o.rawDataPacket {Buffer} - The 33byte raw time synced accel packet
- * @param o.gains {Array} - An array of channel settings that is an Array that has shape similar to the one
+ * @param o.channelSettings {Array} - An array of channel settings that is an Array that has shape similar to the one
  *                  calling OpenBCIConstans.channelSettingsArrayInit(). The most important rule here is that it is
  *                  Array of objects that have key-value pair {gain:NUMBER}
  * @param o.timeOffset {Number} - The difference between board time and current time calculated with sync methods.
@@ -1074,24 +1075,22 @@ function parsePacketTimeSyncedAccel (o) {
   }
 
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
-  if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.gains);
+  if (o.scale) sampleObject.channelData = getChannelDataArray(o);
   else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
 
   return sampleObject;
 }
 
 /**
- * @description Grabs an accel value from a raw but time synced packet. Important that this utilizes the fact that:
- *      X axis data is sent with every sampleNumber % 10 === 0
- *      Y axis data is sent with every sampleNumber % 10 === 1
- *      Z axis data is sent with every sampleNumber % 10 === 2
+ * @description Raw aux
  * @param o {Object} - The input object
  * @param o.rawDataPacket {Buffer} - The 33byte raw time synced accel packet
- * @param o.gains {Array} - An array of channel settings that is an Array that has shape similar to the one
+ * @param o.channelSettings {Array} - An array of channel settings that is an Array that has shape similar to the one
  *                  calling k.channelSettingsArrayInit(). The most important rule here is that it is
  *                  Array of objects that have key-value pair {gain:NUMBER}
  * @param o.timeOffset {Number} - The difference between board time and current time calculated with sync methods.
  * @param o.scale {Boolean} - Do you want to scale the results? Default is true
+ * @param o.lastSampleNumber {Number} - The last sample number
  * @returns {Sample} - A sample object. NOTE: The aux data is placed in a 2 byte buffer
  */
 function parsePacketTimeSyncedRawAux (o) {
@@ -1123,7 +1122,7 @@ function parsePacketTimeSyncedRawAux (o) {
 
   // Grab the channel data.
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
-  if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.gains);
+  if (o.scale) sampleObject.channelData = getChannelDataArray(o);
   else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
 
   return sampleObject;
@@ -1211,40 +1210,70 @@ function getDataArrayAccel (dataBuf) {
   return accelData;
 }
 /**
-* @description Takes a buffer filled with 24 bit signed integers from an OpenBCI device with gain settings in
-*                  channelSettingsArray[index].gain and converts based on settings of ADS1299... spits out an
-*                  array of floats in VOLTS
-* @param dataBuf {Buffer} - Buffer with 33 bit signed integers, number of elements is same as channelSettingsArray.length * 3
-* @param channelSettingsArray {Array} - The channel settings array, see OpenBCIConstants.channelSettingsArrayInit() for specs
-* @returns {Array} - Array filled with floats for each channel's voltage in VOLTS
-* @author AJ Keller (@pushtheworldllc)
-*/
-function getChannelDataArray (dataBuf, channelSettingsArray) {
-  if (!Array.isArray(channelSettingsArray)) {
+ * @description Takes a buffer filled with 24 bit signed integers from an OpenBCI device with gain settings in
+ *                  channelSettingsArray[index].gain and converts based on settings of ADS1299... spits out an
+ *                  array of floats in VOLTS
+ * @param o {Object} - The input object
+ * @param o.rawDataPacket {Buffer} - The 33byte raw time synced accel packet
+ * @param o.channelSettings {Array} - An array of channel settings that is an Array that has shape similar to the one
+ *                  calling k.channelSettingsArrayInit(). The most important rule here is that it is
+ *                  Array of objects that have key-value pair {gain:NUMBER}
+ * @param o.scale {Boolean} - Do you want to scale the results? Default is true
+ * @param o.lastSampleNumber {Number} - The last sample number
+ * @param o.protocol {String} - Either `Serial` or `Wifi` (Default is `Wifi`)
+ * @returns {Array} - Array filled with floats for each channel's voltage in VOLTS
+ * @author AJ Keller (@pushtheworldllc)
+ */
+function getChannelDataArray (o) {
+  if (!Array.isArray(o.channelSettings)) {
     throw new Error('Error [getChannelDataArray]: Channel Settings must be an array!');
   }
-  var channelData = [];
+  if (o.hasOwnProperty('protocol')) {
+    if (o.protocol !== k.OBCIProtocolSerial && o.protocol !== k.OBCIProtocolWifi) {
+      throw new Error(`Error [getChannelDataArray]: Invalid protocol must be ${k.OBCIProtocolWifi} or ${k.OBCIProtocolSerial}`);
+    }
+  } else {
+    o.protocol = k.OBCIProtocolSerial;
+  }
+  let channelData = [];
   // Grab the sample number from the buffer
-  var sampleNumber = dataBuf[k.OBCIPacketPositionSampleNumber];
-  var daisy = channelSettingsArray.length > k.OBCINumberOfChannelsDefault;
-
+  const numChannels = o.channelSettings.length;
+  const sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
+  const daisy = numChannels === k.OBCINumberOfChannelsDaisy;
+  const channelsInPacket = numChannels > k.OBCINumberOfChannelsGanglion ? k.OBCINumberOfChannelsDefault : k.OBCINumberOfChannelsGanglion;
   // Channel data arrays are always 8 long
-  for (var i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
-    if (!channelSettingsArray[i].hasOwnProperty('gain')) {
+  for (let i = 0; i < channelsInPacket; i++) {
+    if (!o.channelSettings[i].hasOwnProperty('gain')) {
       throw new Error(`Error [getChannelDataArray]: Invalid channel settings object at index ${i}`);
     }
-    if (!k.isNumber(channelSettingsArray[i].gain)) {
+    if (!k.isNumber(o.channelSettings[i].gain)) {
       throw new Error('Error [getChannelDataArray]: Property gain of channelSettingsObject not or type Number');
     }
 
-    var scaleFactor = 0;
-    if (isEven(sampleNumber) && daisy) {
-      scaleFactor = ADS1299_VREF / channelSettingsArray[i + k.OBCINumberOfChannelsDefault].gain / (Math.pow(2, 23) - 1);
-    } else {
-      scaleFactor = ADS1299_VREF / channelSettingsArray[i].gain / (Math.pow(2, 23) - 1);
+    let scaleFactor = 0;
+
+    if (o.protocol === k.OBCIProtocolSerial) {
+      if (isEven(sampleNumber) && daisy) {
+        scaleFactor = ADS1299_VREF / o.channelSettings[i + k.OBCINumberOfChannelsDefault].gain / (Math.pow(2, 23) - 1);
+      } else {
+        scaleFactor = ADS1299_VREF / o.channelSettings[i].gain / (Math.pow(2, 23) - 1);
+      }
+    } else if (o.protocol === k.OBCIProtocolWifi) {
+      if (daisy) {
+        if (o.lastSampleNumber === sampleNumber) {
+          scaleFactor = ADS1299_VREF / o.channelSettings[i + k.OBCINumberOfChannelsDefault].gain / (Math.pow(2, 23) - 1);
+        } else {
+          scaleFactor = ADS1299_VREF / o.channelSettings[i].gain / (Math.pow(2, 23) - 1);
+        }
+      } else if (o.channelSettings.length === k.OBCINumberOfChannelsCyton) {
+        scaleFactor = ADS1299_VREF / o.channelSettings[i].gain / (Math.pow(2, 23) - 1);
+      } else {
+        scaleFactor = k.OBCIGanglionScaleFactorPerCountVolts;
+      }
     }
+
     // Convert the three byte signed integer and convert it
-    channelData.push(scaleFactor * utilitiesModule.interpret24bitAsInt32(dataBuf.slice((i * 3) + k.OBCIPacketPositionChannelDataStart, (i * 3) + k.OBCIPacketPositionChannelDataStart + 3)));
+    channelData.push(scaleFactor * utilitiesModule.interpret24bitAsInt32(o.rawDataPacket.slice((i * 3) + k.OBCIPacketPositionChannelDataStart, (i * 3) + k.OBCIPacketPositionChannelDataStart + 3)));
   }
   return channelData;
 }
@@ -1379,6 +1408,57 @@ function makeDaisySampleObject (lowerSampleObject, upperSampleObject) {
   };
 
   daisySampleObject['timestamp'] = (lowerSampleObject.timestamp + upperSampleObject.timestamp) / 2;
+
+  daisySampleObject['_timestamps'] = {
+    'lower': lowerSampleObject.timestamp,
+    'upper': upperSampleObject.timestamp
+  };
+
+  if (lowerSampleObject.accelData) {
+    daisySampleObject['accelData'] = lowerSampleObject.accelData;
+  } else if (upperSampleObject.accelData) {
+    daisySampleObject['accelData'] = upperSampleObject.accelData;
+  }
+
+  return daisySampleObject;
+}
+
+/**
+ * @description Used to make one sample object from two sample objects. The sample number of the new daisy sample will
+ *      be the upperSampleObject's sample number divded by 2. This allows us to preserve consecutive sample numbers that
+ *      flip over at 127 instead of 255 for an 8 channel. The daisySampleObject will also have one `channelData` array
+ *      with 16 elements inside it, with the lowerSampleObject in the lower indices and the upperSampleObject in the
+ *      upper set of indices. The auxData from both channels shall be captured in an object called `auxData` which
+ *      contains two arrays referenced by keys `lower` and `upper` for the `lowerSampleObject` and `upperSampleObject`,
+ *      respectively. The timestamps shall be averaged and moved into an object called `timestamp`. Further, the
+ *      un-averaged timestamps from the `lowerSampleObject` and `upperSampleObject` shall be placed into an object called
+ *      `_timestamps` which shall contain two keys `lower` and `upper` which contain the original timestamps for their
+ *      respective sampleObjects.
+ * @param lowerSampleObject {Object} - Lower 8 channels with odd sample number
+ * @param upperSampleObject {Object} - Upper 8 channels with even sample number
+ * @returns {Object} - The new merged daisy sample object
+ */
+function makeDaisySampleObjectWifi (lowerSampleObject, upperSampleObject) {
+  var daisySampleObject = {};
+
+  if (lowerSampleObject.hasOwnProperty('channelData')) {
+    daisySampleObject['channelData'] = lowerSampleObject.channelData.concat(upperSampleObject.channelData);
+  }
+
+  if (lowerSampleObject.hasOwnProperty('channelDataCounts')) {
+    daisySampleObject['channelDataCounts'] = lowerSampleObject.channelDataCounts.concat(upperSampleObject.channelDataCounts);
+  }
+
+  daisySampleObject['sampleNumber'] = upperSampleObject.sampleNumber;
+
+  daisySampleObject['auxData'] = {
+    'lower': lowerSampleObject.auxData,
+    'upper': upperSampleObject.auxData
+  };
+
+  if (lowerSampleObject.hasOwnProperty('timestamp')) {
+    daisySampleObject['timestamp'] = lowerSampleObject.timestamp;
+  }
 
   daisySampleObject['_timestamps'] = {
     'lower': lowerSampleObject.timestamp,

@@ -230,8 +230,9 @@ const obciRadioCmdBaudRateSetFast = 0x06;
 const obciRadioCmdSystemStatus = 0x07;
 
 /** Possible number of channels */
+const obciNumberOfChannelsCyton = 8;
 const obciNumberOfChannelsDaisy = 16;
-const obciNumberOfChannelsDefault = 8;
+const obciNumberOfChannelsDefault = obciNumberOfChannelsCyton;
 const obciNumberOfChannelsGanglion = 4;
 
 /** Possible OpenBCI board types */
@@ -239,6 +240,7 @@ const obciBoardCyton = 'cyton';
 const obciBoardDaisy = 'daisy';
 const obciBoardDefault = 'default';
 const obciBoardGanglion = 'ganglion';
+const obciBoardNone = 'none';
 
 /** Possible Simulator Line Noise injections */
 const obciSimulatorLineNoiseHz60 = '60Hz';
@@ -455,14 +457,14 @@ const obciGanglionPacket19Bit = {
   dataStart: 1,
   dataStop: 20
 };
-const obciGanglionMCP3912Gain = 1.0;  // assumed gain setting for MCP3912.  NEEDS TO BE ADJUSTABLE JM
+const obciGanglionMCP3912Gain = 51.0;  // assumed gain setting for MCP3912.  NEEDS TO BE ADJUSTABLE JM
 const obciGanglionMCP3912Vref = 1.2;  // reference voltage for ADC in MCP3912 set in hardware
 const obciGanglionPrefix = 'Ganglion';
 const obciGanglionSyntheticDataEnable = 't';
 const obciGanglionSyntheticDataDisable = 'T';
 const obciGanglionImpedanceStart = 'z';
 const obciGanglionImpedanceStop = 'Z';
-const obciGanglionScaleFactorPerCountVolts = obciGanglionMCP3912Vref / (8388607.0 * obciGanglionMCP3912Gain * 1.5 * 51.0);
+const obciGanglionScaleFactorPerCountVolts = obciGanglionMCP3912Vref / (8388607.0 * obciGanglionMCP3912Gain * 1.5);
 
 /** Simblee */
 const simbleeUuidService = 'fe84';
@@ -482,6 +484,11 @@ const obciNobleEmitterScanStart = 'scanStart';
 const obciNobleEmitterScanStop = 'scanStop';
 const obciNobleEmitterStateChange = 'stateChange';
 const obciNobleStatePoweredOn = 'poweredOn';
+
+/** Protocols */
+const obciProtocolBLE = "ble";
+const obciProtocolSerial = "serial";
+const obciProtocolWifi = "wifi";
 
 module.exports = {
   /** Turning channels off */
@@ -877,6 +884,7 @@ module.exports = {
   /** Triggers */
   OBCITrigger: obciTrigger,
   /** Possible number of channels */
+  OBCINumberOfChannelsCyton: obciNumberOfChannelsCyton,
   OBCINumberOfChannelsDaisy: obciNumberOfChannelsDaisy,
   OBCINumberOfChannelsDefault: obciNumberOfChannelsDefault,
   OBCINumberOfChannelsGanglion: obciNumberOfChannelsGanglion,
@@ -885,12 +893,16 @@ module.exports = {
   OBCIBoardDaisy: obciBoardDaisy,
   OBCIBoardDefault: obciBoardDefault,
   OBCIBoardGanglion: obciBoardGanglion,
+  OBCIBoardNone: obciBoardNone,
   numberOfChannelsForBoardType: boardType => {
     switch (boardType) {
       case obciBoardDaisy:
         return obciNumberOfChannelsDaisy;
       case obciBoardGanglion:
         return obciNumberOfChannelsGanglion;
+      case obciBoardNone:
+        return 0;
+      case obciBoardCyton:
       default:
         return obciNumberOfChannelsDefault;
     }
@@ -1165,7 +1177,11 @@ module.exports = {
   isPeripheralGanglion,
   commandSampleRateForCmdCyton,
   commandSampleRateForCmdGanglion,
-  commandBoardModeForMode
+  commandBoardModeForMode,
+  /** Protocols */
+  OBCIProtocolBLE: obciProtocolBLE,
+  OBCIProtocolSerial: obciProtocolSerial,
+  OBCIProtocolWifi: obciProtocolWifi
 };
 
 /**
@@ -1319,7 +1335,7 @@ function sampleRateSetter (boardType, sampleRate) {
     sampleRate = Math.floor(sampleRate);
 
     let func;
-    if (boardType === obciBoardCyton) {
+    if (boardType === obciBoardCyton || boardType === obciBoardDaisy) {
       func = commandSampleRateForCmdCyton;
     } else if (boardType === obciBoardGanglion) {
       func = commandSampleRateForCmdGanglion;
