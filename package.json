@@ -1,10 +1,11 @@
 {
   "name": "openbci-utilities",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "The official utility package of Node.js SDK for the OpenBCI Biosensor Boards.",
   "main": "index.js",
   "scripts": {
-    "test": "semistandard | snazzy && mocha test",
+    "test": "mocha test",
+    "test-lint": "semistandard | snazzy",
     "test-cov": "istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec && codecov"
   },
   "keywords": [

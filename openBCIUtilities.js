@@ -29,6 +29,17 @@ var utilitiesModule = {
    * @property {Buffer} rawDataPacket The raw data packet
    */
   /**
+   * @typedef {Object} RawDataToSample
+   * @property {Array} rawDataPackets - An array of rawDataPackets
+   * @property {Buffer} rawDataPacket - A single raw data packet
+   * @property {Array} channelSettings - The channel settings array
+   * @property {Number} timeOffset (optional) for non time stamp use cases i.e. 0xC0 or 0xC1 (default and raw aux)
+   * @property {Array} accelArray (optional) for non time stamp use cases
+   * @property {Boolean} verbose (optional) for verbose output
+   * @property {Number} lastSampleNumber (optional) - The last sample number
+   * @property {Boolean} scale (optional) Default `true`. A gain of 24 for Cyton will be used and 51 for ganglion by default.
+   */
+  /**
    * @description Used to extract samples out of a buffer of unknown length
    * @param dataBuffer {Buffer} - A buffer to parse for samples
    * @returns {ProcessedBuffer} - Object with parsed raw packets and remaining buffer. Calling function shall maintain
@@ -107,6 +118,7 @@ var utilitiesModule = {
     };
   },
 
+  transformRawDataPacketToSample,
   transformRawDataPacketsToSample,
   getRawPacketType,
   getFromTimePacketAccel,
@@ -879,69 +891,61 @@ function newSyncObject () {
 
 /**
  * @description Used transform raw data packets into fully qualified packets
- * @param o {Object}
- * @param o.rawDataPackets {Array} - An array of rawDataPackets
- * @param o.channelSettings {Array}
- * @param o.timeOffset {Number} (optional) for non time stamp use cases i.e. 0xC0 or 0xC1 (default and raw aux)
- * @param o.accelArray {Array} (optional) for non time stamp use cases
- * @param o.verbose {Boolean} (optional) for verbose output
- * @param o.scale {Boolean} (optional) Default `true`. A gain of 24 for Cyton will be used and 51 for ganglion by default.
+ * @param o {RawDataToSample} - Used to hold data and configuration settings
  * @return {Array} samples An array of {Sample}
  * @author AJ Keller (@pushtheworldllc)
  */
 function transformRawDataPacketsToSample (o) {
   let samples = [];
   for (let i = 0; i < o.rawDataPackets.length; i++) {
-    const rawDataPacket = o.rawDataPackets[i];
-    const packetType = getRawPacketType(rawDataPacket[k.OBCIPacketPositionStopByte]);
-    let sample;
-    try {
-      switch (packetType) {
-        case k.OBCIStreamPacketStandardAccel:
-          sample = utilitiesModule.parsePacketStandardAccel({
-            rawDataPacket,
-            channelSettings: o.channelSettings,
-            scale: o.scale
-          });
-          break;
-        case k.OBCIStreamPacketStandardRawAux:
-          sample = utilitiesModule.parsePacketStandardRawAux({
-            rawDataPacket,
-            channelSettings: o.channelSettings,
-            scale: o.scale
-          });
-          break;
-        case k.OBCIStreamPacketAccelTimeSyncSet:
-        case k.OBCIStreamPacketAccelTimeSynced:
-          sample = utilitiesModule.parsePacketTimeSyncedAccel({
-            rawDataPacket,
-            channelSettings: o.channelSettings,
-            timeOffset: o.timeOffset,
-            accelArray: o.accelArray
-          });
-          break;
-        case k.OBCIStreamPacketRawAuxTimeSyncSet:
-        case k.OBCIStreamPacketRawAuxTimeSynced:
-          sample = utilitiesModule.parsePacketTimeSyncedRawAux({
-            rawDataPacket,
-            channelSettings: o.channelSettings,
-            timeOffset: o.timeOffset
-          });
-          break;
-        default:
-          // Don't do anything if the packet is not defined
-          break;
-      }
-      samples.push(sample);
-    } catch (err) {
-      samples.push({
-        rawDataPacket
-      });
-      if (o.verbose) console.log(err);
+    o.rawDataPacket = o.rawDataPackets[i];
+    const sample = transformRawDataPacketToSample(o);
+    samples.push(sample);
+    if (sample.hasOwnProperty('sampleNumber')) {
+      o['lastSampleNumber'] = sample.sampleNumber;
+    } else {
+      o['lastSampleNumber'] = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
     }
   }
-
   return samples;
+}
+
+/**
+ * @description Used transform raw data packets into fully qualified packets
+ * @param o {RawDataToSample} - Used to hold data and configuration settings
+ * @return {Array} samples An array of {Sample}
+ * @author AJ Keller (@pushtheworldllc)
+ */
+function transformRawDataPacketToSample (o) {
+  const packetType = getRawPacketType(o.rawDataPacket[k.OBCIPacketPositionStopByte]);
+  let sample;
+  try {
+    switch (packetType) {
+      case k.OBCIStreamPacketStandardAccel:
+        sample = utilitiesModule.parsePacketStandardAccel(o);
+        break;
+      case k.OBCIStreamPacketStandardRawAux:
+        sample = utilitiesModule.parsePacketStandardRawAux(o);
+        break;
+      case k.OBCIStreamPacketAccelTimeSyncSet:
+      case k.OBCIStreamPacketAccelTimeSynced:
+        sample = utilitiesModule.parsePacketTimeSyncedAccel(o);
+        break;
+      case k.OBCIStreamPacketRawAuxTimeSyncSet:
+      case k.OBCIStreamPacketRawAuxTimeSynced:
+        sample = utilitiesModule.parsePacketTimeSyncedRawAux(o);
+        break;
+      default:
+        // Don't do anything if the packet is not defined
+        break;
+    }
+  } catch (err) {
+    sample = {
+      rawDataPacket: o.rawDataPacket
+    };
+    if (o.verbose) console.log(err);
+  }
+  return sample;
 }
 
 /**
@@ -952,6 +956,7 @@ function transformRawDataPacketsToSample (o) {
  *                  calling k.channelSettingsArrayInit(). The most important rule here is that it is
  *                  Array of objects that have key-value pair {gain:NUMBER}
  * @param o.scale {Boolean} - Do you want to scale the results? Default true
+ * @param o.lastSampleNumber {Number} - The last sample number
  * @returns {Sample} - A sample object. NOTE: Only has accelData if this is a Z axis packet.
  */
 function parsePacketStandardAccel (o) {
@@ -993,6 +998,7 @@ function parsePacketStandardAccel (o) {
  *                  calling k.channelSettingsArrayInit(). The most important rule here is that it is
  *                  Array of objects that have key-value pair {gain:NUMBER}
  * @param o.scale {Boolean} - Do you want to scale the results? Default is true
+ * @param o.lastSampleNumber {Number} - The last sample number
  * @returns {Sample} - A sample object. NOTE: Only has accelData if this is a Z axis packet.
  */
 function parsePacketStandardRawAux (o) {

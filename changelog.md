@@ -1,3 +1,18 @@
+# 0.0.7
+
+### Continuous Integration
+
+* Add `npm run test-lint` to add linting to travis.yml
+
+### Bug Fixes
+
+* Last sample number was confusing to use with `transformRawDataPacketsToSample`
+
+### New Features
+
+* In openBCIUtilities.js add function `transformRawDataPacketToSample` to parse a single raw data packet
+* In openBCIConstants.js add function `rawDataToSampleObjectDefault(numChannels)` which should be used by drivers to create the object that is passed through each call to `transformRawDataPacketsToSample` 
+
 # 0.0.6
 
 ### Bug Fixes

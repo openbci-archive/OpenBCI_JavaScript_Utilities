@@ -969,16 +969,16 @@ describe('OpenBCIConstants', function () {
   });
   describe('Board Types', function () {
     it('should get right name for chan daisy', function () {
-      expect(k.OBCIBoardDaisy).to.equal("daisy");
+      expect(k.OBCIBoardDaisy).to.equal('daisy');
     });
     it('should get right name for chan cyton', function () {
-      expect(k.OBCIBoardCyton).to.equal("cyton");
+      expect(k.OBCIBoardCyton).to.equal('cyton');
     });
     it('should get right name for chan ganglion', function () {
-      expect(k.OBCIBoardGanglion).to.equal("ganglion");
+      expect(k.OBCIBoardGanglion).to.equal('ganglion');
     });
     it('should get right name for chan none', function () {
-      expect(k.OBCIBoardNone).to.equal("none");
+      expect(k.OBCIBoardNone).to.equal('none');
     });
   });
   describe('numberOfChannelsForBoardTypes', function () {
