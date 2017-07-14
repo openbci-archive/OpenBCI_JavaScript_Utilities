@@ -486,11 +486,11 @@ const obciNobleEmitterStateChange = 'stateChange';
 const obciNobleStatePoweredOn = 'poweredOn';
 
 /** Protocols */
-const obciProtocolBLE = "ble";
-const obciProtocolSerial = "serial";
-const obciProtocolWifi = "wifi";
+const obciProtocolBLE = 'ble';
+const obciProtocolSerial = 'serial';
+const obciProtocolWifi = 'wifi';
 
-module.exports = {
+const constantsModule = {
   /** Turning channels off */
   OBCIChannelOff1: obciChannelOff1,
   OBCIChannelOff2: obciChannelOff2,
@@ -1178,11 +1178,13 @@ module.exports = {
   commandSampleRateForCmdCyton,
   commandSampleRateForCmdGanglion,
   commandBoardModeForMode,
+  rawDataToSampleObjectDefault,
   /** Protocols */
   OBCIProtocolBLE: obciProtocolBLE,
   OBCIProtocolSerial: obciProtocolSerial,
   OBCIProtocolWifi: obciProtocolWifi
 };
+module.exports = constantsModule;
 
 /**
 * @description To add a usability abstraction layer above channel setting commands. Due to the
@@ -1525,6 +1527,25 @@ function channelSettingsObjectDefault (channelNumber) {
     bias: true,
     srb2: true,
     srb1: false
+  };
+}
+
+/**
+ * @description RawDataToSample default object creation
+ * @param numChannels {Number} - The number of channels
+ * @returns {RawDataToSample} - A new object
+ */
+function rawDataToSampleObjectDefault (numChannels) {
+  if (_.isUndefined(numChannels)) numChannels = obciNumberOfChannelsDefault;
+  return {
+    accelArray: [0, 0, 0],
+    channelSettings: constantsModule.channelSettingsArrayInit(numChannels),
+    lastSampleNumber: 0,
+    rawDataPacket: Buffer.alloc(33),
+    rawDataPackets: [],
+    scale: true,
+    timeOffset: 0,
+    verbose: false
   };
 }
 

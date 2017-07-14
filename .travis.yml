@@ -7,4 +7,5 @@ node_js:
 install:
   - npm install --all
 script:
+  - npm run test-lint
   - npm run test-cov
