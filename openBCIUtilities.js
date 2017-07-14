@@ -917,9 +917,9 @@ function transformRawDataPacketsToSample (o) {
  * @author AJ Keller (@pushtheworldllc)
  */
 function transformRawDataPacketToSample (o) {
-  const packetType = getRawPacketType(o.rawDataPacket[k.OBCIPacketPositionStopByte]);
   let sample;
   try {
+    const packetType = getRawPacketType(o.rawDataPacket[k.OBCIPacketPositionStopByte]);
     switch (packetType) {
       case k.OBCIStreamPacketStandardAccel:
         sample = utilitiesModule.parsePacketStandardAccel(o);
@@ -937,13 +937,12 @@ function transformRawDataPacketToSample (o) {
         break;
       default:
         // Don't do anything if the packet is not defined
-        const msg = `bad stop byte ${o.rawDataPacket[k.OBCIPacketPositionStopByte].toString('hex')}`;
         sample = {
-          error: msg,
+          error: `bad stop byte ${o.rawDataPacket.slice(32,33).toString('hex')}`,
           valid: false,
           rawDataPacket: o.rawDataPacket
         };
-        if (o.verbose) console.log();
+        if (o.verbose) console.log(sample.error);
         break;
     }
   } catch (err) {

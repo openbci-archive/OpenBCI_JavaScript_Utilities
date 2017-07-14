@@ -2120,6 +2120,7 @@ describe('#transformRawDataPacketToSample', function () {
 
     // Call the function under test
     openBCIUtilities.transformRawDataPacketToSample({
+      channelSettings: defaultChannelSettingsArray,
       rawDataPacket: buffer
     });
 
@@ -2131,6 +2132,7 @@ describe('#transformRawDataPacketToSample', function () {
 
     // Call the function under test
     openBCIUtilities.transformRawDataPacketToSample({
+      channelSettings: defaultChannelSettingsArray,
       rawDataPacket: buffer
     });
 
@@ -2140,22 +2142,46 @@ describe('#transformRawDataPacketToSample', function () {
     expect(funcSpyTimeSyncedAccel).to.not.have.been.called();
     expect(funcSpyTimeSyncedRawAux).to.not.have.been.called();
   });
+  it('should throw err when no channel settings', function () {
+    var buffer = new Buffer(5).fill(0)
+
+    // Call the function under test
+    let sample = openBCIUtilities.transformRawDataPacketToSample({
+      rawDataPacket: buffer
+    });
+
+    expect(sample.valid).to.be.false();
+    expect(sample.error.message).to.equal(k.OBCIErrorInvalidByteLength);
+    expect(bufferEqual(buffer, sample.rawDataPacket)).to.be.true();
+  });
   it('should process a time sync set packet with accel', function () {
     var buffer = openBCIUtilities.samplePacketAccelTimeSyncSet();
 
     // Call the function under test
     openBCIUtilities.transformRawDataPacketToSample({
+      channelSettings: defaultChannelSettingsArray,
       rawDataPacket: buffer
     });
 
     // we should call to get a packet
     expect(funcSpyTimeSyncedAccel).to.have.been.calledOnce();
   });
+  it('should process bad one', function () {
+    var buffer = openBCIUtilities.samplePacketRawAuxTimeSyncSet(0);
+    buffer.writeUInt8(215, k.OBCIPacketPositionStopByte);
+
+    // Call the function under test
+    openBCIUtilities.transformRawDataPacketToSample({
+      channelSettings: defaultChannelSettingsArray,
+      rawDataPacket: buffer
+    });
+  });
   it('should process a time synced packet with accel', function () {
     var buffer = openBCIUtilities.samplePacketAccelTimeSynced(0);
 
     // Call the function under test
     openBCIUtilities.transformRawDataPacketToSample({
+      channelSettings: defaultChannelSettingsArray,
       rawDataPacket: buffer
     });
 
@@ -2167,6 +2193,7 @@ describe('#transformRawDataPacketToSample', function () {
 
     // Call the function under test
     openBCIUtilities.transformRawDataPacketToSample({
+      channelSettings: defaultChannelSettingsArray,
       rawDataPacket: buffer
     });
 
@@ -2177,6 +2204,7 @@ describe('#transformRawDataPacketToSample', function () {
 
     // Call the function under test
     openBCIUtilities.transformRawDataPacketToSample({
+      channelSettings: defaultChannelSettingsArray,
       rawDataPacket: buffer
     });
 
@@ -2191,6 +2219,7 @@ describe('#transformRawDataPacketToSample', function () {
 
     // Call the function under test
     openBCIUtilities.transformRawDataPacketToSample({
+      channelSettings: defaultChannelSettingsArray,
       rawDataPacket: buffer
     });
 
