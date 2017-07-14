@@ -917,6 +917,7 @@ describe('openBCIUtilities', function () {
   });
   describe('#makeDaisySampleObject', function () {
     let lowerSampleObject, upperSampleObject, daisySampleObject;
+    let lowerSampleObjectNoScale, upperSampleObjectNoScale, daisySampleObjectNoScale;
     before(() => {
       // Make the lower sample (channels 1-8)
       lowerSampleObject = openBCIUtilities.newSample(1);
@@ -930,37 +931,135 @@ describe('openBCIUtilities', function () {
       upperSampleObject.auxData = [3, 4, 5];
       upperSampleObject.timestamp = 8;
 
-      // Call the function under test
       daisySampleObject = openBCIUtilities.makeDaisySampleObject(lowerSampleObject, upperSampleObject);
+
+      // lowerSampleObjectNoScale = openBCIUtilities.newSample(1);
+      // lowerSampleObjectNoScale.channelDataCounts = [1, 2, 3, 4, 5, 6, 7, 8];
+      // lowerSampleObjectNoScale.auxData = [0, 1, 2];
+      // lowerSampleObjectNoScale.timestamp = 4;
+      // lowerSampleObjectNoScale.accelData = [0.5, -0.5, 1];
+      // // Make the upper sample (channels 9-16)
+      // upperSampleObjectNoScale = openBCIUtilities.newSample(2);
+      // upperSampleObjectNoScale.channelDataCounts = [9, 10, 11, 12, 13, 14, 15, 16];
+      // upperSampleObjectNoScale.auxData = [3, 4, 5];
+      // upperSampleObjectNoScale.timestamp = 8;
+      //
+      // // Call the function under test
+      // daisySampleObjectNoScale = openBCIUtilities.makeDaisySampleObject(lowerSampleObjectNoScale, upperSampleObjectNoScale);
     });
     it('should make a channelData array 16 elements long', function () {
       expect(daisySampleObject.channelData).to.have.length(k.OBCINumberOfChannelsDaisy);
+      // expect(daisySampleObjectNoScale.channelDataCounts).to.have.length(k.OBCINumberOfChannelsDaisy);
     });
     it('should make a channelData array with lower array in front of upper array', function () {
       for (let i = 0; i < 16; i++) {
         expect(daisySampleObject.channelData[i]).to.equal(i + 1);
+        // expect(daisySampleObjectNoScale.channelDataCounts[i]).to.equal(i + 1);
       }
     });
     it('should make the sample number equal to the second packet divided by two', function () {
       expect(daisySampleObject.sampleNumber).to.equal(upperSampleObject.sampleNumber / 2);
+      // expect(daisySampleObjectNoScale.sampleNumber).to.equal(upperSampleObject.sampleNumber / 2);
     });
     it('should put the aux packets in an object', function () {
       expect(daisySampleObject.auxData).to.have.property('lower');
       expect(daisySampleObject.auxData).to.have.property('upper');
+      // expect(daisySampleObjectNoScale.auxData).to.have.property('lower');
+      // expect(daisySampleObjectNoScale.auxData).to.have.property('upper');
     });
     it('should put the aux packets in an object in the right order', function () {
       for (let i = 0; i < 3; i++) {
         expect(daisySampleObject.auxData['lower'][i]).to.equal(i);
         expect(daisySampleObject.auxData['upper'][i]).to.equal(i + 3);
+        // expect(daisySampleObjectNoScale.auxData['lower'][i]).to.equal(i);
+        // expect(daisySampleObjectNoScale.auxData['upper'][i]).to.equal(i + 3);
       }
     });
     it('should average the two timestamps together', function () {
       let expectedAverage = (upperSampleObject.timestamp + lowerSampleObject.timestamp) / 2;
       expect(daisySampleObject.timestamp).to.equal(expectedAverage);
+      // expect(daisySampleObjectNoScale.timestamp).to.equal(expectedAverage);
     });
     it('should place the old timestamps in an object', function () {
       expect(daisySampleObject._timestamps.lower).to.equal(lowerSampleObject.timestamp);
       expect(daisySampleObject._timestamps.upper).to.equal(upperSampleObject.timestamp);
+      // expect(upperSampleObjectNoScale._timestamps.lower).to.equal(upperSampleObjectNoScale.timestamp);
+      // expect(upperSampleObjectNoScale._timestamps.upper).to.equal(upperSampleObjectNoScale.timestamp);
+    });
+    it('should store an accelerometer value if present', function () {
+      expect(daisySampleObject).to.have.property('accelData');
+    });
+  });
+
+  describe('#makeDaisySampleObjectWifi', function () {
+    let lowerSampleObject, upperSampleObject, daisySampleObject;
+    let lowerSampleObjectNoScale, upperSampleObjectNoScale, daisySampleObjectNoScale;
+    before(() => {
+      // Make the lower sample (channels 1-8)
+      lowerSampleObject = openBCIUtilities.newSample(1);
+      lowerSampleObject.channelData = [1, 2, 3, 4, 5, 6, 7, 8];
+      lowerSampleObject.auxData = [0, 1, 2];
+      lowerSampleObject.timestamp = 4;
+      lowerSampleObject.accelData = [0.5, -0.5, 1];
+      // Make the upper sample (channels 9-16)
+      upperSampleObject = openBCIUtilities.newSample(2);
+      upperSampleObject.channelData = [9, 10, 11, 12, 13, 14, 15, 16];
+      upperSampleObject.auxData = [3, 4, 5];
+      upperSampleObject.timestamp = 8;
+
+      daisySampleObject = openBCIUtilities.makeDaisySampleObjectWifi(lowerSampleObject, upperSampleObject);
+
+      lowerSampleObjectNoScale = openBCIUtilities.newSample(1);
+      lowerSampleObjectNoScale.channelDataCounts = [1, 2, 3, 4, 5, 6, 7, 8];
+      lowerSampleObjectNoScale.auxData = [0, 1, 2];
+      lowerSampleObjectNoScale.timestamp = 4;
+      lowerSampleObjectNoScale.accelData = [0.5, -0.5, 1];
+      // Make the upper sample (channels 9-16)
+      upperSampleObjectNoScale = openBCIUtilities.newSample(2);
+      upperSampleObjectNoScale.channelDataCounts = [9, 10, 11, 12, 13, 14, 15, 16];
+      upperSampleObjectNoScale.auxData = [3, 4, 5];
+      upperSampleObjectNoScale.timestamp = 8;
+
+      // Call the function under test
+      daisySampleObjectNoScale = openBCIUtilities.makeDaisySampleObjectWifi(lowerSampleObjectNoScale, upperSampleObjectNoScale);
+    });
+    it('should make a channelData array 16 elements long', function () {
+      expect(daisySampleObject.channelData).to.have.length(k.OBCINumberOfChannelsDaisy);
+      expect(daisySampleObjectNoScale.channelDataCounts).to.have.length(k.OBCINumberOfChannelsDaisy);
+    });
+    it('should make a channelData array with lower array in front of upper array', function () {
+      for (let i = 0; i < 16; i++) {
+        expect(daisySampleObject.channelData[i]).to.equal(i + 1);
+        expect(daisySampleObjectNoScale.channelDataCounts[i]).to.equal(i + 1);
+      }
+    });
+    it('should make the sample number equal to the second packet divided by two', function () {
+      expect(daisySampleObject.sampleNumber).to.equal(upperSampleObject.sampleNumber);
+      expect(daisySampleObjectNoScale.sampleNumber).to.equal(upperSampleObject.sampleNumber);
+    });
+    it('should put the aux packets in an object', function () {
+      expect(daisySampleObject.auxData).to.have.property('lower');
+      expect(daisySampleObject.auxData).to.have.property('upper');
+      expect(daisySampleObjectNoScale.auxData).to.have.property('lower');
+      expect(daisySampleObjectNoScale.auxData).to.have.property('upper');
+    });
+    it('should put the aux packets in an object in the right order', function () {
+      for (let i = 0; i < 3; i++) {
+        expect(daisySampleObject.auxData['lower'][i]).to.equal(i);
+        expect(daisySampleObject.auxData['upper'][i]).to.equal(i + 3);
+        expect(daisySampleObjectNoScale.auxData['lower'][i]).to.equal(i);
+        expect(daisySampleObjectNoScale.auxData['upper'][i]).to.equal(i + 3);
+      }
+    });
+    it('should take the lower timestamp', function () {
+      expect(daisySampleObject.timestamp).to.equal(lowerSampleObject.timestamp);
+      expect(daisySampleObjectNoScale.timestamp).to.equal(lowerSampleObject.timestamp);
+    });
+    it('should place the old timestamps in an object', function () {
+      expect(daisySampleObject._timestamps.lower).to.equal(lowerSampleObject.timestamp);
+      expect(daisySampleObject._timestamps.upper).to.equal(upperSampleObject.timestamp);
+      expect(daisySampleObjectNoScale._timestamps.lower).to.equal(lowerSampleObjectNoScale.timestamp);
+      expect(daisySampleObjectNoScale._timestamps.upper).to.equal(upperSampleObjectNoScale.timestamp);
     });
     it('should store an accelerometer value if present', function () {
       expect(daisySampleObject).to.have.property('accelData');

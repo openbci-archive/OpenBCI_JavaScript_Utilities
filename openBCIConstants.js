@@ -239,6 +239,7 @@ const obciBoardCyton = 'cyton';
 const obciBoardDaisy = 'daisy';
 const obciBoardDefault = 'default';
 const obciBoardGanglion = 'ganglion';
+const obciBoardNone = 'none';
 
 /** Possible Simulator Line Noise injections */
 const obciSimulatorLineNoiseHz60 = '60Hz';
@@ -885,12 +886,16 @@ module.exports = {
   OBCIBoardDaisy: obciBoardDaisy,
   OBCIBoardDefault: obciBoardDefault,
   OBCIBoardGanglion: obciBoardGanglion,
+  OBCIBoardNone: obciBoardNone,
   numberOfChannelsForBoardType: boardType => {
     switch (boardType) {
       case obciBoardDaisy:
         return obciNumberOfChannelsDaisy;
       case obciBoardGanglion:
         return obciNumberOfChannelsGanglion;
+      case obciBoardNone:
+        return 0;
+      case obciBoardCyton:
       default:
         return obciNumberOfChannelsDefault;
     }

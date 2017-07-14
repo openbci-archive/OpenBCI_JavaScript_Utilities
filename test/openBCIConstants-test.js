@@ -967,6 +967,34 @@ describe('OpenBCIConstants', function () {
       expect(k.OBCIRadioPollTimeMin).to.be.equal(0);
     });
   });
+  describe('Board Types', function () {
+    it('should get right name for chan daisy', function () {
+      expect(k.OBCIBoardDaisy).to.equal("daisy");
+    });
+    it('should get right name for chan cyton', function () {
+      expect(k.OBCIBoardCyton).to.equal("cyton");
+    });
+    it('should get right name for chan ganglion', function () {
+      expect(k.OBCIBoardGanglion).to.equal("ganglion");
+    });
+    it('should get right name for chan none', function () {
+      expect(k.OBCIBoardNone).to.equal("none");
+    });
+  });
+  describe('numberOfChannelsForBoardTypes', function () {
+    it('should get right num chan for daisy board', function () {
+      expect(k.numberOfChannelsForBoardType(k.OBCIBoardDaisy)).to.equal(16);
+    });
+    it('should get right num chan for cyton board', function () {
+      expect(k.numberOfChannelsForBoardType(k.OBCIBoardCyton)).to.equal(8);
+    });
+    it('should get right num chan for ganglion', function () {
+      expect(k.numberOfChannelsForBoardType(k.OBCIBoardGanglion)).to.equal(4);
+    });
+    it('should get right num chan for none', function () {
+      expect(k.numberOfChannelsForBoardType(k.OBCIBoardNone)).to.equal(0);
+    });
+  });
   describe('#getChannelSetter', function () {
     // 'channel 1, power on, gain 24, inputType normal, bias include, srb2 connect, srb1 dissconnect'
     describe('channel input selection works', function () {

@@ -4,6 +4,10 @@
 
 * Could not use 'daisy' with sample rate setter.
 
+### New Features
+
+* Add function in utilities for making daisy packets.
+
 
 # 0.0.5
 
