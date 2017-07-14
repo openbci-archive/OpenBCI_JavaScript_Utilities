@@ -938,7 +938,7 @@ function transformRawDataPacketToSample (o) {
       default:
         // Don't do anything if the packet is not defined
         sample = {
-          error: `bad stop byte ${o.rawDataPacket.slice(32,33).toString('hex')}`,
+          error: `bad stop byte ${o.rawDataPacket.slice(32, 33).toString('hex')}`,
           valid: false,
           rawDataPacket: o.rawDataPacket
         };

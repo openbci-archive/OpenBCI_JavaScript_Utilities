@@ -2143,7 +2143,7 @@ describe('#transformRawDataPacketToSample', function () {
     expect(funcSpyTimeSyncedRawAux).to.not.have.been.called();
   });
   it('should throw err when no channel settings', function () {
-    var buffer = new Buffer(5).fill(0)
+    var buffer = new Buffer(5).fill(0);
 
     // Call the function under test
     let sample = openBCIUtilities.transformRawDataPacketToSample({
