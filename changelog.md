@@ -1,3 +1,10 @@
+# 0.0.6
+
+### Bug Fixes
+
+* Could not use 'daisy' with sample rate setter.
+
+
 # 0.0.5
 
 ### Bug Fixes

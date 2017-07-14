@@ -1587,8 +1587,17 @@ describe('OpenBCIConstants', function () {
         done(err);
       });
     });
+    it('Works for daisy', function (done) {
+      k.getSampleRateSetter('daisy', 1000).then(function (arrayOfCommands) {
+        arrayOfCommands[0].should.equal('~');
+        arrayOfCommands[1].should.equal('4');
+        done();
+      }).catch(function (err) {
+        done(err);
+      });
+    });
     it('Invalid board type', function (done) {
-      k.getSampleRateSetter('daisy', 1600).should.be.rejected.and.notify(done);
+      k.getSampleRateSetter('taco', 1600).should.be.rejected.and.notify(done);
     });
     it('Invalid board type type', function (done) {
       k.getSampleRateSetter(10, 1600).should.be.rejected.and.notify(done);

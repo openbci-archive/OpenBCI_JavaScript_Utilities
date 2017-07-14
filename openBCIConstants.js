@@ -1319,7 +1319,7 @@ function sampleRateSetter (boardType, sampleRate) {
     sampleRate = Math.floor(sampleRate);
 
     let func;
-    if (boardType === obciBoardCyton) {
+    if (boardType === obciBoardCyton || boardType === obciBoardDaisy) {
       func = commandSampleRateForCmdCyton;
     } else if (boardType === obciBoardGanglion) {
       func = commandSampleRateForCmdGanglion;
