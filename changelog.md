@@ -7,7 +7,12 @@
 ### New Features
 
 * Add function in utilities for making daisy packets.
+* Add code to `getChannelDataArray` for ganglion and daisy data being routed over wifi
+* Create idea of protocols i.e. `BLE`, `Wifi`, and `Serial`
 
+### Breaking changes
+
+* `getChannelDataArray` now takes object as only arg.
 
 # 0.0.5
 

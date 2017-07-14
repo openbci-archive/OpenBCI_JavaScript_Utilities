@@ -41,14 +41,14 @@ describe('openBCIUtilities', function () {
   describe('#parsePacketStandardAccel', function () {
     it('should return the packet', function () {
       expect(openBCIUtilities.parsePacketStandardAccel({
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: sampleBuf,
         scale: true
       })).to.not.equal(null);
     });
     it('should have the correct sample number', function () {
       let sample = openBCIUtilities.parsePacketStandardAccel({
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: sampleBuf,
         scale: true
       });
@@ -58,7 +58,7 @@ describe('openBCIUtilities', function () {
     it('all the channels should have the same number value as their (index + 1) * scaleFactor', function () {
       // sampleBuf has its channel number for each 3 byte integer. See line 20...
       let sample = openBCIUtilities.parsePacketStandardAccel({
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: sampleBuf,
         scale: true
       });
@@ -74,7 +74,7 @@ describe('openBCIUtilities', function () {
     it('all the channels should have the same number value as their (index + 1)', function () {
       // sampleBuf has its channel number for each 3 byte integer. See line 20...
       let sample = openBCIUtilities.parsePacketStandardAccel({
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: sampleBuf,
         scale: false
       });
@@ -88,7 +88,7 @@ describe('openBCIUtilities', function () {
     });
     it('all the auxs should have the same number value as their index * scaleFactor', function () {
       let sample = openBCIUtilities.parsePacketStandardAccel({
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: sampleBuf,
         scale: true
       });
@@ -103,7 +103,7 @@ describe('openBCIUtilities', function () {
       let taco = new Buffer([0x81]);
       taco.copy(temp, 2);
       let sample = openBCIUtilities.parsePacketStandardAccel({
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: temp,
         scale: true
       });
@@ -114,7 +114,7 @@ describe('openBCIUtilities', function () {
       let taco = new Buffer([0x81]);
       taco.copy(temp, 26);
       let sample = openBCIUtilities.parsePacketStandardAccel({
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: temp,
         scale: true
       });
@@ -130,7 +130,7 @@ describe('openBCIUtilities', function () {
         let taco = new Buffer([i]);
         taco.copy(temp, 2);
         let sample = openBCIUtilities.parsePacketStandardAccel({
-          gains: defaultChannelSettingsArray,
+          channelSettings: defaultChannelSettingsArray,
           rawDataPacket: temp,
           scale: true
         });
@@ -141,7 +141,7 @@ describe('openBCIUtilities', function () {
     it('has the right sample number', function () {
       let expectedSampleNumber = 0x45;
       let sample = openBCIUtilities.parsePacketStandardAccel({
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: sampleBuf,
         scale: true
       });
@@ -149,7 +149,7 @@ describe('openBCIUtilities', function () {
     });
     it('has the right stop byte', function () {
       let sample = openBCIUtilities.parsePacketStandardAccel({
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: sampleBuf,
         scale: true
       });
@@ -157,7 +157,7 @@ describe('openBCIUtilities', function () {
     });
     it('has the right start byte', function () {
       let sample = openBCIUtilities.parsePacketStandardAccel({
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: sampleBuf,
         scale: true
       });
@@ -195,7 +195,7 @@ describe('openBCIUtilities', function () {
 
       let sample = openBCIUtilities.parsePacketStandardRawAux({
         rawDataPacket: packet,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         scale: true
       });
       expect(Buffer.isBuffer(sample.auxData)).to.be.true();
@@ -207,7 +207,7 @@ describe('openBCIUtilities', function () {
 
       let sample = openBCIUtilities.parsePacketStandardRawAux({
         rawDataPacket: packet,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         scale: true
       });
       for (let i = 0; i < 6; i++) {
@@ -218,7 +218,7 @@ describe('openBCIUtilities', function () {
       packet = openBCIUtilities.samplePacketStandardRawAux(0);
       let sample = openBCIUtilities.parsePacketStandardRawAux({
         rawDataPacket: packet,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         scale: true
       });
       sample.channelData.forEach((channelValue, index) => {
@@ -229,7 +229,7 @@ describe('openBCIUtilities', function () {
       packet = openBCIUtilities.samplePacketStandardRawAux(0);
       let sample = openBCIUtilities.parsePacketStandardRawAux({
         rawDataPacket: packet,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         scale: false
       });
       sample.channelDataCounts.forEach((channelValue, index) => {
@@ -241,7 +241,7 @@ describe('openBCIUtilities', function () {
       packet = openBCIUtilities.samplePacketStandardRawAux(expectedSampleNumber);
       let sample = openBCIUtilities.parsePacketStandardRawAux({
         rawDataPacket: packet,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         scale: true
       });
       expect(sample.sampleNumber).to.equal(expectedSampleNumber);
@@ -250,7 +250,7 @@ describe('openBCIUtilities', function () {
       packet = openBCIUtilities.samplePacketStandardRawAux(0);
       let sample = openBCIUtilities.parsePacketStandardRawAux({
         rawDataPacket: packet,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         scale: true
       });
       expect(sample.stopByte).to.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketStandardRawAux));
@@ -259,7 +259,7 @@ describe('openBCIUtilities', function () {
       packet = openBCIUtilities.samplePacketStandardRawAux(0);
       let sample = openBCIUtilities.parsePacketStandardRawAux({
         rawDataPacket: packet,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         scale: true
       });
       expect(sample.startByte).to.equal(0xA0);
@@ -344,7 +344,7 @@ describe('openBCIUtilities', function () {
 
       let sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet1,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         timeOffset: 0,
         accelArray
       });
@@ -352,7 +352,7 @@ describe('openBCIUtilities', function () {
 
       sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet2,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         timeOffset: 0,
         accelArray
       });
@@ -360,7 +360,7 @@ describe('openBCIUtilities', function () {
 
       sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet3,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         timeOffset: 0,
         accelArray
       });
@@ -377,19 +377,19 @@ describe('openBCIUtilities', function () {
 
       let sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet1,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         timeOffset: 0,
         accelArray
       });
       sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet2,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         timeOffset: 0,
         accelArray
       });
       sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet3,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         timeOffset: 0,
         accelArray
       });
@@ -401,7 +401,7 @@ describe('openBCIUtilities', function () {
       packet1 = openBCIUtilities.samplePacketAccelTimeSynced(0);
       let sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet1,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         timeOffset: 0,
         scale: true,
         accelArray
@@ -414,7 +414,7 @@ describe('openBCIUtilities', function () {
       packet1 = openBCIUtilities.samplePacketAccelTimeSynced(0);
       let sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet1,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         timeOffset: 0,
         scale: false,
         accelArray
@@ -428,7 +428,7 @@ describe('openBCIUtilities', function () {
       packet1 = openBCIUtilities.samplePacketAccelTimeSynced(expectedSampleNumber);
       let sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet1,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         timeOffset: 0,
         accelArray
       }); // sampleBuf has its channel number for each 3 byte integer. See line 20...
@@ -438,7 +438,7 @@ describe('openBCIUtilities', function () {
       packet1 = openBCIUtilities.samplePacketAccelTimeSynced(0);
       let sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet1,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         timeOffset: 0,
         accelArray
       }); // sampleBuf has its channel number for each 3 byte integer. See line 20...
@@ -448,7 +448,7 @@ describe('openBCIUtilities', function () {
       packet1 = openBCIUtilities.samplePacketAccelTimeSynced(0);
       let sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packet1,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         timeOffset: 0,
         accelArray
       }); // sampleBuf has its channel number for each 3 byte integer. See line 20...
@@ -458,7 +458,7 @@ describe('openBCIUtilities', function () {
       it('wrong number of bytes', function () {
         expect(openBCIUtilities.parsePacketTimeSyncedAccel.bind(openBCIUtilities, {
           rawDataPacket: new Buffer(5),
-          gains: defaultChannelSettingsArray,
+          channelSettings: defaultChannelSettingsArray,
           timeOffset: 0,
           accelArray
         })).to.throw(k.OBCIErrorInvalidByteLength);
@@ -488,7 +488,7 @@ describe('openBCIUtilities', function () {
 
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
         rawDataPacket: packet,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         timeOffset: 0
       });
       expect(sample).to.have.property('auxData');
@@ -501,7 +501,7 @@ describe('openBCIUtilities', function () {
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
         rawDataPacket: packet,
         timeOffset: 0,
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         scale: true
       });
       sample.channelData.forEach((channelValue, index) => {
@@ -523,7 +523,7 @@ describe('openBCIUtilities', function () {
       let expectedSampleNumber = 69;
       packet = openBCIUtilities.samplePacketRawAuxTimeSynced(expectedSampleNumber);
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: packet,
         timeOffset: 0
       });
@@ -532,7 +532,7 @@ describe('openBCIUtilities', function () {
     it('has the right stop byte', function () {
       packet = openBCIUtilities.samplePacketRawAuxTimeSynced(0);
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: packet,
         timeOffset: 0
       });
@@ -541,7 +541,7 @@ describe('openBCIUtilities', function () {
     it('has the right start byte', function () {
       packet = openBCIUtilities.samplePacketRawAuxTimeSynced(0);
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
-        gains: defaultChannelSettingsArray,
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: packet,
         timeOffset: 0
       });
@@ -550,7 +550,7 @@ describe('openBCIUtilities', function () {
     describe('#errorConditions', function () {
       it('wrong number of bytes', function () {
         expect(openBCIUtilities.parsePacketTimeSyncedRawAux.bind(openBCIUtilities, {
-          gains: defaultChannelSettingsArray,
+          channelSettings: defaultChannelSettingsArray,
           rawDataPacket: new Buffer(5),
           timeOffset: 0
         })).to.throw(k.OBCIErrorInvalidByteLength);
@@ -578,7 +578,7 @@ describe('openBCIUtilities', function () {
     it('should convert channel data to binary', function () {
       let sample = openBCIUtilities.parsePacketStandardAccel({
         rawDataPacket: packetBuffer,
-        gains: defaultChannelSettingsArray
+        channelSettings: defaultChannelSettingsArray
       });
       for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
         expect(sample.channelData[i]).to.be.approximately(newSample.channelData[i], 0.001);
@@ -587,7 +587,7 @@ describe('openBCIUtilities', function () {
     it('should convert aux data to binary', function () {
       let sample = openBCIUtilities.parsePacketStandardAccel({
         rawDataPacket: packetBuffer,
-        gains: defaultChannelSettingsArray
+        channelSettings: defaultChannelSettingsArray
       });
       for (let i = 0; i < 3; i++) {
         expect(sample.accelData[i]).to.be.approximately(newSample.auxData[i], 0.001);
@@ -618,7 +618,7 @@ describe('openBCIUtilities', function () {
     it('should convert channel data to binary', function () {
       let sample = openBCIUtilities.parsePacketStandardRawAux({
         rawDataPacket: packetBuffer,
-        gains: defaultChannelSettingsArray
+        channelSettings: defaultChannelSettingsArray
       });
       for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
         expect(sample.channelData[i]).to.be.approximately(newSample.channelData[i], 0.001);
@@ -627,7 +627,7 @@ describe('openBCIUtilities', function () {
     it('should get raw aux buffer', function () {
       let sample = openBCIUtilities.parsePacketStandardRawAux({
         rawDataPacket: packetBuffer,
-        gains: defaultChannelSettingsArray
+        channelSettings: defaultChannelSettingsArray
       });
       expect(sample.auxData).to.exist();
       expect(bufferEqual(rawBuffer, sample.auxData)).to.be.true();
@@ -663,7 +663,7 @@ describe('openBCIUtilities', function () {
     it('should convert channel data to binary', function () {
       let sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packetBuffer,
-        gains: channelSettingsArray,
+        channelSettings: channelSettingsArray,
         timeOffset: 0,
         accelArray
       });
@@ -674,7 +674,7 @@ describe('openBCIUtilities', function () {
     it('should get board time', function () {
       let sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packetBuffer,
-        gains: channelSettingsArray,
+        channelSettings: channelSettingsArray,
         timeOffset: 0,
         accelArray
       });
@@ -685,7 +685,7 @@ describe('openBCIUtilities', function () {
       let timeOffset = 80;
       let sample = openBCIUtilities.parsePacketTimeSyncedAccel({
         rawDataPacket: packetBuffer,
-        gains: channelSettingsArray,
+        channelSettings: channelSettingsArray,
         timeOffset: timeOffset,
         accelArray
       });
@@ -724,7 +724,7 @@ describe('openBCIUtilities', function () {
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
         rawDataPacket: packetBuffer,
         timeOffset: 0,
-        gains: channelSettingsArray
+        channelSettings: channelSettingsArray
       });
       for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
         expect(sample.channelData[i]).to.be.approximately(newSample.channelData[i], 0.001);
@@ -1086,69 +1086,48 @@ describe('openBCIUtilities', function () {
     beforeEach(() => {
       sampleBuf = openBCIUtilities.samplePacket(0);
     });
-    it('should multiply each channel by the proper scale value', function () {
-      let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDefault); // Not in daisy mode
-      let scaleFactor = 4.5 / 24 / (Math.pow(2, 23) - 1);
-      // Call the function under test
-      let valueArray = openBCIUtilities.getChannelDataArray(sampleBuf, chanArr);
-      for (let j = 0; j < k.OBCINumberOfChannelsDefault; j++) {
-        console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`);
-        expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
-      }
-    });
-    it('in daisy mode, on odd samples should use gains from index 0-7 of channel settings array', function () {
-      // Overwrite the default
-      sampleBuf = openBCIUtilities.samplePacket(1); // even's are the daisy channels
-      // Make a 16 element long channel settings array
-      let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
-      // Set the upper (8-15) of channel settings array. If the function under test uses the 1 gain, then the test
-      //  will fail.
-      for (let i = k.OBCINumberOfChannelsDefault; i < k.OBCINumberOfChannelsDaisy; i++) {
-        chanArr[i].gain = 1;
-      }
-      let scaleFactor = 4.5 / 24 / (Math.pow(2, 23) - 1);
-      // Call the function under test
-      let valueArray = openBCIUtilities.getChannelDataArray(sampleBuf, chanArr);
-      for (let j = 0; j < k.OBCINumberOfChannelsDefault; j++) {
-        // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`)
-        expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
-      }
-    });
-    it('in daisy mode, on even samples should use gains from index 8-15 of channel settings array', function () {
-      // Overwrite the default
-      sampleBuf = openBCIUtilities.samplePacket(2); // even's are the daisy channels
-      // Make a 16 element long channel settings array
-      let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
-      // Set the lower (0-7) of channel settings array. If the function under test uses the 1 gain, then the test
-      //  will fail.
-      for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
-        chanArr[i].gain = 1;
-      }
-      // gain here is 24, the same as in the channel settings array
-      let scaleFactor = 4.5 / 24 / (Math.pow(2, 23) - 1);
-      // Call the function under test
-      let valueArray = openBCIUtilities.getChannelDataArray(sampleBuf, chanArr);
-      for (let j = 0; j < k.OBCINumberOfChannelsDefault; j++) {
-        // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`)
-        expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
-      }
+    it('should reject when channelSettingsArray is not in fact an array', function () {
+      expect(openBCIUtilities.getChannelDataArray.bind(openBCIUtilities, {
+        rawDataPacket: sampleBuf,
+        channelSettings: {},
+        protocol: k.OBCIProtocolSerial
+      })).to.throw('Error [getChannelDataArray]: Channel Settings must be an array!');
     });
     it('in default mode, should reject when empty channel setting array', function () {
       badChanArray = new Array(k.OBCINumberOfChannelsDefault).fill(0);
-      expect(openBCIUtilities.getChannelDataArray.bind(openBCIUtilities, sampleBuf, badChanArray)).to.throw('Error [getChannelDataArray]: Invalid channel settings object at index 0');
+      expect(openBCIUtilities.getChannelDataArray.bind(openBCIUtilities, {
+        rawDataPacket: sampleBuf,
+        channelSettings: badChanArray,
+        protocol: k.OBCIProtocolWifi
+      })).to.throw('Error [getChannelDataArray]: Invalid channel settings object at index 0');
+    });
+    it('should reject when unsupported protocol', function () {
+      expect(openBCIUtilities.getChannelDataArray.bind(openBCIUtilities, {
+        rawDataPacket: sampleBuf,
+        channelSettings: k.channelSettingsArrayInit(k.OBCINumberOfChannelsDefault),
+        protocol: 'taco'
+      })).to.throw('Error [getChannelDataArray]: Invalid protocol must be wifi or serial');
     });
     it('in daisy mode, should reject when empty channel setting array', function () {
       badChanArray = new Array(k.OBCINumberOfChannelsDaisy).fill(0);
-      expect(openBCIUtilities.getChannelDataArray.bind(openBCIUtilities, sampleBuf, badChanArray)).to.throw('Error [getChannelDataArray]: Invalid channel settings object at index 0');
+      expect(openBCIUtilities.getChannelDataArray.bind(openBCIUtilities, {
+        rawDataPacket: sampleBuf,
+        channelSettings: badChanArray,
+        protocol: k.OBCIProtocolWifi
+      })).to.throw('Error [getChannelDataArray]: Invalid channel settings object at index 0');
     });
-    it('in default mode, should reject if not numbers in gain position', function () {
+    it('in cyton mode, should reject if not numbers in gain position', function () {
       badChanArray = [];
       for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
         badChanArray.push({
           gain: 'taco'
         });
       }
-      expect(openBCIUtilities.getChannelDataArray.bind(openBCIUtilities, sampleBuf, badChanArray)).to.throw('Error [getChannelDataArray]: Property gain of channelSettingsObject not or type Number');
+      expect(openBCIUtilities.getChannelDataArray.bind(openBCIUtilities, {
+        rawDataPacket: sampleBuf,
+        channelSettings: badChanArray,
+        protocol: k.OBCIProtocolWifi
+      })).to.throw('Error [getChannelDataArray]: Property gain of channelSettingsObject not or type Number');
     });
     it('in daisy mode, should reject if not numbers in gain position', function () {
       badChanArray = [];
@@ -1157,10 +1136,153 @@ describe('openBCIUtilities', function () {
           gain: 'taco'
         });
       }
-      expect(openBCIUtilities.getChannelDataArray.bind(openBCIUtilities, sampleBuf, badChanArray)).to.throw('Error [getChannelDataArray]: Property gain of channelSettingsObject not or type Number');
+      expect(openBCIUtilities.getChannelDataArray.bind(openBCIUtilities, {
+        rawDataPacket: sampleBuf,
+        channelSettings: badChanArray,
+        protocol: k.OBCIProtocolWifi
+      })).to.throw('Error [getChannelDataArray]: Property gain of channelSettingsObject not or type Number');
     });
-    it('should reject when channelSettingsArray is not in fact an array', function () {
-      expect(openBCIUtilities.getChannelDataArray.bind(openBCIUtilities, sampleBuf, {})).to.throw('Error [getChannelDataArray]: Channel Settings must be an array!');
+    describe('Serial', function () {
+      it('should multiply each channel by the proper scale value', function () {
+        let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDefault); // Not in daisy mode
+        let scaleFactor = 4.5 / 24 / (Math.pow(2, 23) - 1);
+        // Call the function under test
+        let valueArray = openBCIUtilities.getChannelDataArray({
+          rawDataPacket: sampleBuf,
+          channelSettings: chanArr,
+          protocol: k.OBCIProtocolSerial
+        });
+        for (let j = 0; j < k.OBCINumberOfChannelsDefault; j++) {
+          // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`);
+          expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
+        }
+      });
+      it('in daisy mode, on odd samples should use gains from index 0-7 of channel settings array', function () {
+        // Overwrite the default
+        sampleBuf = openBCIUtilities.samplePacket(1); // even's are the daisy channels
+        // Make a 16 element long channel settings array
+        let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
+        // Set the upper (8-15) of channel settings array. If the function under test uses the 1 gain, then the test
+        //  will fail.
+        for (let i = k.OBCINumberOfChannelsDefault; i < k.OBCINumberOfChannelsDaisy; i++) {
+          chanArr[i].gain = 1;
+        }
+        let scaleFactor = 4.5 / 24 / (Math.pow(2, 23) - 1);
+        // Call the function under test
+        let valueArray = openBCIUtilities.getChannelDataArray({
+          rawDataPacket: sampleBuf,
+          channelSettings: chanArr,
+          protocol: k.OBCIProtocolSerial
+        });
+        for (let j = 0; j < k.OBCINumberOfChannelsDefault; j++) {
+          // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`)
+          expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
+        }
+      });
+      it('in daisy mode, on even samples should use gains from index 8-15 of channel settings array', function () {
+        // Overwrite the default
+        sampleBuf = openBCIUtilities.samplePacket(2); // even's are the daisy channels
+        // Make a 16 element long channel settings array
+        let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
+        // Set the lower (0-7) of channel settings array. If the function under test uses the 1 gain, then the test
+        //  will fail.
+        for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
+          chanArr[i].gain = 1;
+        }
+        // gain here is 24, the same as in the channel settings array
+        let scaleFactor = 4.5 / 24 / (Math.pow(2, 23) - 1);
+        // Call the function under test
+        let valueArray = openBCIUtilities.getChannelDataArray({
+          rawDataPacket: sampleBuf,
+          channelSettings: chanArr,
+          protocol: k.OBCIProtocolSerial
+        });
+        for (let j = 0; j < k.OBCINumberOfChannelsDefault; j++) {
+          // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`)
+          expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
+        }
+      });
+    });
+    describe('Wifi', function () {
+      it('should multiply each channel by the ganglion scale value when num chan is 4', function () {
+        let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsGanglion); // Not in daisy mode
+        let scaleFactor = 1.2 / 51.0 / (Math.pow(2, 23) - 1);
+        // Call the function under test
+        let valueArray = openBCIUtilities.getChannelDataArray({
+          rawDataPacket: sampleBuf,
+          channelSettings: chanArr,
+          protocol: k.OBCIProtocolWifi
+        });
+        for (let j = 0; j < k.OBCINumberOfChannelsGanglion; j++) {
+          // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`);
+          expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
+        }
+      });
+      it('should multiply each channel by the cyton scale value when num chan is 8', function () {
+        let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDefault); // Not in daisy mode
+        let scaleFactor = 4.5 / 24 / (Math.pow(2, 23) - 1);
+        // Call the function under test
+        let valueArray = openBCIUtilities.getChannelDataArray({
+          rawDataPacket: sampleBuf,
+          channelSettings: chanArr,
+          protocol: k.OBCIProtocolWifi
+        });
+        for (let j = 0; j < k.OBCINumberOfChannelsDefault; j++) {
+          // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`);
+          expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
+        }
+      });
+      it('in daisy mode, when last sample num not equal to cur sample num should use gains from index 0-7 of channel settings array', function () {
+        // Overwrite the default
+        const lastSampleNumber = 0;
+        const curSampleNumber = lastSampleNumber + 1;
+        sampleBuf = openBCIUtilities.samplePacket(curSampleNumber);
+        // Make a 16 element long channel settings array
+        let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
+        // Set the upper (8-15) of channel settings array. If the function under test uses the 1 gain, then the test
+        //  will fail.
+        for (let i = k.OBCINumberOfChannelsDefault; i < k.OBCINumberOfChannelsDaisy; i++) {
+          chanArr[i].gain = 1;
+        }
+        let scaleFactor = 4.5 / 24 / (Math.pow(2, 23) - 1);
+        // Call the function under test
+        let valueArray = openBCIUtilities.getChannelDataArray({
+          rawDataPacket: sampleBuf,
+          channelSettings: chanArr,
+          protocol: k.OBCIProtocolWifi,
+          lastSampleNumber
+        });
+        for (let j = 0; j < k.OBCINumberOfChannelsDefault; j++) {
+          // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`)
+          expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
+        }
+      });
+      it('in daisy mode, when last sample number is equal to cur sample number should use gains from index 8-15 of channel settings array', function () {
+        // Overwrite the default
+        const lastSampleNumber = 1;
+        const curSampleNumber = lastSampleNumber;
+        sampleBuf = openBCIUtilities.samplePacket(curSampleNumber);
+        // Make a 16 element long channel settings array
+        let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
+        // Set the lower (0-7) of channel settings array. If the function under test uses the 1 gain, then the test
+        //  will fail.
+        for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
+          chanArr[i].gain = 1;
+        }
+        // gain here is 24, the same as in the channel settings array
+        let scaleFactor = 4.5 / 24 / (Math.pow(2, 23) - 1);
+        // Call the function under test
+        let valueArray = openBCIUtilities.getChannelDataArray({
+          rawDataPacket: sampleBuf,
+          channelSettings: chanArr,
+          protocol: k.OBCIProtocolWifi,
+          lastSampleNumber
+        });
+        for (let j = 0; j < k.OBCINumberOfChannelsDefault; j++) {
+          // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`)
+          expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
+        }
+      });
     });
   });
   describe('#countADSPresent', function () {
@@ -1913,7 +2035,7 @@ describe('#transformRawDataPacketsToSamples', function () {
     // Call the function under test
     const samples = openBCIUtilities.transformRawDataPacketsToSample({
       rawDataPackets: [buffer],
-      gains: defaultChannelSettingsArray
+      channelSettings: defaultChannelSettingsArray
     });
 
     // Ensure that we extracted only one buffer
@@ -1929,7 +2051,7 @@ describe('#transformRawDataPacketsToSamples', function () {
         openBCIUtilities.samplePacket(1),
         openBCIUtilities.samplePacket(2)
       ],
-      gains: defaultChannelSettingsArray
+      channelSettings: defaultChannelSettingsArray
     });
 
     // Ensure that we extracted only one buffer

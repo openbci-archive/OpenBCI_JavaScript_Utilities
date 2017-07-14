@@ -966,7 +966,7 @@ function parsePacketStandardAccel (o) {
   sampleObject.accelData = getDataArrayAccel(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
 
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
-  if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.channelSettings);
+  if (o.scale) sampleObject.channelData = getChannelDataArray(o);
   else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
 
   if (k.getVersionNumber(process.version) >= 6) {
@@ -1075,7 +1075,7 @@ function parsePacketTimeSyncedAccel (o) {
   }
 
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
-  if (o.scale) sampleObject.channelData = getChannelDataArray(o.rawDataPacket, o.channelSettings);
+  if (o.scale) sampleObject.channelData = getChannelDataArray(o);
   else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
 
   return sampleObject;
@@ -1228,13 +1228,21 @@ function getChannelDataArray (o) {
   if (!Array.isArray(o.channelSettings)) {
     throw new Error('Error [getChannelDataArray]: Channel Settings must be an array!');
   }
-  var channelData = [];
+  if (o.hasOwnProperty('protocol')) {
+    if (o.protocol !== k.OBCIProtocolSerial && o.protocol !== k.OBCIProtocolWifi) {
+      throw new Error(`Error [getChannelDataArray]: Invalid protocol must be ${k.OBCIProtocolWifi} or ${k.OBCIProtocolSerial}`);
+    }
+  } else {
+    o.protocol = k.OBCIProtocolSerial;
+  }
+  let channelData = [];
   // Grab the sample number from the buffer
-  var sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
-  var daisy = o.channelSettings.length === k.OBCINumberOfChannelsDaisy;
-
+  const numChannels = o.channelSettings.length;
+  const sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
+  const daisy = numChannels === k.OBCINumberOfChannelsDaisy;
+  const channelsInPacket = numChannels > k.OBCINumberOfChannelsGanglion ? k.OBCINumberOfChannelsDefault : k.OBCINumberOfChannelsGanglion;
   // Channel data arrays are always 8 long
-  for (var i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
+  for (let i = 0; i < channelsInPacket; i++) {
     if (!o.channelSettings[i].hasOwnProperty('gain')) {
       throw new Error(`Error [getChannelDataArray]: Invalid channel settings object at index ${i}`);
     }
