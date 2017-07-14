@@ -1,3 +1,9 @@
+# 0.0.8
+
+### New Features
+
+* Sample object now has property `valid` of type `boolean`, `false` when error parseing packet, `true` otherwise. On `false` there will be another property called `error` of type `string` which contains an error message.
+
 # 0.0.7
 
 ### Continuous Integration

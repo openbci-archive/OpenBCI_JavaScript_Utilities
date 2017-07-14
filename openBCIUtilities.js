@@ -937,10 +937,19 @@ function transformRawDataPacketToSample (o) {
         break;
       default:
         // Don't do anything if the packet is not defined
+        const msg = `bad stop byte ${o.rawDataPacket[k.OBCIPacketPositionStopByte].toString('hex')}`;
+        sample = {
+          error: msg,
+          valid: false,
+          rawDataPacket: o.rawDataPacket
+        };
+        if (o.verbose) console.log();
         break;
     }
   } catch (err) {
     sample = {
+      error: err,
+      valid: false,
       rawDataPacket: o.rawDataPacket
     };
     if (o.verbose) console.log(err);
@@ -987,6 +996,8 @@ function parsePacketStandardAccel (o) {
   // Get the stop byte
   sampleObject.stopByte = o.rawDataPacket[k.OBCIPacketPositionStopByte];
 
+  sampleObject.valid = true;
+
   return sampleObject;
 }
 
@@ -1029,6 +1040,8 @@ function parsePacketStandardRawAux (o) {
   sampleObject.startByte = o.rawDataPacket[0];
   // Get the stop byte
   sampleObject.stopByte = o.rawDataPacket[k.OBCIPacketPositionStopByte];
+
+  sampleObject.valid = true;
 
   return sampleObject;
 }
@@ -1084,6 +1097,8 @@ function parsePacketTimeSyncedAccel (o) {
   if (o.scale) sampleObject.channelData = getChannelDataArray(o);
   else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
 
+  sampleObject.valid = true;
+
   return sampleObject;
 }
 
@@ -1130,6 +1145,8 @@ function parsePacketTimeSyncedRawAux (o) {
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
   if (o.scale) sampleObject.channelData = getChannelDataArray(o);
   else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
+
+  sampleObject.valid = true;
 
   return sampleObject;
 }
