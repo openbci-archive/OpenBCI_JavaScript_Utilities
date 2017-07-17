@@ -3,13 +3,16 @@ const bluebirdChecks = require('./bluebirdChecks');
 const bufferEqual = require('buffer-equal');
 const chai = require('chai');
 const chaiAsPromised = require(`chai-as-promised`);
+const dirtyChai = require('dirty-chai');
 const expect = chai.expect;
 const should = chai.should(); // eslint-disable-line no-unused-vars
 const OpenBCISimulator = require('../openBCISimulator');
 const openBCIUtilities = require('../openBCIUtilities');
 const k = require('../openBCIConstants');
+const Buffer = require('safe-buffer').Buffer;
 
 chai.use(chaiAsPromised);
+chai.use(dirtyChai);
 
 describe('openBCISimulator', function () {
   this.timeout(4000);
@@ -28,17 +31,17 @@ describe('openBCISimulator', function () {
     });
     it('constructs with the correct default options', function () {
       simulator = new OpenBCISimulator();
-      expect(simulator.options.accel).to.be.true;
-      expect(simulator.options.alpha).to.be.true;
-      expect(simulator.options.boardFailure).to.be.false;
-      expect(simulator.options.daisy).to.be.false;
-      expect(simulator.options.daisyCanBeAttached).to.be.true;
+      expect(simulator.options.accel).to.be.true();
+      expect(simulator.options.alpha).to.be.true();
+      expect(simulator.options.boardFailure).to.be.false();
+      expect(simulator.options.daisy).to.be.false();
+      expect(simulator.options.daisyCanBeAttached).to.be.true();
       expect(simulator.options.drift).to.equal(0);
       expect(simulator.options.firmwareVersion).to.equal(k.OBCIFirmwareV1);
       expect(simulator.options.lineNoise).to.equal(k.OBCISimulatorLineNoiseHz60);
       expect(simulator.options.sampleRate).to.equal(k.OBCISampleRate250);
-      expect(simulator.options.serialPortFailure).to.be.false;
-      expect(simulator.options.verbose).to.be.false;
+      expect(simulator.options.serialPortFailure).to.be.false();
+      expect(simulator.options.verbose).to.be.false();
       expect(simulator.options.fragmentation).to.equal(k.OBCISimulatorFragmentationNone);
       expect(simulator.options.latencyTime).to.equal(16);
       expect(simulator.options.bufferSize).to.equal(4096);
@@ -47,7 +50,7 @@ describe('openBCISimulator', function () {
       simulator = new OpenBCISimulator(portName, {
         daisy: true
       });
-      expect(simulator.options.daisy).to.be.true;
+      expect(simulator.options.daisy).to.be.true();
     });
     it('should set the correct sample rate in daisy mode, if no sampleRate is provided', function () {
       simulator = new OpenBCISimulator(portName, {
@@ -60,7 +63,7 @@ describe('openBCISimulator', function () {
         daisy: true,
         sampleRate: 20
       });
-      expect(simulator.options.daisy).to.be.true;
+      expect(simulator.options.daisy).to.be.true();
       expect(simulator.options.sampleRate).to.equal(20);
     });
     it('should be able to put into firmware version 2', function () {
@@ -73,13 +76,13 @@ describe('openBCISimulator', function () {
       simulator = new OpenBCISimulator(portName, {
         boardFailure: true
       });
-      expect(simulator.options.boardFailure).to.be.true;
+      expect(simulator.options.boardFailure).to.be.true();
     });
     it('should be able to simulate serial port failure', function () {
       simulator = new OpenBCISimulator(portName, {
         serialPortFailure: true
       });
-      expect(simulator.options.serialPortFailure).to.be.true;
+      expect(simulator.options.serialPortFailure).to.be.true();
     });
     it('can turn 50Hz line noise on', function () {
       simulator = new OpenBCISimulator(portName, {
@@ -97,13 +100,13 @@ describe('openBCISimulator', function () {
       simulator = new OpenBCISimulator(portName, {
         alpha: false
       });
-      expect(simulator.options.alpha).to.be.false;
+      expect(simulator.options.alpha).to.be.false();
     });
     it('should be able to not use the accel', function () {
       simulator = new OpenBCISimulator(portName, {
         accel: false
       });
-      expect(simulator.options.accel).to.be.false;
+      expect(simulator.options.accel).to.be.false();
     });
     it('should be able to set positive drift', function () {
       simulator = new OpenBCISimulator(portName, {
@@ -197,7 +200,7 @@ describe('openBCISimulator', function () {
           // Now this data should be the time sync up packet
           expect(data[k.OBCIPacketPositionStopByte]).to.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketAccelTimeSyncSet));
           // Expect flag to be down
-          expect(simulator.sendSyncSetPacket).to.be.false;
+          expect(simulator.sendSyncSetPacket).to.be.false();
         } else if (sampleCounter >= sampleTestSize) {
           simulator.write(k.OBCIStreamStop);
           simulator.removeListener('data', newDataFunc);
@@ -230,7 +233,7 @@ describe('openBCISimulator', function () {
           // Now this data should be the time sync up packet
           expect(data[k.OBCIPacketPositionStopByte]).to.equal(openBCIUtilities.makeTailByteFromPacketType(k.OBCIStreamPacketRawAuxTimeSyncSet));
           // Expect flag to be down
-          expect(simulator.sendSyncSetPacket).to.be.false;
+          expect(simulator.sendSyncSetPacket).to.be.false();
         } else if (sampleCounter >= sampleTestSize) {
           simulator.write(k.OBCIStreamStop);
           simulator.removeListener('data', newDataFunc);
@@ -355,8 +358,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false();
               expect(buf[buf.length - 4]).to.equal(0);
               simulator.removeListener('data', dataEmit);
               done();
@@ -375,8 +378,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true();
               expect(buf[buf.length - 4]).to.equal(9);
               simulator.removeListener('data', dataEmit);
               done();
@@ -395,8 +398,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false();
               expect(buf[buf.length - 4]).to.equal(newChanNum);
               expect(simulator.channelNumber).to.equal(newChanNum);
               expect(simulator.hostChannelNumber).to.equal(newChanNum);
@@ -415,8 +418,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true();
               simulator.removeListener('data', dataEmit);
               done();
             }
@@ -433,8 +436,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true();
               simulator.removeListener('data', dataEmit);
               done();
             }
@@ -453,10 +456,10 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false();
               expect(buf[buf.length - 4]).to.equal(newHostChannelNumber);
-              expect(simulator.options.boardFailure).to.be.true;
+              expect(simulator.options.boardFailure).to.be.true();
               expect(simulator.channelNumber).to.equal(systemChannelNumber);
               expect(simulator.hostChannelNumber).to.equal(newHostChannelNumber);
               simulator.removeListener('data', dataEmit);
@@ -477,10 +480,10 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false();
               expect(buf[buf.length - 4]).to.equal(systemChannelNumber);
-              expect(simulator.options.boardFailure).to.be.false;
+              expect(simulator.options.boardFailure).to.be.false();
               expect(simulator.channelNumber).to.equal(systemChannelNumber);
               expect(simulator.hostChannelNumber).to.equal(systemChannelNumber);
               simulator.removeListener('data', dataEmit);
@@ -498,8 +501,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true();
               simulator.removeListener('data', dataEmit);
               done();
             }
@@ -518,8 +521,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false();
               expect(buf[buf.length - 4]).to.equal(expectedPollTime);
               simulator.removeListener('data', dataEmit);
               done();
@@ -537,8 +540,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true();
               simulator.removeListener('data', dataEmit);
               done();
             }
@@ -556,8 +559,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false();
               expect(buf[buf.length - 4]).to.equal(newPollTime);
               simulator.removeListener('data', dataEmit);
               done();
@@ -575,8 +578,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true();
               simulator.removeListener('data', dataEmit);
               done();
             }
@@ -592,8 +595,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false();
               var eotBuf = new Buffer('$$$');
               var newBaudRateBuf;
               for (var i = buf.length; i > 3; i--) {
@@ -620,8 +623,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false();
               simulator.removeListener('data', dataEmit);
               done();
             }
@@ -638,8 +641,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false();
               var eotBuf = new Buffer(`$$$`);
               var newBaudRateBuf;
               for (var i = buf.length; i > 3; i--) {
@@ -666,8 +669,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false();
               simulator.removeListener('data', dataEmit);
               done();
             }
@@ -684,8 +687,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.true();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.false();
               simulator.removeListener('data', dataEmit);
               done();
             }
@@ -702,8 +705,8 @@ describe('openBCISimulator', function () {
           var dataEmit = data => {
             buf = Buffer.concat([buf, data]);
             if (openBCIUtilities.doesBufferHaveEOT(buf)) {
-              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false;
-              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true;
+              expect(openBCIUtilities.isSuccessInBuffer(buf)).to.be.false();
+              expect(openBCIUtilities.isFailureInBuffer(buf)).to.be.true();
               simulator.removeListener('data', dataEmit);
               done();
             }
@@ -803,7 +806,7 @@ describe('openBCISimulator', function () {
     });
     it(`should emit the time sync sent command`, function (done) {
       simulator.once('data', data => {
-        expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(data)).to.be.true;
+        expect(openBCIUtilities.isTimeSyncSetConfirmationInBuffer(data)).to.be.true();
         done();
       });
       simulator.write(k.OBCISyncTimeSet, (err, msg) => {
@@ -815,7 +818,7 @@ describe('openBCISimulator', function () {
     it(`should set synced to true`, function (done) {
       simulator.synced = false;
       var newData = data => {
-        expect(simulator.synced).to.be.true;
+        expect(simulator.synced).to.be.true();
         simulator.removeListener('data', newData);
         done();
       };

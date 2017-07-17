@@ -12,6 +12,7 @@
     "openbci",
     "openbci-node",
     "ganglion",
+    "wifi",
     "cyton",
     "utilities"
   ],

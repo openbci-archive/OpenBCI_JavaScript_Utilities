@@ -1,13 +1,14 @@
 'use strict';
-var EventEmitter = require('events').EventEmitter;
-var util = require('util');
-var stream = require('stream');
+const EventEmitter = require('events').EventEmitter;
+const util = require('util');
+const stream = require('stream');
 
-var openBCISample = require('./openBCIUtilities');
-var k = require('./openBCIConstants');
-var now = require('performance-now');
+const openBCISample = require('./openBCIUtilities');
+const k = require('./openBCIConstants');
+const now = require('performance-now');
+const Buffer = require('safe-buffer').Buffer;
 
-var _options = {
+const _options = {
   accel: true,
   alpha: true,
   boardFailure: false,
@@ -25,7 +26,7 @@ var _options = {
 };
 
 function OpenBCISimulator (portName, options) {
-  options = (typeof options !== 'function') && options || {};
+  options = options || {};
   var opts = {};
 
   stream.Stream.call(this);
@@ -186,7 +187,8 @@ OpenBCISimulator.prototype._output = function (dataBuffer) {
 
 OpenBCISimulator.prototype.write = function (data, callback) {
   if (!this.connected) {
-    if (callback) callback('Not connected');
+    /* istanbul ignore else */
+    if (callback) callback(Error('Not connected'));
     else throw new Error('Not connected!');
     return;
   }
@@ -298,7 +300,7 @@ OpenBCISimulator.prototype.close = function (callback) {
     this.emit('close');
     if (callback) callback();
   } else {
-    if (callback) callback('not connected');
+    if (callback) callback(Error('Not connected'));
   }
 };
 
