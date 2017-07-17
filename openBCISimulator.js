@@ -25,7 +25,10 @@ const _options = {
   verbose: false
 };
 
-function OpenBCISimulator (portName, options) {
+function Simulator (portName, options) {
+  if (!(this instanceof Simulator)) {
+    return new Simulator(portName, options);
+  }
   options = options || {};
   var opts = {};
 
@@ -97,10 +100,9 @@ function OpenBCISimulator (portName, options) {
 }
 
 // This allows us to use the emitter class freely outside of the module
-// TODO: upgrade from old-style streams to stream.Duplex or stream.Transform
-util.inherits(OpenBCISimulator, stream.Stream);
+util.inherits(Simulator, EventEmitter);
 
-OpenBCISimulator.prototype.flush = function (callback) {
+Simulator.prototype.flush = function (callback) {
   this.outputBuffered = 0;
 
   clearTimeout(this.outputLoopHandle);
@@ -109,12 +111,12 @@ OpenBCISimulator.prototype.flush = function (callback) {
   if (callback) callback();
 };
 
-OpenBCISimulator.prototype.isOpen = function () {
+Simulator.prototype.isOpen = function () {
   return this.connected;
 };
 
 // output only size bytes of the output buffer
-OpenBCISimulator.prototype._partialDrain = function (size) {
+Simulator.prototype._partialDrain = function (size) {
   if (!this.connected) throw new Error('not connected');
 
   if (size > this.outputBuffered) size = this.outputBuffered;
@@ -129,7 +131,7 @@ OpenBCISimulator.prototype._partialDrain = function (size) {
 };
 
 // queue some data for output and send it out depending on options.fragmentation
-OpenBCISimulator.prototype._output = function (dataBuffer) {
+Simulator.prototype._output = function (dataBuffer) {
   // drain full buffers until there is no overflow
   while (this.outputBuffered + dataBuffer.length > this.outputBuffer.length) {
     var len = dataBuffer.copy(this.outputBuffer, this.outputBuffered);
@@ -185,7 +187,7 @@ OpenBCISimulator.prototype._output = function (dataBuffer) {
   }
 };
 
-OpenBCISimulator.prototype.write = function (data, callback) {
+Simulator.prototype.write = function (data, callback) {
   if (!this.connected) {
     /* istanbul ignore else */
     if (callback) callback(Error('Not connected'));
@@ -286,11 +288,11 @@ OpenBCISimulator.prototype.write = function (data, callback) {
   }
 };
 
-OpenBCISimulator.prototype.drain = function (callback) {
+Simulator.prototype.drain = function (callback) {
   if (callback) callback();
 };
 
-OpenBCISimulator.prototype.close = function (callback) {
+Simulator.prototype.close = function (callback) {
   if (this.connected) {
     this.flush();
 
@@ -304,7 +306,7 @@ OpenBCISimulator.prototype.close = function (callback) {
   }
 };
 
-OpenBCISimulator.prototype._startStream = function () {
+Simulator.prototype._startStream = function () {
   var intervalInMS = 1000 / this.options.sampleRate;
 
   if (intervalInMS < 2) intervalInMS = 2;
@@ -341,31 +343,31 @@ OpenBCISimulator.prototype._startStream = function () {
   }, intervalInMS);
 };
 
-OpenBCISimulator.prototype._syncUp = function () {
+Simulator.prototype._syncUp = function () {
   setTimeout(() => {
     this.sendSyncSetPacket = true;
   }, 12); // 3 packets later
 };
 
-OpenBCISimulator.prototype._printEOT = function () {
+Simulator.prototype._printEOT = function () {
   this._output(new Buffer('$$$'));
 };
 
-OpenBCISimulator.prototype._printFailure = function () {
+Simulator.prototype._printFailure = function () {
   this._output(new Buffer('Failure: '));
 };
 
-OpenBCISimulator.prototype._printSuccess = function () {
+Simulator.prototype._printSuccess = function () {
   this._output(new Buffer('Success: '));
 };
 
-OpenBCISimulator.prototype._printValidatedCommsTimeout = function () {
+Simulator.prototype._printValidatedCommsTimeout = function () {
   this._printFailure();
   this._output(new Buffer('Communications timeout - Device failed to poll Host'));
   this._printEOT();
 };
 
-OpenBCISimulator.prototype._processPrivateRadioMessage = function (dataBuffer) {
+Simulator.prototype._processPrivateRadioMessage = function (dataBuffer) {
   switch (dataBuffer[1]) {
     case k.OBCIRadioCmdChannelGet:
       if (this.options.firmwareVersion === k.OBCIFirmwareV2) {
@@ -479,6 +481,4 @@ OpenBCISimulator.prototype._processPrivateRadioMessage = function (dataBuffer) {
   }
 };
 
-util.inherits(OpenBCISimulator, EventEmitter);
-
-module.exports = OpenBCISimulator;
+module.exports = Simulator;
