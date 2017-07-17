@@ -476,6 +476,54 @@ var utilitiesModule = {
     };
   },
   scaleFactorAux: SCALE_FACTOR_ACCEL,
+  /**
+   * Calculate the impedance
+   * @param sample {Object} - Standard sample
+   * @param impedanceTest {Object} - Impedance Object from openBCIBoard.js
+   * @return {null | Object} - Null if not enough samples have passed to calculate an accurate
+   */
+  impedanceCalculateArray: (sample, impedanceTest) => {
+    impedanceTest.buffer.push(sample.channelData);
+    impedanceTest.count++;
+
+    if (impedanceTest.count >= impedanceTest.window) {
+      let output = [];
+      for (let i = 0; i < sample.channelData.length; i++) {
+        let max = 0.0; // sumSquared
+        for (let j = 0; j < impedanceTest.window; j++) {
+          if (impedanceTest.buffer[i][j] > max) {
+            max = impedanceTest.buffer[i][j];
+          }
+        }
+        let min = 0.0;
+        for (let j = 0; j < impedanceTest.window; j++) {
+          if (impedanceTest.buffer[i][j] < min) {
+            min = impedanceTest.buffer[i][j];
+          }
+        }
+        const vP2P = max - min; // peak to peak
+
+        output.push(vP2P / 2 / k.OBCILeadOffDriveInAmps);
+      }
+      impedanceTest.count = 0;
+      return output;
+    }
+    return null;
+  },
+  impedanceTestObjDefault: (impedanceTestObj) => {
+    let newObj = impedanceTestObj || {};
+    newObj['active'] = false;
+    newObj['buffer'] = [];
+    newObj['count'] = 0;
+    newObj['isTestingPInput'] = false;
+    newObj['isTestingNInput'] = false;
+    newObj['onChannel'] = 0;
+    newObj['sampleNumber'] = 0;
+    newObj['continuousMode'] = false;
+    newObj['impedanceForChannel'] = 0;
+    newObj['window'] = 40;
+    return newObj;
+  },
   samplePacket: sampleNumber => {
     return new Buffer([0xA0, sampleNumberNormalize(sampleNumber), 0, 0, 1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0, 5, 0, 0, 6, 0, 0, 7, 0, 0, 8, 0, 0, 0, 1, 0, 2, makeTailByteFromPacketType(k.OBCIStreamPacketStandardAccel)]);
   },

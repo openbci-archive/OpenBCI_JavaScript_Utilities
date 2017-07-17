@@ -1625,6 +1625,45 @@ $$$`);
       expect(openBCIUtilities.stripToEOTBuffer(totalBuf)).to.equal(null);
     });
   });
+  describe('#impedanceTestObjDefault', function () {
+    it('should give a new impedance object', function () {
+      const expectedImpedanceObj = {
+        active: false,
+        buffer: [],
+        count: 0,
+        isTestingPInput: false,
+        isTestingNInput: false,
+        onChannel: 0,
+        sampleNumber: 0,
+        continuousMode: false,
+        impedanceForChannel: 0,
+        window: 40
+      };
+      expect(openBCIUtilities.impedanceTestObjDefault()).to.deep.equal(expectedImpedanceObj);
+    });
+  });
+  describe('#impedanceCalculateArray', function () {
+    const numberOfChannels = k.OBCINumberOfChannelsDefault;
+    const newRandomSample = openBCIUtilities.randomSample(numberOfChannels, k.OBCISampleRate250, false, 'none');
+
+    afterEach(() => bluebirdChecks.noPendingPromises());
+
+    it('should not produce an array of impedances till window', function () {
+      const impTestObj = openBCIUtilities.impedanceTestObjDefault();
+      for (let i = 0; i < impTestObj.window - 1; i++) {
+        expect(openBCIUtilities.impedanceCalculateArray(newRandomSample(i), impTestObj)).to.equal(null);
+      }
+      expect(impTestObj.buffer.length).to.equal(impTestObj.window - 1);
+    });
+    it('should produce and array of impedances at window', function () {
+      const impTestObj = openBCIUtilities.impedanceTestObjDefault();
+      let impedanceArray = null;
+      for (let i = 0; i < impTestObj.window; i++) {
+        impedanceArray = openBCIUtilities.impedanceCalculateArray(newRandomSample(i), impTestObj);
+      }
+      expect(impedanceArray.length).to.equal(numberOfChannels);
+    });
+  });
 });
 
 describe('openBCIGanglionUtils', function () {
