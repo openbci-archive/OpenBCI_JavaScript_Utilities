@@ -3,6 +3,7 @@
 ### New Features
 
 * Add impedance calculation functions from cyton
+* The simulator from OpenBCI_NodeJS has been ripped out and place into this library! Woo.
 
 # 0.0.8
 
