@@ -556,6 +556,7 @@ var utilitiesModule = {
   countADSPresent,
   doesBufferHaveEOT,
   findV2Firmware,
+  getMajorFirmwareVersion,
   isFailureInBuffer,
   isSuccessInBuffer,
   isTimeSyncSetConfirmationInBuffer,
@@ -1618,6 +1619,13 @@ function findV2Firmware (dataBuffer) {
 
   // Check and see if there is a match
   return s.matches >= 1;
+}
+
+function getMajorFirmwareVersion (dataBuffer) {
+  const regexPattern = /v\d/;
+  const ret = dataBuffer.toString().match(regexPattern);
+  if (ret) return ret[0];
+  else return ret;
 }
 
 /**

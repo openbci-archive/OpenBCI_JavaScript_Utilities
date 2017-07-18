@@ -1,3 +1,9 @@
+# 0.0.11
+
+### New Functions
+
+* Add functions to help determine the board firmware version
+
 # 0.0.10
 
 ### New Function
