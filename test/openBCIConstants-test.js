@@ -995,6 +995,20 @@ describe('OpenBCIConstants', function () {
       expect(k.numberOfChannelsForBoardType(k.OBCIBoardNone)).to.equal(0);
     });
   });
+  describe('boardTypeForNumberOfChannels', function () {
+    it('should get daisy board right for num chan', function () {
+      expect(k.boardTypeForNumberOfChannels(16)).to.equal(k.OBCIBoardDaisy);
+    });
+    it('should get cyton board right for num chan', function () {
+      expect(k.boardTypeForNumberOfChannels(8)).to.equal(k.OBCIBoardCyton);
+    });
+    it('should get ganglion right for num chan', function () {
+      expect(k.boardTypeForNumberOfChannels(4)).to.equal(k.OBCIBoardGanglion);
+    });
+    it('should get none right for num chan', function () {
+      expect(k.boardTypeForNumberOfChannels(0)).to.equal(k.OBCIBoardNone);
+    });
+  });
   describe('#getChannelSetter', function () {
     // 'channel 1, power on, gain 24, inputType normal, bias include, srb2 connect, srb1 dissconnect'
     describe('channel input selection works', function () {

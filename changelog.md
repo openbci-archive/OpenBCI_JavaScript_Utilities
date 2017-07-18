@@ -1,3 +1,9 @@
+# 0.0.10
+
+### New Function
+
+* Add `boardTypeForNumberOfChannels()` to Constants
+
 # 0.0.9
 
 ### New Features

@@ -907,6 +907,19 @@ const constantsModule = {
         return obciNumberOfChannelsDefault;
     }
   },
+  boardTypeForNumberOfChannels: (numberOfChannels) => {
+    switch (numberOfChannels) {
+      case obciNumberOfChannelsDaisy:
+        return obciBoardDaisy;
+      case obciNumberOfChannelsGanglion:
+        return obciBoardGanglion;
+      case 0:
+        return obciBoardNone;
+      case obciNumberOfChannelsDefault:
+      default:
+        return obciBoardCyton;
+    }
+  },
   /** Possible Sample Rates */
   OBCISampleRate1000: obciSampleRate1000,
   OBCISampleRate125: obciSampleRate125,
