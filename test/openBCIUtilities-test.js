@@ -1328,14 +1328,14 @@ $$$`);
     it('should not find any v2', function () {
       let buf = new Buffer('AJ Keller is an awesome programmer!\n I know right!');
 
-      expect(openBCIUtilities.getFirmware(buf)).to.equal(null)
+      expect(openBCIUtilities.getFirmware(buf)).to.equal(null);
     });
     it('should not find a v2', function () {
       let buf = new Buffer(`OpenBCI V3 Simulator
 On Board ADS1299 Device ID: 0x12345
 LIS3DH Device ID: 0x38422$$$`);
 
-      expect(openBCIUtilities.getFirmware(buf)).to.equal(null)
+      expect(openBCIUtilities.getFirmware(buf)).to.equal(null);
     });
     it('should find a v2', function () {
       let buf = new Buffer(`OpenBCI V3 Simulator
