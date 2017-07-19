@@ -1,8 +1,12 @@
-# 0.0.11
+# 0.1.0
 
 ### New Functions
 
-* Add functions to help determine the board firmware version
+* Add function `getFirmware(dataBuffer)` to utilities 
+
+### Breaking Changes
+
+* Removed function called `findV2Firmware()` because it's useless with v3.0.0 firmware
 
 # 0.0.10
 

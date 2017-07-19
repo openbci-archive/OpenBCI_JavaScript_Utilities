@@ -555,8 +555,7 @@ var utilitiesModule = {
   isOdd,
   countADSPresent,
   doesBufferHaveEOT,
-  findV2Firmware,
-  getMajorFirmwareVersion,
+  getFirmware,
   isFailureInBuffer,
   isSuccessInBuffer,
   isTimeSyncSetConfirmationInBuffer,
@@ -1604,28 +1603,21 @@ function doesBufferHaveEOT (dataBuffer) {
 }
 
 /**
-* @description Used to parse a soft reset response to determine if the board is running the v2 firmware
-* @param dataBuffer {Buffer} - The data to parse
-* @returns {boolean} - True if `v2`is indeed found in the `dataBuffer`
-*/
-function findV2Firmware (dataBuffer) {
-  const s = new StreamSearch(new Buffer(k.OBCIParseFirmware));
-
-  // Clear the buffer
-  s.reset();
-
-  // Push the new data buffer. This runs the search.
-  s.push(dataBuffer);
-
-  // Check and see if there is a match
-  return s.matches >= 1;
-}
-
-function getMajorFirmwareVersion (dataBuffer) {
-  const regexPattern = /v\d/;
+ * Used to extract the major version from
+ * @param dataBuffer
+ * @return {*}
+ */
+function getFirmware (dataBuffer) {
+  const regexPattern = /v\d.\d.\d/;
   const ret = dataBuffer.toString().match(regexPattern);
-  if (ret) return ret[0];
-  else return ret;
+  if (ret) {
+    const elems = ret[0].split('.');
+    return {
+      major: Number(elems[0][1]),
+      minor: Number(elems[1]),
+      patch: Number(elems[2])
+    };
+  } else return ret;
 }
 
 /**
