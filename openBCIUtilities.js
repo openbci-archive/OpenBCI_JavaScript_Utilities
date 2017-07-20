@@ -1468,7 +1468,13 @@ function floatTo2ByteBuffer (float) {
 function makeDaisySampleObject (lowerSampleObject, upperSampleObject) {
   var daisySampleObject = {};
 
-  daisySampleObject['channelData'] = lowerSampleObject.channelData.concat(upperSampleObject.channelData);
+  if (lowerSampleObject.hasOwnProperty('channelData')) {
+    daisySampleObject['channelData'] = lowerSampleObject.channelData.concat(upperSampleObject.channelData);
+  }
+
+  if (lowerSampleObject.hasOwnProperty('channelDataCounts')) {
+    daisySampleObject['channelDataCounts'] = lowerSampleObject.channelDataCounts.concat(upperSampleObject.channelDataCounts);
+  }
 
   daisySampleObject['sampleNumber'] = Math.floor(upperSampleObject.sampleNumber / 2);
 
