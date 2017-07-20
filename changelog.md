@@ -1,3 +1,11 @@
+# 0.1.2
+
+### Bug Fixes
+
+* Send counts did not work for daisy.
+* Sample output was inconsistent
+* Fixed `timeStamp` to `timestamp` this was pr #147 (thanks @alexdevmotion)
+
 # 0.1.1
 
 ### Bug Fixes

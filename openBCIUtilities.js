@@ -1045,6 +1045,9 @@ function parsePacketStandardAccel (o) {
 
   sampleObject.valid = true;
 
+  sampleObject.timestamp = Date.now();
+  sampleObject.boardTime = 0;
+
   return sampleObject;
 }
 
@@ -1090,6 +1093,9 @@ function parsePacketStandardRawAux (o) {
 
   sampleObject.valid = true;
 
+  sampleObject.timestamp = Date.now();
+  sampleObject.boardTime = 0;
+
   return sampleObject;
 }
 
@@ -1130,7 +1136,11 @@ function parsePacketTimeSyncedAccel (o) {
 
   // Get the board time
   sampleObject.boardTime = getFromTimePacketTime(o.rawDataPacket);
-  sampleObject.timeStamp = sampleObject.boardTime + o.timeOffset;
+  if (o.hasOwnProperty('timeOffset')) {
+    sampleObject.timestamp = sampleObject.boardTime + o.timeOffset;
+  } else {
+    sampleObject.timestamp = Date.now();
+  }
 
   // Extract the aux data
   sampleObject.auxData = getFromTimePacketRawAux(o.rawDataPacket);
@@ -1183,7 +1193,11 @@ function parsePacketTimeSyncedRawAux (o) {
 
   // Get the board time
   sampleObject.boardTime = getFromTimePacketTime(o.rawDataPacket);
-  sampleObject.timeStamp = sampleObject.boardTime + o.timeOffset;
+  if (o.hasOwnProperty('timeOffset')) {
+    sampleObject.timestamp = sampleObject.boardTime + o.timeOffset;
+  } else {
+    sampleObject.timestamp = Date.now();
+  }
 
   // Extract the aux data
   sampleObject.auxData = getFromTimePacketRawAux(o.rawDataPacket);
@@ -1403,7 +1417,7 @@ function newSample (sampleNumber) {
     auxData: null,
     stopByte: k.OBCIByteStop,
     boardTime: 0,
-    timeStamp: 0
+    timestamp: 0
   };
 }
 
@@ -1496,6 +1510,8 @@ function makeDaisySampleObject (lowerSampleObject, upperSampleObject) {
     daisySampleObject['accelData'] = upperSampleObject.accelData;
   }
 
+  daisySampleObject['valid'] = true;
+
   return daisySampleObject;
 }
 
@@ -1546,6 +1562,8 @@ function makeDaisySampleObjectWifi (lowerSampleObject, upperSampleObject) {
   } else if (upperSampleObject.accelData) {
     daisySampleObject['accelData'] = upperSampleObject.accelData;
   }
+
+  daisySampleObject['valid'] = true;
 
   return daisySampleObject;
 }

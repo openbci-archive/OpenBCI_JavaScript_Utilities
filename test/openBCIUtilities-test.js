@@ -55,6 +55,14 @@ describe('openBCIUtilities', function () {
 
       expect(sample.sampleNumber).to.equal(0x45);
     });
+    it('should be valid', function () {
+      let sample = openBCIUtilities.parsePacketStandardAccel({
+        rawDataPacket: sampleBuf,
+        channelSettings: defaultChannelSettingsArray,
+        scale: true
+      });
+      expect(sample.valid).to.be.true();
+    });
     it('all the channels should have the same number value as their (index + 1) * scaleFactor', function () {
       // sampleBuf has its channel number for each 3 byte integer. See line 20...
       let sample = openBCIUtilities.parsePacketStandardAccel({
@@ -137,6 +145,23 @@ describe('openBCIUtilities', function () {
         expect(sample.sampleNumber).to.equal(samplesReceived);
         samplesReceived++;
       }
+    });
+    it('should be have time stamp when none given', function () {
+      let sample = openBCIUtilities.parsePacketStandardAccel({
+        rawDataPacket: sampleBuf,
+        channelSettings: defaultChannelSettingsArray,
+        scale: true
+      });
+      expect(sample.boardTime).to.equal(0);
+      expect(sample.timestamp).to.be.greaterThan(0);
+    });
+    it('should be valid', function () {
+      let sample = openBCIUtilities.parsePacketStandardAccel({
+        rawDataPacket: sampleBuf,
+        channelSettings: defaultChannelSettingsArray,
+        scale: true
+      });
+      expect(sample.valid).to.be.true();
     });
     it('has the right sample number', function () {
       let expectedSampleNumber = 0x45;
@@ -245,6 +270,25 @@ describe('openBCIUtilities', function () {
         scale: true
       });
       expect(sample.sampleNumber).to.equal(expectedSampleNumber);
+    });
+    it('should be valid', function () {
+      packet = openBCIUtilities.samplePacketStandardRawAux(0);
+      let sample = openBCIUtilities.parsePacketStandardRawAux({
+        rawDataPacket: packet,
+        channelSettings: defaultChannelSettingsArray,
+        scale: true
+      });
+      expect(sample.valid).to.be.true();
+    });
+    it('should be have time stamp when none given', function () {
+      packet = openBCIUtilities.samplePacketStandardRawAux(0);
+      let sample = openBCIUtilities.parsePacketStandardRawAux({
+        rawDataPacket: packet,
+        channelSettings: defaultChannelSettingsArray,
+        scale: true
+      });
+      expect(sample.boardTime).to.equal(0);
+      expect(sample.timestamp).to.be.greaterThan(0);
     });
     it('has the right stop byte', function () {
       packet = openBCIUtilities.samplePacketStandardRawAux(0);
@@ -423,6 +467,25 @@ describe('openBCIUtilities', function () {
         expect(channelValue).to.equal(index + 1);
       });
     });
+    it('should be have time stamp when none given', function () {
+      packet1 = openBCIUtilities.samplePacketAccelTimeSynced(0);
+      let sample = openBCIUtilities.parsePacketTimeSyncedAccel({
+        rawDataPacket: packet1,
+        channelSettings: defaultChannelSettingsArray,
+        scale: true
+      });
+      expect(sample.boardTime).to.equal(1);
+      expect(sample.timestamp).to.be.greaterThan(0);
+    });
+    it('should be valid', function () {
+      packet1 = openBCIUtilities.samplePacketAccelTimeSynced(0);
+      let sample = openBCIUtilities.parsePacketTimeSyncedAccel({
+        rawDataPacket: packet1,
+        channelSettings: defaultChannelSettingsArray,
+        scale: true
+      });
+      expect(sample.valid).to.be.true();
+    });
     it('has the right sample number', function () {
       let expectedSampleNumber = 69;
       packet1 = openBCIUtilities.samplePacketAccelTimeSynced(expectedSampleNumber);
@@ -518,6 +581,25 @@ describe('openBCIUtilities', function () {
       sample.channelDataCounts.forEach((channelValue, index) => {
         expect(channelValue).to.equal(index + 1);
       });
+    });
+    it('should be valid', function () {
+      packet = openBCIUtilities.samplePacketRawAuxTimeSynced(0);
+      let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
+        rawDataPacket: packet,
+        channelSettings: defaultChannelSettingsArray,
+        scale: true
+      });
+      expect(sample.valid).to.be.true();
+    });
+    it('should be have time stamp when none given', function () {
+      packet = openBCIUtilities.samplePacketRawAuxTimeSynced(0);
+      let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
+        rawDataPacket: packet,
+        channelSettings: defaultChannelSettingsArray,
+        scale: true
+      });
+      expect(sample.boardTime).to.equal(1);
+      expect(sample.timestamp).to.be.greaterThan(0);
     });
     it('has the right sample number', function () {
       let expectedSampleNumber = 69;
@@ -689,8 +771,8 @@ describe('openBCIUtilities', function () {
         timeOffset: timeOffset,
         accelArray
       });
-      expect(sample.timeStamp).to.exist();
-      expect(sample.timeStamp).to.equal(time + timeOffset);
+      expect(sample.timestamp).to.exist();
+      expect(sample.timestamp).to.equal(time + timeOffset);
     });
   });
   describe('#convertSampleToPacketRawAuxTimeSynced', function () {
@@ -755,8 +837,8 @@ describe('openBCIUtilities', function () {
         timeOffset: timeOffset,
         scale: false
       });
-      expect(sample.timeStamp).to.exist();
-      expect(sample.timeStamp).to.equal(time + timeOffset);
+      expect(sample.timestamp).to.exist();
+      expect(sample.timestamp).to.equal(time + timeOffset);
     });
   });
   describe('#interpret24bitAsInt32', function () {
@@ -947,6 +1029,10 @@ describe('openBCIUtilities', function () {
       // Call the function under test
       daisySampleObjectNoScale = openBCIUtilities.makeDaisySampleObject(lowerSampleObjectNoScale, upperSampleObjectNoScale);
     });
+    it('should have valid object true', function () {
+      expect(daisySampleObject.valid).to.be.true();
+      expect(daisySampleObjectNoScale.valid).to.be.true();
+    });
     it('should make a channelData array 16 elements long', function () {
       expect(daisySampleObject.channelData).to.have.length(k.OBCINumberOfChannelsDaisy);
       expect(daisySampleObjectNoScale.channelDataCounts).to.have.length(k.OBCINumberOfChannelsDaisy);
@@ -1023,6 +1109,10 @@ describe('openBCIUtilities', function () {
 
       // Call the function under test
       daisySampleObjectNoScale = openBCIUtilities.makeDaisySampleObjectWifi(lowerSampleObjectNoScale, upperSampleObjectNoScale);
+    });
+    it('should have valid object true', function () {
+      expect(daisySampleObject.valid).to.be.true();
+      expect(daisySampleObjectNoScale.valid).to.be.true();
     });
     it('should make a channelData array 16 elements long', function () {
       expect(daisySampleObject.channelData).to.have.length(k.OBCINumberOfChannelsDaisy);
