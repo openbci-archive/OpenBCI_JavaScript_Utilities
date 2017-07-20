@@ -1345,33 +1345,51 @@ $$$`);
       expect(openBCIUtilities.doesBufferHaveEOT(buf)).to.equal(true);
     });
   });
-  describe('#findV2Firmware', function () {
+  describe('#getMajorFirmwareVersion', function () {
     it('should not crash on small buff', function () {
       let buf = new Buffer('AJ!');
 
-      expect(openBCIUtilities.findV2Firmware(buf)).to.be.false();
+      expect(openBCIUtilities.getFirmware(buf)).to.equal(null);
     });
     it('should not find any v2', function () {
       let buf = new Buffer('AJ Keller is an awesome programmer!\n I know right!');
 
-      expect(openBCIUtilities.findV2Firmware(buf)).to.be.false();
+      expect(openBCIUtilities.getFirmware(buf)).to.equal(null);
     });
     it('should not find a v2', function () {
       let buf = new Buffer(`OpenBCI V3 Simulator
 On Board ADS1299 Device ID: 0x12345
 LIS3DH Device ID: 0x38422$$$`);
 
-      expect(openBCIUtilities.findV2Firmware(buf)).to.be.false();
+      expect(openBCIUtilities.getFirmware(buf)).to.equal(null);
     });
     it('should find a v2', function () {
       let buf = new Buffer(`OpenBCI V3 Simulator
 On Board ADS1299 Device ID: 0x12345
 On Daisy ADS1299 Device ID: 0xFFFFF
 LIS3DH Device ID: 0x38422
-Firmware: v2
+Firmware: v2.0.1
 $$$`);
 
-      expect(openBCIUtilities.findV2Firmware(buf)).to.equal(true);
+      expect(openBCIUtilities.getFirmware(buf)).to.deep.equal({
+        major: 2,
+        minor: 0,
+        patch: 1
+      });
+    });
+    it('should find a v3', function () {
+      let buf = new Buffer(`OpenBCI V3 Simulator
+On Board ADS1299 Device ID: 0x12345
+On Daisy ADS1299 Device ID: 0xFFFFF
+LIS3DH Device ID: 0x38422
+Firmware: v3.0.1
+$$$`);
+
+      expect(openBCIUtilities.getFirmware(buf)).to.deep.equal({
+        major: 3,
+        minor: 0,
+        patch: 1
+      });
     });
   });
   describe('#isFailureInBuffer', function () {

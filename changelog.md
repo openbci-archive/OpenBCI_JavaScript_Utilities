@@ -1,3 +1,13 @@
+# 0.1.0
+
+### New Functions
+
+* Add function `getFirmware(dataBuffer)` to utilities 
+
+### Breaking Changes
+
+* Removed function called `findV2Firmware()` because it's useless with v3.0.0 firmware
+
 # 0.0.10
 
 ### New Function
