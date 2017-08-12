@@ -124,6 +124,7 @@ var utilitiesModule = {
   getFromTimePacketAccel,
   getFromTimePacketTime,
   getFromTimePacketRawAux,
+  ganglionFillRawDataPacket,
   parsePacketStandardAccel,
   parsePacketStandardRawAux,
   parsePacketTimeSyncedAccel,
@@ -1002,6 +1003,27 @@ function transformRawDataPacketToSample (o) {
     if (o.verbose) console.log(err);
   }
   return sample;
+}
+
+/**
+ * @description This function takes a raw data buffer of 4 3-byte signed integers for ganglion
+ * @param o {Object} - The input object
+ * @param o.data {Buffer} - An allocated and filled buffer of length 12
+ * @param o.rawDataPacket {Buffer} - An allocated buffer of length 33
+ * @param o.sampleNumber {Number} - The sample number to load into the `rawDataPacket`
+ */
+function ganglionFillRawDataPacket(o) {
+  // Check to make sure data is not null.
+  if (k.isUndefined(o) || k.isUndefined(o.rawDataPacket) || k.isNull(o.rawDataPacket) || k.isUndefined(o.data) || k.isNull(o.data)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  // Check to make sure the rawDataPacket buffer is the right size.
+  if (o.rawDataPacket.byteLength !== k.OBCIPacketSize) throw new Error(k.OBCIErrorInvalidByteLength);
+  // Check to make sure the rawDataPacket buffer is the right size.
+  if (o.data.byteLength !== k.OBCIPacketSizeBLERaw) throw new Error(k.OBCIErrorInvalidByteLength);
+
+  o.data.copy(o.rawDataPacket, k.OBCIPacketPositionChannelDataStart);
+  o.rawDataPacket[k.OBCIPacketPositionSampleNumber] = o.sampleNumber;
+  o.rawDataPacket[k.OBCIPacketPositionStartByte] = k.OBCIByteStart;
+  o.rawDataPacket[k.OBCIPacketPositionStopByte] = k.OBCIStreamPacketStandardRawAux;
 }
 
 /**

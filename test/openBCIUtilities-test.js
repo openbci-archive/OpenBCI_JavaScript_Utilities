@@ -35,8 +35,43 @@ describe('openBCIUtilities', function () {
     accelArray = [0, 0, 0];
   });
   afterEach(() => bluebirdChecks.noPendingPromises());
-  describe('#transformRawDataPacketsToSample', function () {
-    // TODO: Add tests
+  describe('#ganglionFillRawDataPacket', function () {
+    it('should fill the packet with values from data', function () {
+      let o = k.rawDataToSampleObjectDefault(k.numberOfChannelsForBoardType(k.OBCIBoardGanglion));
+      let dataBuf = Buffer.alloc(k.OBCIPacketSizeBLERaw);
+      dataBuf[2] = 1;
+      dataBuf[5] = 2;
+      dataBuf[8] = 3;
+      dataBuf[11] = 4;
+    });
+    describe('#errorConditions', function () {
+      it('send non data buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          rawDataPacket: 1
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+      it('wrong number of bytes', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: Buffer.alloc(5)
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+      it('wrong number of bytes', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(5),
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize)
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+      it('undefined', function () {
+        expect(openBCIUtilities.parsePacketStandardAccel.bind(openBCIUtilities)).to.throw(k.OBCIErrorUndefinedOrNullInput);
+        expect(openBCIUtilities.parsePacketStandardAccel.bind(openBCIUtilities), {
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize)
+        }).to.throw(k.OBCIErrorUndefinedOrNullInput);
+        expect(openBCIUtilities.parsePacketStandardAccel.bind(openBCIUtilities), {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw)
+        }).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+    });
   });
   describe('#parsePacketStandardAccel', function () {
     it('should return the packet', function () {

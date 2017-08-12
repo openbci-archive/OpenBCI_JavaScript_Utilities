@@ -276,6 +276,7 @@ const obciSampleNumberMax = 255;
 
 /** Packet Size */
 const obciPacketSize = 33;
+const obciPacketSizeBLERaw = 12;
 
 /** OpenBCI V3 Standard Packet Positions */
 /**
@@ -941,6 +942,7 @@ const constantsModule = {
   OBCISampleNumberMax: obciSampleNumberMax,
   /** Packet Size */
   OBCIPacketSize: obciPacketSize,
+  OBCIPacketSizeBLERaw: obciPacketSizeBLERaw,
   /** Notable Bytes */
   OBCIByteStart: obciByteStart,
   OBCIByteStop: obciByteStop,

@@ -1757,6 +1757,14 @@ describe('OpenBCIConstants', function () {
       assert.equal('sample', k.OBCIEmitterSample);
     });
   });
+  describe('Packet Size', function () {
+    it('Standard packet size', function () {
+      assert.equal(33, k.OBCIPacketSize);
+    });
+    it('Small packet size', function () {
+      assert.equal(12, k.OBCIPacketSizeBLERaw);
+    });
+  });
   describe('General', function () {
     it('Ganglion prefix', function () {
       assert.equal('Ganglion', k.OBCIGanglionPrefix);
