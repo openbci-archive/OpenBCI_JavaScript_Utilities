@@ -563,8 +563,11 @@ var utilitiesModule = {
   isTimeSyncSetConfirmationInBuffer,
   makeTailByteFromPacketType,
   isStopByte,
+  getBooleanFromRegisterQuery,
   getSRB1FromADSRegisterQuery,
   getBiasSetFromADSRegisterQuery,
+  getNumFromThreeCSVADSRegisterQuery,
+  setChSetFromADSRegisterQuery,
   syncChannelSettingsWithRawData,
   newSyncObject,
   stripToEOTBuffer,
@@ -1193,13 +1196,14 @@ function parsePacketTimeSyncedAccel (o) {
 /**
  * Use reg ex to parse a `str` register query for a boolean `offset` from index. Throws errors
  * @param str {String} - The string to search
+ * @param regEx {RegExp} - The key to match to
  * @param offset {Number} - The number of bytes to offset from the index of the reg ex hit
  * @returns {boolean} The converted and parsed value from `str`
  */
-function getBooleanFromRegisterQuery (str, offset) {
-  let regEx = str.match(str);
-  if (regEx) {
-    const num = Number(str.charAt(regEx.index + offset));
+function getBooleanFromRegisterQuery (str, regEx, offset) {
+  let regExArr = str.match(regEx);
+  if (regExArr) {
+    const num = Number(str.charAt(regExArr.index + offset));
     if (!_.isNaN(num)) {
       return Boolean(num);
     } else {
@@ -1210,24 +1214,60 @@ function getBooleanFromRegisterQuery (str, offset) {
   }
 }
 
+/**
+ * Used to get the truth value fo srb1 within the system
+ * @param str {String} - The raw query data
+ * @returns {boolean}
+ */
 function getSRB1FromADSRegisterQuery (str) {
-  getBooleanFromRegisterQuery('MISC1', 21);
+  return getBooleanFromRegisterQuery(str, k.OBCIRegisterQueryNameMISC1, 21);
 }
 
 /**
- *
- * @param str
+ * Used to get bias setting from raw query
+ * @param str {String} - The raw query data
  * @param channelNumber {Number} - Zero indexed, please send `channelNumber` directly to this function.
  * @returns {boolean}
  */
 function getBiasSetFromADSRegisterQuery (str, channelNumber) {
+  return getBooleanFromRegisterQuery(str, k.OBCIRegisterQueryNameBIASSENSP, 20 + (channelNumber * 3));
+}
 
-
-  try {
-    return Boolean(Number(str.charAt(str.match('BIAS_SENSP').index + 20-10 + (channelNumber * 3))));
-  } catch (e) {
-    throw e;
+/**
+ * Used to get a number from the raw query data
+ * @param str {String} - The raw query data
+ * @param regEx {RegExp} - The regular expression to index off of
+ * @param offset {Number} - The number of bytes offset from index to start
+ */
+function getNumFromThreeCSVADSRegisterQuery (str, regEx, offset) {
+  let regExArr = str.match(regEx);
+  if (regExArr) {
+    const bit2 = Number(str.charAt(regExArr.index + offset));
+    const bit1 = Number(str.charAt(regExArr.index + offset + 3));
+    const bit0 = Number(str.charAt(regExArr.index + offset + 6));
+    if (!_.isNaN(bit2) && !_.isNaN(bit1) && !_.isNaN(bit0)) {
+      return bit2 << 2 | bit1 << 1 | bit0;
+    } else {
+      throw new Error(k.OBCIErrorInvalidData);
+    }
+  } else {
+    throw new Error(k.OBCIErrorMissingRegisterSetting);
   }
+}
+
+/**
+ * Used to get bias setting from raw query
+ * @param str {String} - The raw query data
+ * @param channelSettings {ChannelSettingsObject} - Just your standard channel setting object
+ * @returns {boolean}
+ */
+function setChSetFromADSRegisterQuery (str, channelSettings) {
+  const key = k.OBCIRegisterQueryNameCHnSET[channelSettings.channelNumber];
+
+  channelSettings.powerDown = getBooleanFromRegisterQuery(str, key, 16);
+  channelSettings.gain = k.gainForCommand(getNumFromThreeCSVADSRegisterQuery(str, key, 19));
+  channelSettings.srb2 = getBooleanFromRegisterQuery(str, key, 28);
+  channelSettings.inputType = k.inputTypeForCommand(getNumFromThreeCSVADSRegisterQuery(str, key, 31));
 }
 
 /**
@@ -1268,31 +1308,41 @@ function syncChannelSettingsWithRawData (o) {
   }
   let adsCyton = null;
   let adsDaisy = null;
-  let usingSRB1 = false;
+  let usingSRB1Cyton = false;
+  let usingSRB1Daisy = false;
   if (o.channelSettings.length === k.OBCINumberOfChannelsCyton) {
-    adsCyton = o.data.toString().slice(0, k.OBCIRegisterQueryCyton.length);
-    if (getBooleanFromRegisterQuery())
-    const regExArr = adsCyton.match('MISC1'); // Where SRB1 lives
-    if (regExArr) {
-      try {
-        const srb1 = Boolean(Number(adsCyton.charAt(regExArr.index + 21)));
-        _.forEach(o.channelSettings, (channelSetting) => {
-          channelSetting.srb1 = srb1;
-        });
-      } catch (e) {
-        throw e;
-      }
+    let regExArr = o.data.toString().match(/Board ADS/);
+    if (k.isNull(regExArr)) throw new Error(`No Board ADS found in raw query data`);
+    adsCyton = o.data.toString().slice(regExArr.index, k.OBCIRegisterQueryCyton.length);
+    if (getSRB1FromADSRegisterQuery(adsCyton)) {
+      usingSRB1Cyton = true;
+    }
+  } else {
+    let regExArrCyton = o.data.toString().match(/Board ADS/);
+    if (k.isNull(regExArrCyton)) throw new Error(`No Board ADS found in raw query data`);
+    adsCyton = o.data.toString().slice(regExArrCyton.index, k.OBCIRegisterQueryCyton.length);
+    if (getSRB1FromADSRegisterQuery(adsCyton)) {
+      usingSRB1Cyton = true;
+    }
+    let regExArrDaisy = o.data.toString().match(/Board ADS/);
+    if (k.isNull(regExArrDaisy)) throw new Error(`No Board ADS found in raw query data`);
+    adsDaisy = o.data.toString().slice(regExArrDaisy.index, k.OBCIRegisterQueryCytonDaisy.length);
+    if (getSRB1FromADSRegisterQuery(adsCyton)) {
+      usingSRB1Daisy = true;
     }
   }
-  _.forEach(o.channelSettings, (cs) => {
-    if (cs.channelNumber < k.OBCINumberOfChannelsCyton) {
-      const tmpString = o.data.toString().slice(0, k.OBCIRegisterQueryCyton.length);
-      const key = `CH${cs.channelNumber + 1}SET`;
-      let regExArr = tmpString.match(key);
-      if (k.isNull(regExArr)) throw new Error(`No ${key} found in raw query data`);
+  _.forEach(o.channelSettings,
+    /**
+     * Set each channel
+     * @param cs {ChannelSettingsObject}
+     */
+    (cs) => {
+      if (cs.channelNumber < k.OBCINumberOfChannelsCyton) {
 
-    }
-  });
+        cs.srb1 = usingSRB1Cyton;
+
+      }
+    });
 }
 
 /**

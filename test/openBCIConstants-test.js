@@ -245,6 +245,125 @@ describe('OpenBCIConstants', function () {
         assert.equal('6', k.OBCIChannelCmdGain24);
       });
     });
+    describe('#commandForGain', function () {
+      it('gain of 1', function () {
+        let expectation = '0';
+        let result = k.commandForGain(k.OBCIChannelCmdGain1);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('gain of 2', function () {
+        let expectation = '1';
+        let result = k.commandForGain(k.OBCIChannelCmdGain2);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('gain of 4', function () {
+        let expectation = '2';
+        let result = k.commandForGain(k.OBCIChannelCmdGain4);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('gain of 6', function () {
+        let expectation = '3';
+        let result = k.commandForGain(k.OBCIChannelCmdGain6);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('gain of 8', function () {
+        let expectation = '4';
+        let result = k.commandForGain(k.OBCIChannelCmdGain8);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('gain of 12', function () {
+        let expectation = '5';
+        let result = k.commandForGain(k.OBCIChannelCmdGain12);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('gain of 24', function () {
+        let expectation = '6';
+        let result = k.commandForGain(k.OBCIChannelCmdGain24);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('Invalid command request', function () {
+        let result = k.commandForGain('taco');
+        return expect(result).to.be.rejected;
+      });
+    });
+    describe('#gainForCommand', function () {
+      it('gain of 1', function () {
+        assert.equal(1, k.gainForCommand('0'));
+      });
+      it('gain of 2', function () {
+        assert.equal(2, k.gainForCommand('1'));
+      });
+      it('gain of 4', function () {
+        assert.equal(4, k.gainForCommand('2'));
+      });
+      it('gain of 6', function () {
+        assert.equal(6, k.gainForCommand('3'));
+      });
+      it('gain of 8', function () {
+        assert.equal(8, k.gainForCommand('4'));
+      });
+      it('gain of 12', function () {
+        assert.equal(12, k.gainForCommand('5'));
+      });
+      it('gain of 24', function () {
+        assert.equal(24, k.gainForCommand('6'));
+      });
+      it('Invalid command request', function () {
+        expect(k.gainForCommand.bind(k, '8')).to.throw(`Invalid gain setting of 8 gain must be (0,1,2,3,4,5,6)`);
+      });
+    });
+    describe('#inputTypeForCommand', function () {
+      it('Normal', function () {
+        assert.equal(k.OBCIStringADCNormal, k.inputTypeForCommand(0));
+      });
+      it('Shorted', function () {
+        assert.equal(k.OBCIStringADCShorted, k.inputTypeForCommand(1));
+      });
+      it('Bias Method', function () {
+        assert.equal(k.OBCIStringADCBiasMethod, k.inputTypeForCommand(2));
+      });
+      it('MVDD', function () {
+        assert.equal(k.OBCIStringADCMvdd, k.inputTypeForCommand(3));
+      });
+      it('Temp', function () {
+        assert.equal(k.OBCIStringADCTemp, k.inputTypeForCommand(4));
+      });
+      it('Test Signal', function () {
+        assert.equal(k.OBCIStringADCTestSig, k.inputTypeForCommand(5));
+      });
+      it('Bias Dr P', function () {
+        assert.equal(k.OBCIStringADCBiasDrp, k.inputTypeForCommand(6));
+      });
+      it('Bias Dr N', function () {
+        assert.equal(k.OBCIStringADCBiasDrn, k.inputTypeForCommand(7));
+      });
+      it('Invalid command request', function () {
+        expect(k.inputTypeForCommand.bind(k, '8')).to.throw('Invalid input type, must be less than 8');
+      });
+    });
+    describe('#gainForCommand', function () {
+      it('1', function () {
+        assert.equal('0', k.commandForGain(k.OBCIChannelCmdGain1));
+      });
+      it('2', function () {
+        assert.equal('1', k.commandForGain(k.OBCIChannelCmdGain2));
+      });
+      it('4', function () {
+        assert.equal('2', k.commandForGain(k.OBCIChannelCmdGain4));
+      });
+      it('6', function () {
+        assert.equal('3', k.commandForGain(k.OBCIChannelCmdGain6));
+      });
+      it('8', function () {
+        assert.equal('4', k.commandForGain(k.OBCIChannelCmdGain8));
+      });
+      it('12', function () {
+        assert.equal('5', k.commandForGain(k.OBCIChannelCmdGain12));
+      });
+      it('24', function () {
+        assert.equal('6', k.commandForGain(k.OBCIChannelCmdGain24));
+      });
+    });
     describe('ADC Channel Input Soruce', function () {
       it('Normal', function () {
         assert.equal('0', k.OBCIChannelCmdADCNormal);
@@ -1807,6 +1926,16 @@ describe('OpenBCIConstants', function () {
     assert.equal(k.OBCIRegisterQuerySizeCytonDaisyFirmwareV1, k.OBCIRegisterQueryCyton.length + k.OBCIRegisterQueryCytonDaisy.length + k.OBCIRegisterQueryAccelerometerFirmwareV1.length);
     assert.equal(k.OBCIRegisterQuerySizeCytonFirmwareV3, k.OBCIRegisterQueryCyton.length + k.OBCIRegisterQueryAccelerometerFirmwareV3.length);
     assert.equal(k.OBCIRegisterQuerySizeCytonDaisyFirmwareV3, k.OBCIRegisterQueryCyton.length + k.OBCIRegisterQueryCytonDaisy.length + k.OBCIRegisterQueryAccelerometerFirmwareV3.length);
+    assert.equal(k.OBCIRegisterQueryNameMISC1, 'MISC1');
+    assert.equal(k.OBCIRegisterQueryNameBIASSENSP, 'BIAS_SENSP');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[0], 'CH1SET)');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[1], 'CH2SET)');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[2], 'CH3SET)');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[3], 'CH4SET)');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[4], 'CH5SET)');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[5], 'CH6SET)');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[6], 'CH7SET)');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[7], 'CH8SET)');
   });
   describe('General', function () {
     it('Ganglion prefix', function () {

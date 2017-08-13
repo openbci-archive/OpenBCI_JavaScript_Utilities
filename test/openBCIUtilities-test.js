@@ -404,18 +404,18 @@ describe('openBCIUtilities', function () {
   });
   describe('#getBooleanFromRegisterQuery', function () {
     it('should return true if 1', function () {
-      const retVal = openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 1, 0, 0, 0, 0, 0');
+      const retVal = openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 1, 0, 0, 0, 0, 0', 'MISC1', 20);
       expect(retVal).to.be.true();
     });
     it('should return false it 0', function () {
-      expect(openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.be.false();
+      expect(openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0', 'MISC', 20)).to.be.false();
     });
     describe('#errorConditions', function () {
       it('should throw an error when none found', function () {
-        expect(openBCIUtilities.getBooleanFromRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!")).to.throw(k.OBCIErrorMissingRegisterSetting);
+        expect(openBCIUtilities.getBooleanFromRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!", 'MISC', 20)).to.throw(k.OBCIErrorMissingRegisterSetting);
       });
       it('should throw an error other wise', function () {
-        expect(openBCIUtilities.getBooleanFromRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorInvalidData);
+        expect(openBCIUtilities.getBooleanFromRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0', 'MISC', 20)).to.throw(k.OBCIErrorInvalidData);
       });
     });
   });
@@ -435,6 +435,55 @@ describe('openBCIUtilities', function () {
         expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorInvalidData);
       });
     });
+  });
+  describe('#getNumFromThreeCSVADSRegisterQuery', function () {
+    it('should return 1', function () {
+      const str = '0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 0, 0, 1, 1, 0, 0, 0\nCH2SET, 06, 68,';
+      const retVal = openBCIUtilities.getNumFromThreeCSVADSRegisterQuery(str, k.OBCIRegisterQueryNameCHnSET[0], 19);
+      expect(retVal).to.be.equal(1);
+    });
+    it('should return 6', function () {
+      const str = '0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH2SET, 06, 68,';
+      const retVal = openBCIUtilities.getNumFromThreeCSVADSRegisterQuery(str, k.OBCIRegisterQueryNameCHnSET[0], 19);
+      expect(retVal).to.be.equal(6);
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getNumFromThreeCSVADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!", 'MISC', 20)).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getNumFromThreeCSVADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0', 'MISC', 20)).to.throw(k.OBCIErrorInvalidData);
+      });
+    });
+  });
+  describe('#setChSetFromADSRegisterQuery', function () {
+    it('should return correct values for raw config', function () {
+      const str = '0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH2SET, 06, 68,';
+      const expected_channelNumber = 0;
+      const channelSettings = k.channelSettingsObjectDefault(expected_channelNumber);
+      channelSettings.powerDown = true;
+      channelSettings.gain = 50;
+      channelSettings.srb2 = false;
+      channelSettings.inputType = k.OBCIStringADCMvdd;
+      const o = {
+        channelSettings,
+        str
+      }
+      const retVal = openBCIUtilities.setChSetFromADSRegisterQuery(o);
+      expect(retVal.powerDown).
+    });
+    it('should return false it 0', function () {
+      expect(openBCIUtilities.getSRB1FromADSRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.be.false();
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!")).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorInvalidData);
+      });
+    });
+
   });
   describe('#getBiasSetFromADSRegisterQuery', function () {
     it('should work for 8 channels', function () {
