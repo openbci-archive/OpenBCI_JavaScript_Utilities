@@ -19,6 +19,7 @@ chai.use(sinonChai);
 chai.use(dirtyChai);
 const bufferEqual = require('buffer-equal');
 const Buffer = require('safe-buffer').Buffer;
+const _ = require('lodash');
 
 let k = require('../openBCIConstants');
 
@@ -38,11 +39,7 @@ describe('openBCIUtilities', function () {
   describe('#ganglionFillRawDataPacket', function () {
     it('should fill the packet with values from data', function () {
       let o = k.rawDataToSampleObjectDefault(k.numberOfChannelsForBoardType(k.OBCIBoardGanglion));
-      let dataBuf = Buffer.alloc(k.OBCIPacketSizeBLERaw);
-      dataBuf[2] = 1;
-      dataBuf[5] = 2;
-      dataBuf[8] = 3;
-      dataBuf[11] = 4;
+      let dataBuf = openBCIUtilities.sampleBLERaw();
     });
     describe('#errorConditions', function () {
       it('send non data buffer', function () {
@@ -360,6 +357,25 @@ describe('openBCIUtilities', function () {
         expect(openBCIUtilities.parsePacketStandardRawAux.bind(openBCIUtilities, {
           rawDataPacket: new Buffer(5)
         })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+    });
+  });
+  describe('#syncChannelSettingsWithRawData', function () {
+    it('should set the channel settings from the data buffer', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+      _.forEach(channelSettings, (channelSetting) => {
+          channelSetting.channelNumber = 50;
+          channelSetting.powerDown = true;
+          channelSetting.gain = 59;
+          channelSetting.inputType = k.OBCIStringADCBiasDrn;
+          channelSetting.bias = false;
+          channelSetting.srb2 = false;
+          channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(openBCIUtilities.sampleRegisterQueryCyton() + openBCIUtilities.sampleRegisterQueryAccelerometer());
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        data,
+        channelSettings
       });
     });
   });

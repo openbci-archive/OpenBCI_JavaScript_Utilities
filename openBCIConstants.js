@@ -728,6 +728,10 @@ const constantsModule = {
   OBCIChannelCmdSRB2Diconnect: obciChannelCmdSRB2Diconnect,
   /** Channel Settings Object */
   channelSettingsObjectDefault,
+  /**
+   * @param numberOfChannels {Number}
+   * @returns {Array}
+   */
   channelSettingsArrayInit: (numberOfChannels) => {
     var newChannelSettingsArray = [];
     for (var i = 0; i < numberOfChannels; i++) {
@@ -1194,6 +1198,7 @@ const constantsModule = {
   commandSampleRateForCmdGanglion,
   commandBoardModeForMode,
   rawDataToSampleObjectDefault,
+  getChannelSettingsFromQuery,
   /** Protocols */
   OBCIProtocolBLE: obciProtocolBLE,
   OBCIProtocolSerial: obciProtocolSerial,
@@ -1728,4 +1733,10 @@ function isPeripheralGanglion (peripheral) {
     }
   }
   return false;
+}
+
+function getChannelSettingsFromQuery(data) {
+  let lines = data.toString().split('\n');
+
+  // for (let i = 0; i < )
 }
