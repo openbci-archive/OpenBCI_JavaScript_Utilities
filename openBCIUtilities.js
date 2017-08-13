@@ -659,104 +659,6 @@ var utilitiesModule = {
     const bufPre = new Buffer([255]);
     return Buffer.concat([bufPre, data]);
   },
-  sampleRegisterQueryAccelerometer: () => {
-    return "LIS3DH Registers\n" +
-      "0x07 00\n" +
-      "0x08 00\n" +
-      "0x09 00\n" +
-      "0x0A 00\n" +
-      "0x0B 00\n" +
-      "0x0C 00\n" +
-      "0x0D 00\n" +
-      "0x0E 00\n" +
-      "0x0F 33\n" +
-      "\n" +
-      "0x1F 00\n" +
-      "0x20 08\n" +
-      "0x21 00\n" +
-      "0x22 00\n" +
-      "0x23 18\n" +
-      "0x24 00\n" +
-      "0x25 00\n" +
-      "0x26 00\n" +
-      "0x27 00\n" +
-      "0x28 00\n" +
-      "0x29 00\n" +
-      "0x2A 00\n" +
-      "0x2B 00\n" +
-      "0x2C 00\n" +
-      "0x2D 00\n" +
-      "0x2E 00\n" +
-      "0x2F 20\n" +
-      "0x30 00\n" +
-      "0x31 00\n" +
-      "0x32 00\n" +
-      "0x33 00\n" +
-      "\n" +
-      "0x38 00\n" +
-      "0x39 00\n" +
-      "0x3A 00\n" +
-      "0x3B 00\n" +
-      "0x3C 00\n" +
-      "0x3D 00\n" +
-      "\n";
-  },
-  sampleRegisterQueryCyton: () => {
-    return "\nBoard ADS Registers\n" +
-      "ADS_ID, 00, 3E, 0, 0, 1, 1, 1, 1, 1, 0\n" +
-      "CONFIG1, 01, 96, 1, 0, 0, 1, 0, 1, 1, 0\n" +
-      "CONFIG2, 02, C0, 1, 1, 0, 0, 0, 0, 0, 0\n" +
-      "CONFIG3, 03, EC, 1, 1, 1, 0, 1, 1, 0, 0\n" +
-      "LOFF, 04, 02, 0, 0, 0, 0, 0, 0, 1, 0\n" +
-      "CH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH2SET, 06, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH3SET, 07, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH4SET, 08, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH5SET, 09, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH6SET, 0A, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH7SET, 0B, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH8SET, 0C, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "BIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\n" +
-      "BIAS_SENSN, 0E, FF, 1, 1, 1, 1, 1, 1, 1, 1\n" +
-      "LOFF_SENSP, 0F, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "LOFF_SENSN, 10, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "LOFF_FLIP, 11, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "LOFF_STATP, 12, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "LOFF_STATN, 13, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\n" +
-      "MISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "MISC2, 16, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "CONFIG4, 17, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "\n";
-  },
-  sampleRegisterQueryCytonDaisy: () => {
-    return "Daisy ADS Registers\n" +
-      "ADS_ID, 00, 3E, 0, 0, 1, 1, 1, 1, 1, 0\n" +
-      "CONFIG1, 01, 96, 1, 0, 0, 1, 0, 1, 1, 0\n" +
-      "CONFIG2, 02, C0, 1, 1, 0, 0, 0, 0, 0, 0\n" +
-      "CONFIG3, 03, EC, 1, 1, 1, 0, 1, 1, 0, 0\n" +
-      "LOFF, 04, 02, 0, 0, 0, 0, 0, 0, 1, 0\n" +
-      "CH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH2SET, 06, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH3SET, 07, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH4SET, 08, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH5SET, 09, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH6SET, 0A, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH7SET, 0B, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "CH8SET, 0C, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-      "BIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\n" +
-      "BIAS_SENSN, 0E, FF, 1, 1, 1, 1, 1, 1, 1, 1\n" +
-      "LOFF_SENSP, 0F, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "LOFF_SENSN, 10, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "LOFF_FLIP, 11, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "LOFF_STATP, 12, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "LOFF_STATN, 13, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\n" +
-      "MISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "MISC2, 16, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "CONFIG4, 17, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-      "\n";
-  },
   sampleUncompressedData: () => {
     return new Buffer(
       [
@@ -1117,6 +1019,8 @@ function transformRawDataPacketToSample (o) {
 function ganglionFillRawDataPacket(o) {
   // Check to make sure data is not null.
   if (k.isUndefined(o) || k.isUndefined(o.rawDataPacket) || k.isNull(o.rawDataPacket) || k.isUndefined(o.data) || k.isNull(o.data)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  // Check to make sure sampleNumber is inside object
+  if (!o.hasOwnProperty('sampleNumber')) throw new Error(k.OBCIErrorUndefinedOrNullInput);
   // Check to make sure the rawDataPacket buffer is the right size.
   if (o.rawDataPacket.byteLength !== k.OBCIPacketSize) throw new Error(k.OBCIErrorInvalidByteLength);
   // Check to make sure the rawDataPacket buffer is the right size.
@@ -1290,6 +1194,20 @@ function parsePacketTimeSyncedAccel (o) {
  * @param o.channelSettings {Array} - The standard channel settings object
  */
 function syncChannelSettingsWithRawData (o) {
+  // Check to make sure data is not null.
+  if (k.isUndefined(o) || k.isUndefined(o.channelSettings) || k.isNull(o.channelSettings) || k.isUndefined(o.data) || k.isNull(o.data)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  // Check to make sure channel settings is array
+  if (!Array.isArray(o.channelSettings)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  // Check to make sure the rawDataPacket buffer is the right size.
+  if (o.channelSettings.length === k.OBCINumberOfChannelsCyton) {
+    if (o.data.byteLength !== (k.sampleRegisterQueryCyton().length + k.sampleRegisterQueryAccelerometer().length)) {
+      if (o.data.byteLength === (k.sampleRegisterQueryCyton().length + k.sampleRegisterQueryCytonDaisy().length + k.sampleRegisterQueryAccelerometer().length)) throw new Error('raw data mismatch - expected only cyton register info but also found daisy');
+    }
+  } else {
+    if (o.data.byteLength !== (k.sampleRegisterQueryCyton().length + k.sampleRegisterQueryCytonDaisy().length + k.sampleRegisterQueryAccelerometer().length)) {
+      if (o.data.byteLength === ) throw new Error('raw data mismatch - expected daisy register info but none found');
+    }
+  }
 
 }
 

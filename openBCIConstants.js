@@ -491,6 +491,147 @@ const obciProtocolBLE = 'ble';
 const obciProtocolSerial = 'serial';
 const obciProtocolWifi = 'wifi';
 
+/** Register Query on Cyton */
+const obciRegisterQueryAccelerometerFirmwareV1 = "LIS3DH Registers\n" +
+    "0x07.0\n" +
+    "0x08.0\n" +
+    "0x09.0\n" +
+    "0x0A.0\n" +
+    "0x0B.0\n" +
+    "0x0C.0\n" +
+    "0x0D.0\n" +
+    "0x0E.0\n" +
+    "0x0F.33\n" +
+    "\n" +
+    "0x1F.0\n" +
+    "0x20.8\n" +
+    "0x21.0\n" +
+    "0x22.0\n" +
+    "0x23.18\n" +
+    "0x24.0\n" +
+    "0x25.0\n" +
+    "0x26.0\n" +
+    "0x27.0\n" +
+    "0x28.0\n" +
+    "0x29.0\n" +
+    "0x2A.0\n" +
+    "0x2B.0\n" +
+    "0x2C.0\n" +
+    "0x2D.0\n" +
+    "0x2E.0\n" +
+    "0x2F.20\n" +
+    "0x30.0\n" +
+    "0x31.0\n" +
+    "0x32.0\n" +
+    "0x33.0\n" +
+    "\n" +
+    "0x38.0\n" +
+    "0x39.0\n" +
+    "0x3A.0\n" +
+    "0x3B.0\n" +
+    "0x3C.0\n" +
+    "0x3D.0\n" +
+    "\n";
+
+const obciRegisterQueryAccelerometerFirmwareV3 = "LIS3DH Registers\n" +
+    "0x07 00\n" +
+    "0x08 00\n" +
+    "0x09 00\n" +
+    "0x0A 00\n" +
+    "0x0B 00\n" +
+    "0x0C 00\n" +
+    "0x0D 00\n" +
+    "0x0E 00\n" +
+    "0x0F 33\n" +
+    "\n" +
+    "0x1F 00\n" +
+    "0x20 08\n" +
+    "0x21 00\n" +
+    "0x22 00\n" +
+    "0x23 18\n" +
+    "0x24 00\n" +
+    "0x25 00\n" +
+    "0x26 00\n" +
+    "0x27 00\n" +
+    "0x28 00\n" +
+    "0x29 00\n" +
+    "0x2A 00\n" +
+    "0x2B 00\n" +
+    "0x2C 00\n" +
+    "0x2D 00\n" +
+    "0x2E 00\n" +
+    "0x2F 20\n" +
+    "0x30 00\n" +
+    "0x31 00\n" +
+    "0x32 00\n" +
+    "0x33 00\n" +
+    "\n" +
+    "0x38 00\n" +
+    "0x39 00\n" +
+    "0x3A 00\n" +
+    "0x3B 00\n" +
+    "0x3C 00\n" +
+    "0x3D 00\n" +
+    "\n";
+
+const obciRegisterQueryCyton = "\nBoard ADS Registers\n" +
+    "ADS_ID, 00, 3E, 0, 0, 1, 1, 1, 1, 1, 0\n" +
+    "CONFIG1, 01, 96, 1, 0, 0, 1, 0, 1, 1, 0\n" +
+    "CONFIG2, 02, C0, 1, 1, 0, 0, 0, 0, 0, 0\n" +
+    "CONFIG3, 03, EC, 1, 1, 1, 0, 1, 1, 0, 0\n" +
+    "LOFF, 04, 02, 0, 0, 0, 0, 0, 0, 1, 0\n" +
+    "CH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH2SET, 06, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH3SET, 07, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH4SET, 08, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH5SET, 09, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH6SET, 0A, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH7SET, 0B, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH8SET, 0C, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "BIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\n" +
+    "BIAS_SENSN, 0E, FF, 1, 1, 1, 1, 1, 1, 1, 1\n" +
+    "LOFF_SENSP, 0F, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "LOFF_SENSN, 10, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "LOFF_FLIP, 11, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "LOFF_STATP, 12, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "LOFF_STATN, 13, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\n" +
+    "MISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "MISC2, 16, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "CONFIG4, 17, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "\n";
+
+const obciRegisterQueryCytonDaisy = "Daisy ADS Registers\n" +
+    "ADS_ID, 00, 3E, 0, 0, 1, 1, 1, 1, 1, 0\n" +
+    "CONFIG1, 01, 96, 1, 0, 0, 1, 0, 1, 1, 0\n" +
+    "CONFIG2, 02, C0, 1, 1, 0, 0, 0, 0, 0, 0\n" +
+    "CONFIG3, 03, EC, 1, 1, 1, 0, 1, 1, 0, 0\n" +
+    "LOFF, 04, 02, 0, 0, 0, 0, 0, 0, 1, 0\n" +
+    "CH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH2SET, 06, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH3SET, 07, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH4SET, 08, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH5SET, 09, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH6SET, 0A, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH7SET, 0B, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "CH8SET, 0C, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
+    "BIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\n" +
+    "BIAS_SENSN, 0E, FF, 1, 1, 1, 1, 1, 1, 1, 1\n" +
+    "LOFF_SENSP, 0F, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "LOFF_SENSN, 10, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "LOFF_FLIP, 11, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "LOFF_STATP, 12, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "LOFF_STATN, 13, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\n" +
+    "MISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "MISC2, 16, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "CONFIG4, 17, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
+    "\n";
+const obciRegisterQuerySizeCytonFirmwareV1 = obciRegisterQueryCyton.length + obciRegisterQueryAccelerometerFirmwareV1.length;
+const obciRegisterQuerySizeCytonDaisyFirmwareV1 = obciRegisterQueryCyton.length + obciRegisterQueryCytonDaisy.length + obciRegisterQueryAccelerometerFirmwareV1.length;
+const obciRegisterQuerySizeCytonFirmwareV3 = obciRegisterQueryCyton.length + obciRegisterQueryAccelerometerFirmwareV3.length;
+const obciRegisterQuerySizeCytonDaisyFirmwareV3 = obciRegisterQueryCyton.length + obciRegisterQueryCytonDaisy.length + obciRegisterQueryAccelerometerFirmwareV3.length;
+
 const constantsModule = {
   /** Turning channels off */
   OBCIChannelOff1: obciChannelOff1,
@@ -1202,7 +1343,16 @@ const constantsModule = {
   /** Protocols */
   OBCIProtocolBLE: obciProtocolBLE,
   OBCIProtocolSerial: obciProtocolSerial,
-  OBCIProtocolWifi: obciProtocolWifi
+  OBCIProtocolWifi: obciProtocolWifi,
+  /** Register Query for Cyton */
+  OBCIRegisterQueryAccelerometerFirmwareV1: obciRegisterQueryAccelerometerFirmwareV1,
+  OBCIRegisterQueryAccelerometerFirmwareV3: obciRegisterQueryAccelerometerFirmwareV3,
+  OBCIRegisterQueryCyton: obciRegisterQueryCyton,
+  OBCIRegisterQueryCytonDaisy: obciRegisterQueryCytonDaisy,
+  OBCIRegisterQuerySizeCytonFirmwareV1: obciRegisterQuerySizeCytonFirmwareV1,
+  OBCIRegisterQuerySizeCytonDaisyFirmwareV1: obciRegisterQuerySizeCytonDaisyFirmwareV1,
+  OBCIRegisterQuerySizeCytonFirmwareV3: obciRegisterQuerySizeCytonFirmwareV3,
+  OBCIRegisterQuerySizeCytonDaisyFirmwareV3: obciRegisterQuerySizeCytonDaisyFirmwareV3
 };
 module.exports = constantsModule;
 
