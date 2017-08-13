@@ -402,9 +402,27 @@ describe('openBCIUtilities', function () {
       });
     });
   });
+  describe('#getBooleanFromRegisterQuery', function () {
+    it('should return true if 1', function () {
+      const retVal = openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 1, 0, 0, 0, 0, 0');
+      expect(retVal).to.be.true();
+    });
+    it('should return false it 0', function () {
+      expect(openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.be.false();
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getBooleanFromRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!")).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getBooleanFromRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorInvalidData);
+      });
+    });
+  });
   describe('#getSRB1FromADSRegisterQuery', function () {
     it('should return true if 1', function () {
-      expect(openBCIUtilities.getSRB1FromADSRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 1, 0, 0, 0, 0, 0')).to.be.true();
+      const retVal = openBCIUtilities.getSRB1FromADSRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 1, 0, 0, 0, 0, 0');
+      expect(retVal).to.be.true();
     });
     it('should return false it 0', function () {
       expect(openBCIUtilities.getSRB1FromADSRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.be.false();
@@ -414,7 +432,37 @@ describe('openBCIUtilities', function () {
         expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!")).to.throw(k.OBCIErrorMissingRegisterSetting);
       });
       it('should throw an error other wise', function () {
-        expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorMissingRegisterSetting);
+        expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorInvalidData);
+      });
+    });
+  });
+  describe('#getBiasSetFromADSRegisterQuery', function () {
+    it('should work for 8 channels', function () {
+      const input = ', 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 0, 1, 0, 1, 0, 1, 0\nBIAS_SENSN, 0E, ';
+      for (let i = 0; i < k.OBCINumberOfChannelsCyton; i++) {
+        if (i % 2 === 0) {
+          expect(openBCIUtilities.getBiasSetFromADSRegisterQuery(input, i)).to.be.true();
+        } else {
+          expect(openBCIUtilities.getBiasSetFromADSRegisterQuery(input, i)).to.be.false();
+        }
+      }
+    });
+    it('should return true if 1', function () {
+      const input = ', 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\nBIAS_SENSN, 0E, ';
+      for (let i = 0; i < k.OBCINumberOfChannelsCyton; i++) {
+        expect(openBCIUtilities.getBiasSetFromADSRegisterQuery(input, i)).to.be.true();
+      }
+    });
+    it('should return false it 0', function () {
+      const input = ', 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\nBIAS_SENSN, 0E, FF, 1,  0';
+      expect(openBCIUtilities.getBiasSetFromADSRegisterQuery(input)).to.be.true();
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getBiasSetFromADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!")).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getBiasSetFromADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorMissingRegisterSetting);
       });
     });
   });

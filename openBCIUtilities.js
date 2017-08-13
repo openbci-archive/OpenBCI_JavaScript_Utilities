@@ -564,6 +564,7 @@ var utilitiesModule = {
   makeTailByteFromPacketType,
   isStopByte,
   getSRB1FromADSRegisterQuery,
+  getBiasSetFromADSRegisterQuery,
   syncChannelSettingsWithRawData,
   newSyncObject,
   stripToEOTBuffer,
@@ -1189,12 +1190,28 @@ function parsePacketTimeSyncedAccel (o) {
   return sampleObject;
 }
 
-function getSRB1FromADSRegisterQuery (str) {
-  try {
-    return Boolean(Number(str.charAt(str.match('MISC1').index + 21)));
-  } catch (e) {
-    throw e;
+/**
+ * Use reg ex to parse a `str` register query for a boolean `offset` from index. Throws errors
+ * @param str {String} - The string to search
+ * @param offset {Number} - The number of bytes to offset from the index of the reg ex hit
+ * @returns {boolean} The converted and parsed value from `str`
+ */
+function getBooleanFromRegisterQuery (str, offset) {
+  let regEx = str.match(str);
+  if (regEx) {
+    const num = Number(str.charAt(regEx.index + offset));
+    if (!_.isNaN(num)) {
+      return Boolean(num);
+    } else {
+      throw new Error(k.OBCIErrorInvalidData);
+    }
+  } else {
+    throw new Error(k.OBCIErrorMissingRegisterSetting);
   }
+}
+
+function getSRB1FromADSRegisterQuery (str) {
+  getBooleanFromRegisterQuery('MISC1', 21);
 }
 
 /**
@@ -1204,8 +1221,10 @@ function getSRB1FromADSRegisterQuery (str) {
  * @returns {boolean}
  */
 function getBiasSetFromADSRegisterQuery (str, channelNumber) {
+
+
   try {
-    return Boolean(Number(str.charAt(str.match('BIAS_SENSN').index + 21)));
+    return Boolean(Number(str.charAt(str.match('BIAS_SENSP').index + 20-10 + (channelNumber * 3))));
   } catch (e) {
     throw e;
   }
@@ -1249,8 +1268,10 @@ function syncChannelSettingsWithRawData (o) {
   }
   let adsCyton = null;
   let adsDaisy = null;
+  let usingSRB1 = false;
   if (o.channelSettings.length === k.OBCINumberOfChannelsCyton) {
     adsCyton = o.data.toString().slice(0, k.OBCIRegisterQueryCyton.length);
+    if (getBooleanFromRegisterQuery())
     const regExArr = adsCyton.match('MISC1'); // Where SRB1 lives
     if (regExArr) {
       try {

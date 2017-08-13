@@ -302,6 +302,7 @@ const obciByteStop = 0xC0;
 const errorInvalidByteLength = 'Invalid Packet Byte Length';
 const errorInvalidByteStart = 'Invalid Start Byte';
 const errorInvalidByteStop = 'Invalid Stop Byte';
+const errorInvalidData = 'Invalid data - try again';
 const errorInvalidType = 'Invalid type - check comments for input type';
 const errorMissingRegisterSetting = 'Missing register setting';
 const errorMissingRequiredProperty = 'Missing property in JSON';
@@ -503,6 +504,7 @@ const obciRegisterQuerySizeCytonFirmwareV1 = obciRegisterQueryCyton.length + obc
 const obciRegisterQuerySizeCytonDaisyFirmwareV1 = obciRegisterQueryCyton.length + obciRegisterQueryCytonDaisy.length + obciRegisterQueryAccelerometerFirmwareV1.length;
 const obciRegisterQuerySizeCytonFirmwareV3 = obciRegisterQueryCyton.length + obciRegisterQueryAccelerometerFirmwareV3.length;
 const obciRegisterQuerySizeCytonDaisyFirmwareV3 = obciRegisterQueryCyton.length + obciRegisterQueryCytonDaisy.length + obciRegisterQueryAccelerometerFirmwareV3.length;
+const obciRegisterQueryNameMISC1 = 'MISC1';
 
 const constantsModule = {
   /** Turning channels off */
@@ -967,6 +969,7 @@ const constantsModule = {
   OBCIErrorInvalidByteLength: errorInvalidByteLength,
   OBCIErrorInvalidByteStart: errorInvalidByteStart,
   OBCIErrorInvalidByteStop: errorInvalidByteStop,
+  OBCIErrorInvalidData: errorInvalidData,
   OBCIErrorInvalidType: errorInvalidType,
   OBCIErrorMissingRegisterSetting: errorMissingRegisterSetting,
   OBCIErrorMissingRequiredProperty: errorMissingRequiredProperty,

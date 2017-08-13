@@ -1768,6 +1768,9 @@ describe('OpenBCIConstants', function () {
     it('errorInvalidByteStop', function () {
       assert.equal(k.OBCIErrorInvalidByteStop, 'Invalid Stop Byte');
     });
+    it('OBCIErrorInvalidData', function () {
+      assert.equal(k.OBCIErrorInvalidData, 'Invalid data - try again');
+    });
     it('errorInvalidType', function () {
       assert.equal(k.OBCIErrorInvalidType, 'Invalid type - check comments for input type');
     });
