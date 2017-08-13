@@ -1197,7 +1197,19 @@ function getSRB1FromADSRegisterQuery (str) {
   }
 }
 
-function
+/**
+ *
+ * @param str
+ * @param channelNumber {Number} - Zero indexed, please send `channelNumber` directly to this function.
+ * @returns {boolean}
+ */
+function getBiasSetFromADSRegisterQuery (str, channelNumber) {
+  try {
+    return Boolean(Number(str.charAt(str.match('BIAS_SENSN').index + 21)));
+  } catch (e) {
+    throw e;
+  }
+}
 
 /**
  *

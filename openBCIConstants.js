@@ -1563,6 +1563,39 @@ function commandChannelForCmd (channelNumber) {
     }
   });
 }
+
+/**
+ * @typedef {Object} ChannelSettingsObject - See page 50 of the ads1299.pdf
+ * @property {Number} channelNumber - The channel number of this object
+ * @property {Boolean} powerDown - Power-down: - This boolean determines the channel power mode for the
+ *                      corresponding channel. `false` for normal operation, channel is on, and `true` for channel
+ *                      power-down, channel is off. Default is `false`.
+ * @property {Number} gain - PGA gain: This number determines the PGA gain setting. Can be either 1, 2, 4, 6, 8, 12, 24
+ *                      Default is 24
+ * @property {String} inputType - Channel input: This string is used to determine the channel input selection.
+ *                      Can be:
+ *                        'normal' - Normal electrode input (Default)
+ *                        'shorted' - Input shorted (for offset or noise measurements)
+ *                        'biasMethod' - Used in conjunction with BIAS_MEAS bit for BIAS measurements.
+ *                        'mvdd' - MVDD for supply measurement
+ *                        'temp' - Temperature sensor
+ *                        'testsig' - Test signal
+ *                        'biasDrp' - BIAS_DRP (positive electrode is the driver)
+ *                        'biasDrn' - BIAS_DRN (negative electrode is the driver)
+ * @property {Boolean} bias - BIAS: Is the channel included in the bias? Default is `true` or yes, this channel has both P
+ *                      and N channels connected to the bias.
+ * @property {Boolean} srb2 - SRB2 connection: This boolean determines the SRB2 connection for the corresponding
+ *                      channel. `false` for open, not connected to channel, and `true` for closed, connected to the channel.
+ * @property {Boolean} srb1 - Stimulus, reference, and bias 1: This boolean connects the SRB2 to all 4, 6, or 8
+ *                      channels inverting inputs. `false` when switches open, disconnected, and `true` when switches
+ *                      closed, or connected.
+ */
+
+/**
+ * Get an object of default board settings.
+ * @param channelNumber
+ * @returns {ChannelSettingsObject}
+ */
 function channelSettingsObjectDefault (channelNumber) {
   return {
     channelNumber: channelNumber,
