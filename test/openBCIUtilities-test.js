@@ -402,7 +402,7 @@ describe('openBCIUtilities', function () {
     });
   });
   describe('#syncChannelSettingsWithRawData', function () {
-    it('should set the channel settings from the data buffer for cyton', function () {
+    it('should set the channel settings from the data buffer for cyton for firmware version 1', function () {
       let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
       _.forEach(channelSettings, (channelSetting) => {
           channelSetting.channelNumber = 50;
@@ -413,14 +413,76 @@ describe('openBCIUtilities', function () {
           channelSetting.srb2 = false;
           channelSetting.srb1 = true;
       });
-      let data = Buffer.from(k.sampleRegisterQueryCyton() + k.sampleRegisterQueryAccelerometer());
+      let data = Buffer.from(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryAccelerometerFirmwareV1());
+      const majorFirmwareVersion = 1;
       openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
         data,
-        channelSettings
+        majorFirmwareVersion
       });
       expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton));
     });
-    it('should set the channel settings from the data buffer for cyton', function () {
+    it('should set the channel settings from the data buffer for cyton for firmware version 2', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.channelNumber = 50;
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryAccelerometerFirmwareV1());
+      const majorFirmwareVersion = 2;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton));
+    });
+    it('should set the channel settings from the data buffer for cyton for firmware version 3', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.channelNumber = 50;
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
+      const majorFirmwareVersion = 3;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton));
+    });
+    it('should set the channel settings from the data buffer for cyton for firmware version 10', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.channelNumber = 50;
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
+      const majorFirmwareVersion = 10;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton));
+    });
+    it('should set the channel settings from the data buffer for daisy for firmware version 1', function () {
       let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
       _.forEach(channelSettings, (channelSetting) => {
         channelSetting.channelNumber = 50;
@@ -431,24 +493,55 @@ describe('openBCIUtilities', function () {
         channelSetting.srb2 = false;
         channelSetting.srb1 = true;
       });
-      let data = Buffer.from(k.sampleRegisterQueryCyton() + k.sampleRegisterQueryCytonDaisy() + k.sampleRegisterQueryAccelerometer());
+      let data = Buffer.from(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryCytonDaisy() + k.OBCIRegisterQueryAccelerometerFirmwareV1());
+      const majorFirmwareVersion = 1;
       openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
         data,
-        channelSettings
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy));
+    });
+    it('should set the channel settings from the data buffer for daisy for firmware version 9', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.channelNumber = 50;
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryCytonDaisy() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
+      const majorFirmwareVersion = 9;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
       });
       expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy));
     });
     describe('#errorConditions', function () {
-      it('channel settings not array', function () {
-        let data = Buffer.from(k.sampleRegisterQueryCyton() + k.sampleRegisterQueryAccelerometer());
+      it('channelSettings not array', function () {
+        let data = Buffer.from(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
         expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
           data,
-          channelSettings: 0
-        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+          channelSettings: 0,
+          majorFirmwareVersion: 1
+        })).to.throw(`${k.OBCIErrorInvalidType} channelSettings`);
+      });
+      it('majorFirmwareVersion not number', function () {
+        let data = Buffer.from(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          channelSettings: k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton),
+          majorFirmwareVersion: 'let\'s taco bout tacos'
+        })).to.throw(`${k.OBCIErrorInvalidType} majorFirmwareVersion`);
       });
       it('throw error when raw data is for cyton, but channel settings is for daisy', function () {
         let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
-        let data = Buffer.from(k.sampleRegisterQueryCyton() + k.sampleRegisterQueryAccelerometer());
+        let data = Buffer.from(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
         expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
           data,
           channelSettings
@@ -456,7 +549,7 @@ describe('openBCIUtilities', function () {
       });
       it('throw error when raw data is for daisy, but channel settings is for cyton', function () {
         let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
-        let data = Buffer.from(k.sampleRegisterQueryCyton() + k.sampleRegisterQueryCytonDaisy() + k.sampleRegisterQueryAccelerometer());
+        let data = Buffer.from(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryCytonDaisy() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
         expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
           data,
           channelSettings
@@ -464,22 +557,36 @@ describe('openBCIUtilities', function () {
       });
       it('data is undefined', function () {
         let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+        const majorFirmwareVersion = 3;
         expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
-          channelSettings
+          channelSettings,
+          majorFirmwareVersion
         })).to.throw(k.OBCIErrorUndefinedOrNullInput);
       });
       it('channelSettings is undefined', function () {
-        let data = Buffer.from(k.sampleRegisterQueryCyton() + k.sampleRegisterQueryCytonDaisy() + k.sampleRegisterQueryAccelerometer());
+        let data = Buffer.from(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryCytonDaisy() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
+        const majorFirmwareVersion = 3;
         expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          majorFirmwareVersion
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('majorFirmwareVersion is undefined', function () {
+        let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+        let data = Buffer.from(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryCytonDaisy() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          channelSettings,
           data
         })).to.throw(k.OBCIErrorUndefinedOrNullInput);
       });
       it('bad data', function () {
         let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
         let data = Buffer.from('let\'s taco bout it');
+        const majorFirmwareVersion = 3;
         expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
           data,
-          channelSettings
+          channelSettings,
+          majorFirmwareVersion
         })).to.throw('invalid raw data');
       });
       it('invalid channel settings', function () {
@@ -487,10 +594,12 @@ describe('openBCIUtilities', function () {
         for (let i = 0; i < k.OBCINumberOfChannelsCyton; i++) {
           channelSettings.push({taco: 'gordo'});
         }
-        let data = Buffer.from('let\'s taco bout it');
+        const majorFirmwareVersion = 3;
+        let data = Buffer.from(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
         expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          channelSettings,
           data,
-          channelSettings
+          majorFirmwareVersion
         })).to.throw('invalid raw data');
       });
     });

@@ -1190,14 +1190,17 @@ function parsePacketTimeSyncedAccel (o) {
 /**
  *
  * @param o {Object}
- * @param o.data {Buffer} - The buffer of raw query data
  * @param o.channelSettings {Array} - The standard channel settings object
+ * @param o.data {Buffer} - The buffer of raw query data
+ * @param o.majorFirmwareVersion {Number} - The major firmware version
  */
 function syncChannelSettingsWithRawData (o) {
   // Check to make sure data is not null.
-  if (k.isUndefined(o) || k.isUndefined(o.channelSettings) || k.isNull(o.channelSettings) || k.isUndefined(o.data) || k.isNull(o.data)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  if (k.isUndefined(o) || k.isUndefined(o.channelSettings) || k.isNull(o.channelSettings) || k.isUndefined(o.data) || k.isNull(o.data) || k.isUndefined(o.majorFirmwareVersion) || k.isNull(o.majorFirmwareVersion)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
   // Check to make sure channel settings is array
-  if (!Array.isArray(o.channelSettings)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  if (!Array.isArray(o.channelSettings)) throw new Error(`${k.OBCIErrorInvalidType} channelSettings`);
+  // Check to make sure majorFirmwareVersion is a number
+  if (!k.isNumber(o.majorFirmwareVersion)) throw new Error(`${k.OBCIErrorInvalidType} majorFirmwareVersion`);
   // Check to make sure the rawDataPacket buffer is the right size.
   if (o.channelSettings.length === k.OBCINumberOfChannelsCyton) {
     if (o.data.byteLength !== (k.sampleRegisterQueryCyton().length + k.sampleRegisterQueryAccelerometer().length)) {

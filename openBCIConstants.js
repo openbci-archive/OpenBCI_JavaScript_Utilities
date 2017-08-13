@@ -302,6 +302,7 @@ const obciByteStop = 0xC0;
 const errorInvalidByteLength = 'Invalid Packet Byte Length';
 const errorInvalidByteStart = 'Invalid Start Byte';
 const errorInvalidByteStop = 'Invalid Stop Byte';
+const errorInvalidType = 'Invalid type - check comments for input type';
 const errorTimeSyncIsNull = "'this.sync.curSyncObj' must not be null";
 const errorTimeSyncNoComma = 'Missed the time sync sent confirmation. Try sync again';
 const errorUndefinedOrNullInput = 'Undefined or Null Input';
@@ -492,141 +493,10 @@ const obciProtocolSerial = 'serial';
 const obciProtocolWifi = 'wifi';
 
 /** Register Query on Cyton */
-const obciRegisterQueryAccelerometerFirmwareV1 = "LIS3DH Registers\n" +
-    "0x07.0\n" +
-    "0x08.0\n" +
-    "0x09.0\n" +
-    "0x0A.0\n" +
-    "0x0B.0\n" +
-    "0x0C.0\n" +
-    "0x0D.0\n" +
-    "0x0E.0\n" +
-    "0x0F.33\n" +
-    "\n" +
-    "0x1F.0\n" +
-    "0x20.8\n" +
-    "0x21.0\n" +
-    "0x22.0\n" +
-    "0x23.18\n" +
-    "0x24.0\n" +
-    "0x25.0\n" +
-    "0x26.0\n" +
-    "0x27.0\n" +
-    "0x28.0\n" +
-    "0x29.0\n" +
-    "0x2A.0\n" +
-    "0x2B.0\n" +
-    "0x2C.0\n" +
-    "0x2D.0\n" +
-    "0x2E.0\n" +
-    "0x2F.20\n" +
-    "0x30.0\n" +
-    "0x31.0\n" +
-    "0x32.0\n" +
-    "0x33.0\n" +
-    "\n" +
-    "0x38.0\n" +
-    "0x39.0\n" +
-    "0x3A.0\n" +
-    "0x3B.0\n" +
-    "0x3C.0\n" +
-    "0x3D.0\n" +
-    "\n";
-
-const obciRegisterQueryAccelerometerFirmwareV3 = "LIS3DH Registers\n" +
-    "0x07 00\n" +
-    "0x08 00\n" +
-    "0x09 00\n" +
-    "0x0A 00\n" +
-    "0x0B 00\n" +
-    "0x0C 00\n" +
-    "0x0D 00\n" +
-    "0x0E 00\n" +
-    "0x0F 33\n" +
-    "\n" +
-    "0x1F 00\n" +
-    "0x20 08\n" +
-    "0x21 00\n" +
-    "0x22 00\n" +
-    "0x23 18\n" +
-    "0x24 00\n" +
-    "0x25 00\n" +
-    "0x26 00\n" +
-    "0x27 00\n" +
-    "0x28 00\n" +
-    "0x29 00\n" +
-    "0x2A 00\n" +
-    "0x2B 00\n" +
-    "0x2C 00\n" +
-    "0x2D 00\n" +
-    "0x2E 00\n" +
-    "0x2F 20\n" +
-    "0x30 00\n" +
-    "0x31 00\n" +
-    "0x32 00\n" +
-    "0x33 00\n" +
-    "\n" +
-    "0x38 00\n" +
-    "0x39 00\n" +
-    "0x3A 00\n" +
-    "0x3B 00\n" +
-    "0x3C 00\n" +
-    "0x3D 00\n" +
-    "\n";
-
-const obciRegisterQueryCyton = "\nBoard ADS Registers\n" +
-    "ADS_ID, 00, 3E, 0, 0, 1, 1, 1, 1, 1, 0\n" +
-    "CONFIG1, 01, 96, 1, 0, 0, 1, 0, 1, 1, 0\n" +
-    "CONFIG2, 02, C0, 1, 1, 0, 0, 0, 0, 0, 0\n" +
-    "CONFIG3, 03, EC, 1, 1, 1, 0, 1, 1, 0, 0\n" +
-    "LOFF, 04, 02, 0, 0, 0, 0, 0, 0, 1, 0\n" +
-    "CH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH2SET, 06, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH3SET, 07, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH4SET, 08, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH5SET, 09, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH6SET, 0A, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH7SET, 0B, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH8SET, 0C, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "BIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\n" +
-    "BIAS_SENSN, 0E, FF, 1, 1, 1, 1, 1, 1, 1, 1\n" +
-    "LOFF_SENSP, 0F, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "LOFF_SENSN, 10, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "LOFF_FLIP, 11, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "LOFF_STATP, 12, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "LOFF_STATN, 13, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\n" +
-    "MISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "MISC2, 16, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "CONFIG4, 17, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "\n";
-
-const obciRegisterQueryCytonDaisy = "Daisy ADS Registers\n" +
-    "ADS_ID, 00, 3E, 0, 0, 1, 1, 1, 1, 1, 0\n" +
-    "CONFIG1, 01, 96, 1, 0, 0, 1, 0, 1, 1, 0\n" +
-    "CONFIG2, 02, C0, 1, 1, 0, 0, 0, 0, 0, 0\n" +
-    "CONFIG3, 03, EC, 1, 1, 1, 0, 1, 1, 0, 0\n" +
-    "LOFF, 04, 02, 0, 0, 0, 0, 0, 0, 1, 0\n" +
-    "CH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH2SET, 06, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH3SET, 07, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH4SET, 08, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH5SET, 09, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH6SET, 0A, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH7SET, 0B, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "CH8SET, 0C, 68, 0, 1, 1, 0, 1, 0, 0, 0\n" +
-    "BIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\n" +
-    "BIAS_SENSN, 0E, FF, 1, 1, 1, 1, 1, 1, 1, 1\n" +
-    "LOFF_SENSP, 0F, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "LOFF_SENSN, 10, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "LOFF_FLIP, 11, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "LOFF_STATP, 12, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "LOFF_STATN, 13, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\n" +
-    "MISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "MISC2, 16, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "CONFIG4, 17, 00, 0, 0, 0, 0, 0, 0, 0, 0\n" +
-    "\n";
+const obciRegisterQueryAccelerometerFirmwareV1 = "\nLIS3DH Registers\n0x07.0\n0x08.0\n0x09.0\n0x0A.0\n0x0B.0\n0x0C.0\n0x0D.0\n0x0E.0\n0x0F.33\n\n0x1F.0\n0x20.8\n0x21.0\n0x22.0\n0x23.18\n0x24.0\n0x25.0\n0x26.0\n0x27.0\n0x28.0\n0x29.0\n0x2A.0\n0x2B.0\n0x2C.0\n0x2D.0\n0x2E.0\n0x2F.20\n0x30.0\n0x31.0\n0x32.0\n0x33.0\n\n0x38.0\n0x39.0\n0x3A.0\n0x3B.0\n0x3C.0\n0x3D.0\n";
+const obciRegisterQueryAccelerometerFirmwareV3 = "\nLIS3DH Registers\n0x07 00\n0x08 00\n0x09 00\n0x0A 00\n0x0B 00\n0x0C 00\n0x0D 00\n0x0E 00\n0x0F 33\n\n0x1F 00\n0x20 08\n0x21 00\n0x22 00\n0x23 18\n0x24 00\n0x25 00\n0x26 00\n0x27 00\n0x28 00\n0x29 00\n0x2A 00\n0x2B 00\n0x2C 00\n0x2D 00\n0x2E 00\n0x2F 20\n0x30 00\n0x31 00\n0x32 00\n0x33 00\n\n0x38 00\n0x39 00\n0x3A 00\n0x3B 00\n0x3C 00\n0x3D 00\n";
+const obciRegisterQueryCyton = "\nBoard ADS Registers\nADS_ID, 00, 3E, 0, 0, 1, 1, 1, 1, 1, 0\nCONFIG1, 01, 96, 1, 0, 0, 1, 0, 1, 1, 0\nCONFIG2, 02, C0, 1, 1, 0, 0, 0, 0, 0, 0\nCONFIG3, 03, EC, 1, 1, 1, 0, 1, 1, 0, 0\nLOFF, 04, 02, 0, 0, 0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH2SET, 06, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH3SET, 07, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH4SET, 08, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH5SET, 09, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH6SET, 0A, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH7SET, 0B, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH8SET, 0C, 68, 0, 1, 1, 0, 1, 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\nBIAS_SENSN, 0E, FF, 1, 1, 1, 1, 1, 1, 1, 1\nLOFF_SENSP, 0F, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_SENSN, 10, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_FLIP, 11, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_STATP, 12, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_STATN, 13, 00, 0, 0, 0, 0, 0, 0, 0, 0\nGPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0\nMISC2, 16, 00, 0, 0, 0, 0, 0, 0, 0, 0\nCONFIG4, 17, 00, 0, 0, 0, 0, 0, 0, 0, 0\n";
+const obciRegisterQueryCytonDaisy = "\nDaisy ADS Registers\nADS_ID, 00, 3E, 0, 0, 1, 1, 1, 1, 1, 0\nCONFIG1, 01, 96, 1, 0, 0, 1, 0, 1, 1, 0\nCONFIG2, 02, C0, 1, 1, 0, 0, 0, 0, 0, 0\nCONFIG3, 03, EC, 1, 1, 1, 0, 1, 1, 0, 0\nLOFF, 04, 02, 0, 0, 0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH2SET, 06, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH3SET, 07, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH4SET, 08, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH5SET, 09, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH6SET, 0A, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH7SET, 0B, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH8SET, 0C, 68, 0, 1, 1, 0, 1, 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\nBIAS_SENSN, 0E, FF, 1, 1, 1, 1, 1, 1, 1, 1\nLOFF_SENSP, 0F, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_SENSN, 10, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_FLIP, 11, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_STATP, 12, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_STATN, 13, 00, 0, 0, 0, 0, 0, 0, 0, 0\nGPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0\nMISC2, 16, 00, 0, 0, 0, 0, 0, 0, 0, 0\nCONFIG4, 17, 00, 0, 0, 0, 0, 0, 0, 0, 0\n";
 const obciRegisterQuerySizeCytonFirmwareV1 = obciRegisterQueryCyton.length + obciRegisterQueryAccelerometerFirmwareV1.length;
 const obciRegisterQuerySizeCytonDaisyFirmwareV1 = obciRegisterQueryCyton.length + obciRegisterQueryCytonDaisy.length + obciRegisterQueryAccelerometerFirmwareV1.length;
 const obciRegisterQuerySizeCytonFirmwareV3 = obciRegisterQueryCyton.length + obciRegisterQueryAccelerometerFirmwareV3.length;
@@ -1095,6 +965,7 @@ const constantsModule = {
   OBCIErrorInvalidByteLength: errorInvalidByteLength,
   OBCIErrorInvalidByteStart: errorInvalidByteStart,
   OBCIErrorInvalidByteStop: errorInvalidByteStop,
+  OBCIErrorInvalidType: errorInvalidType,
   OBCIErrorTimeSyncIsNull: errorTimeSyncIsNull,
   OBCIErrorTimeSyncNoComma: errorTimeSyncNoComma,
   OBCIErrorUndefinedOrNullInput: errorUndefinedOrNullInput,
