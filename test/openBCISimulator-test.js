@@ -1,11 +1,12 @@
 'use strict';
+/* global describe, it, after, afterEach */
 const bluebirdChecks = require('./bluebirdChecks');
 const bufferEqual = require('buffer-equal');
 const chai = require('chai');
 const chaiAsPromised = require(`chai-as-promised`);
 const dirtyChai = require('dirty-chai');
 const expect = chai.expect;
-const should = chai.should(); // eslint-disable-line no-unused-lets
+const should = chai.should(); // eslint-disable-line no-unused-vars
 const OpenBCISimulator = require('../index').Simulator;
 const openBCIUtilities = require('../openBCIUtilities');
 const k = require('../openBCIConstants');
@@ -160,11 +161,57 @@ describe('openBCISimulator', function () {
     });
   });
   describe('query register settings', function () {
-    it('should send back the register query settings', function (done) {
-      let simulator = new OpenBCISimulator(k.OBCISimulatorPortName);
+    it('should send back the register query settings firmware version 1 cyton', function (done) {
+      let simulator = new OpenBCISimulator(k.OBCISimulatorPortName, {
+        firmwareVersion: 'v1'
+      });
       simulator.once('data', function (data) {
         console.log(data.toString());
-        expect(data.toString()).to.equal(openBCIUtilities.sampleRegisterQueryCyton() + openBCIUtilities.sampleRegisterQueryAccelerometer());
+        expect(data.toString()).to.equal(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryAccelerometerFirmwareV1());
+        done();
+      });
+
+      simulator.once('open', () => {
+        simulator.write('?');
+      });
+    });
+    it('should send back the register query settings firmware version 3 cyton', function (done) {
+      let simulator = new OpenBCISimulator(k.OBCISimulatorPortName, {
+        firmwareVersion: 'v3'
+      });
+      simulator.once('data', function (data) {
+        console.log(data.toString());
+        expect(data.toString()).to.equal(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
+        done();
+      });
+
+      simulator.once('open', () => {
+        simulator.write('?');
+      });
+    });
+    it('should send back the register query settings firmware version 1 cyton daisy', function (done) {
+      let simulator = new OpenBCISimulator(k.OBCISimulatorPortName, {
+        firmwareVersion: 'v1',
+        daisy: true
+      });
+      simulator.once('data', function (data) {
+        console.log(data.toString());
+        expect(data.toString()).to.equal(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryCytonDaisy() + k.OBCIRegisterQueryAccelerometerFirmwareV1());
+        done();
+      });
+
+      simulator.once('open', () => {
+        simulator.write('?');
+      });
+    });
+    it('should send back the register query settings firmware version 3 cyton daisy', function (done) {
+      let simulator = new OpenBCISimulator(k.OBCISimulatorPortName, {
+        firmwareVersion: 'v3',
+        daisy: true
+      });
+      simulator.once('data', function (data) {
+        console.log(data.toString());
+        expect(data.toString()).to.equal(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryCytonDaisy() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
         done();
       });
 
