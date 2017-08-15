@@ -1479,7 +1479,6 @@ describe('openBCIUtilities', function () {
       expect(daisySampleObjectNoScale).to.have.property('accelData');
     });
   });
-
   describe('#makeDaisySampleObjectWifi', function () {
     let lowerSampleObject, upperSampleObject, daisySampleObject;
     let lowerSampleObjectNoScale, upperSampleObjectNoScale, daisySampleObjectNoScale;
@@ -1918,7 +1917,6 @@ $$$`);
       expect(openBCIUtilities.isSuccessInBuffer(buf)).to.equal(true);
     });
   });
-
   describe('#isStopByte', function () {
     it('should return true for a normal stop byte', () => {
       expect(openBCIUtilities.isStopByte(0xC0)).to.be.true();
@@ -1933,7 +1931,6 @@ $$$`);
       expect(openBCIUtilities.isStopByte(0x00)).to.be.false();
     });
   });
-
   describe('#isTimeSyncSetConfirmationInBuffer', function () {
     // Attn: 0x2C is ASCII for ','
     let comma = 0x2C;
@@ -2198,6 +2195,176 @@ $$$`);
         impedanceArray = openBCIUtilities.impedanceCalculateArray(newRandomSample(i), impTestObj);
       }
       expect(impedanceArray.length).to.equal(numberOfChannels);
+    });
+  });
+  describe('#transformRawDataPacketToSample', function () {
+    it('should unpack')
+  });
+  describe('#extractRawBLEDataPackets', function () {
+    it('should do nothing when empty buffer inserted', () => {
+      let buffer = null;
+
+      // Test the function
+      let output = openBCIUtilities.extractRawBLEDataPackets(buffer);
+
+      expect(output.buffer).to.equal(null);
+      expect(output.rawDataPackets).to.deep.equal([]);
+    });
+    it('should return an unaltered buffer if there is less than a packets worth of data in it', () => {
+      let expectedString = 'AJ';
+      let buffer = new Buffer(expectedString);
+
+      // Test the function
+      let output = openBCIUtilities.extractRawBLEDataPackets(buffer);
+
+      // Convert the buffer to a string and ensure that it equals the expected string
+      expect(bufferEqual(buffer, output.buffer)).to.be.true();
+      expect(output.rawDataPackets).to.deep.equal([]);
+    });
+    it('should identify three packets packet', () => {
+      let buffer = openBCIUtilities.samplePacketCytonBLE(0);
+
+      // Call the function under test
+      let output = openBCIUtilities.extractRawBLEDataPackets(buffer);
+
+      // The buffer should not have anything in it any more
+      expect(output.buffer).to.be.null();
+      expect(output.rawDataPackets.length).to.equal(3);
+    });
+    it('should extract a buffer and preserve the remaining data in the buffer', () => {
+      let expectedString = 'AJ';
+      let extraBuffer = new Buffer(expectedString);
+      // declare the big buffer
+      let buffer = new Buffer(k.OBCIPacketSize + extraBuffer.length);
+      // Fill that new big buffer with buffers
+      const expectedRawDataPacket = openBCIUtilities.samplePacketReal(0);
+      expectedRawDataPacket.copy(buffer, 0);
+      extraBuffer.copy(buffer, k.OBCIPacketSize);
+      // Call the function under test
+      const output = openBCIUtilities.extractRawDataPackets(buffer);
+      expect(bufferEqual(expectedRawDataPacket, output.rawDataPackets[0])).to.be.true();
+      expect(bufferEqual(output.buffer, extraBuffer)).to.be.true(); // Should return the extra parts of the buffer
+    });
+    it('should be able to extract multiple packets from a single buffer', () => {
+      // We are going to extract multiple buffers
+      let expectedNumberOfBuffers = 3;
+      // declare the big buffer
+      let buffer = new Buffer(k.OBCIPacketSize * expectedNumberOfBuffers);
+      // Fill that new big buffer with buffers
+      const expectedRawDataPackets = [
+        openBCIUtilities.samplePacketReal(0),
+        openBCIUtilities.samplePacketReal(1),
+        openBCIUtilities.samplePacketReal(2)
+      ];
+      expectedRawDataPackets[0].copy(buffer, 0);
+      expectedRawDataPackets[1].copy(buffer, k.OBCIPacketSize);
+      expectedRawDataPackets[2].copy(buffer, k.OBCIPacketSize * 2);
+      // Call the function under test
+      const output = openBCIUtilities.extractRawDataPackets(buffer);
+      // The buffer should not have anything in it any more
+      expect(output.buffer).to.be.null();
+      for (let i = 0; i < expectedNumberOfBuffers; i++) {
+        expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i])).to.be.true(`Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`);
+      }
+    });
+
+    it('should be able to get multiple packets and keep extra data on the end', () => {
+      let expectedString = 'AJ';
+      let extraBuffer = new Buffer(expectedString);
+      // We are going to extract multiple buffers
+      let expectedNumberOfBuffers = 2;
+      // declare the big buffer
+      let buffer = new Buffer(k.OBCIPacketSize * expectedNumberOfBuffers + extraBuffer.length);
+      // Fill that new big buffer with buffers
+      const expectedRawDataPackets = [
+        openBCIUtilities.samplePacketReal(0),
+        openBCIUtilities.samplePacketReal(1)
+      ];
+      expectedRawDataPackets[0].copy(buffer, 0);
+      expectedRawDataPackets[1].copy(buffer, k.OBCIPacketSize);
+      extraBuffer.copy(buffer, k.OBCIPacketSize * 2);
+      // Call the function under test
+      const output = openBCIUtilities.extractRawDataPackets(buffer);
+      for (let i = 0; i < expectedNumberOfBuffers; i++) {
+        expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i])).to.be.true(`Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`);
+      }
+      expect(bufferEqual(output.buffer, extraBuffer)).to.be.true(); // Should return the extra parts of the buffer
+    });
+
+    it('should be able to get multiple packets with junk in the middle', () => {
+      let expectedString = ',';
+      let extraBuffer = new Buffer(expectedString);
+      // We are going to extract multiple buffers
+      let expectedNumberOfBuffers = 2;
+      // declare the big buffer
+      let buffer = new Buffer(k.OBCIPacketSize * expectedNumberOfBuffers + extraBuffer.length);
+      // Fill that new big buffer with buffers
+      const expectedRawDataPackets = [
+        openBCIUtilities.samplePacketReal(0),
+        openBCIUtilities.samplePacketReal(1)
+      ];
+      expectedRawDataPackets[0].copy(buffer, 0);
+      extraBuffer.copy(buffer, k.OBCIPacketSize);
+      expectedRawDataPackets[1].copy(buffer, k.OBCIPacketSize + extraBuffer.byteLength);
+
+      const output = openBCIUtilities.extractRawDataPackets(buffer);
+      for (let i = 0; i < expectedNumberOfBuffers; i++) {
+        expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true();
+      }
+      expect(bufferEqual(output.buffer, extraBuffer)).to.be.true(); // Should return the extra parts of the buffer
+    });
+
+    it('should be able to get multiple packets with junk in the middle and end', () => {
+      let expectedString = ',';
+      let extraBuffer = new Buffer(expectedString);
+      // We are going to extract multiple buffers
+      let expectedNumberOfBuffers = 2;
+      // declare the big buffer
+      let buffer = new Buffer(k.OBCIPacketSize * expectedNumberOfBuffers + extraBuffer.length * 2);
+      // Fill that new big buffer with buffers
+      // Fill that new big buffer with buffers
+      const expectedRawDataPackets = [
+        openBCIUtilities.samplePacketReal(0),
+        openBCIUtilities.samplePacketReal(1)
+      ];
+      expectedRawDataPackets[0].copy(buffer, 0);
+      extraBuffer.copy(buffer, k.OBCIPacketSize);
+      expectedRawDataPackets[1].copy(buffer, k.OBCIPacketSize + extraBuffer.byteLength);
+      extraBuffer.copy(buffer, k.OBCIPacketSize * 2 + extraBuffer.byteLength);
+
+      const output = openBCIUtilities.extractRawDataPackets(buffer);
+      for (let i = 0; i < expectedNumberOfBuffers; i++) {
+        expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true();
+      }
+      // The buffer should have everything in it
+      expect(bufferEqual(Buffer.concat([extraBuffer, extraBuffer]), output.buffer)).to.be.true();
+    });
+
+    it('should be able to get multiple packets with junk in the front, middle and end', () => {
+      let expectedString = ',';
+      let extraBuffer = new Buffer(expectedString);
+      // We are going to extract multiple buffers
+      let expectedNumberOfBuffers = 2;
+      // declare the big buffer
+      let buffer = new Buffer(k.OBCIPacketSize * expectedNumberOfBuffers + extraBuffer.length * 3);
+      // Fill that new big buffer with buffers
+      // Fill that new big buffer with buffers
+      const expectedRawDataPackets = [
+        openBCIUtilities.samplePacketReal(0),
+        openBCIUtilities.samplePacketReal(1)
+      ];
+      extraBuffer.copy(buffer, 0);
+      expectedRawDataPackets[0].copy(buffer, extraBuffer.byteLength);
+      extraBuffer.copy(buffer, k.OBCIPacketSize + extraBuffer.byteLength);
+      expectedRawDataPackets[1].copy(buffer, k.OBCIPacketSize + extraBuffer.byteLength * 2);
+      extraBuffer.copy(buffer, k.OBCIPacketSize * 2 + extraBuffer.byteLength * 2);
+
+      const output = openBCIUtilities.extractRawDataPackets(buffer);
+      for (let i = 0; i < expectedNumberOfBuffers; i++) {
+        expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true();
+      }
+      // The buffer should have everything in it
+      expect(bufferEqual(Buffer.concat([extraBuffer, extraBuffer, extraBuffer]), output.buffer)).to.be.true();
     });
   });
 });

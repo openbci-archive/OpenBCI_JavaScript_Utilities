@@ -1033,6 +1033,12 @@ describe('OpenBCIConstants', function () {
     it('Default', function () {
       assert.equal(8, k.OBCINumberOfChannelsDefault);
     });
+    it('Cyton', function () {
+      assert.equal(8, k.OBCINumberOfChannelsCyton);
+    });
+    it('Cyton', function () {
+      assert.equal(2, k.OBCINumberOfChannelsCytonBLE);
+    });
     it('Ganglion', function () {
       assert.equal(4, k.OBCINumberOfChannelsGanglion);
     });
@@ -1071,6 +1077,9 @@ describe('OpenBCIConstants', function () {
     it('should get right name for chan cyton', function () {
       expect(k.OBCIBoardCyton).to.equal('cyton');
     });
+    it('should get right name for chan cyton BLE', function () {
+      expect(k.OBCIBoardCyton).to.equal('cytonBLE');
+    });
     it('should get right name for chan ganglion', function () {
       expect(k.OBCIBoardGanglion).to.equal('ganglion');
     });
@@ -1085,6 +1094,9 @@ describe('OpenBCIConstants', function () {
     it('should get right num chan for cyton board', function () {
       expect(k.numberOfChannelsForBoardType(k.OBCIBoardCyton)).to.equal(8);
     });
+    it('should get right num chan for cyton BLE board', function () {
+      expect(k.numberOfChannelsForBoardType(k.OBCIBoardCytonBLE)).to.equal(2);
+    });
     it('should get right num chan for ganglion', function () {
       expect(k.numberOfChannelsForBoardType(k.OBCIBoardGanglion)).to.equal(4);
     });
@@ -1098,6 +1110,9 @@ describe('OpenBCIConstants', function () {
     });
     it('should get cyton board right for num chan', function () {
       expect(k.boardTypeForNumberOfChannels(8)).to.equal(k.OBCIBoardCyton);
+    });
+    it('should get cyton BLE board right for num chan', function () {
+      expect(k.boardTypeForNumberOfChannels(2)).to.equal(k.OBCIBoardCytonBLE);
     });
     it('should get ganglion right for num chan', function () {
       expect(k.boardTypeForNumberOfChannels(4)).to.equal(k.OBCIBoardGanglion);
@@ -2005,11 +2020,30 @@ describe('OpenBCIConstants', function () {
     it('Receive', function () {
       assert.equal('2d30c082f39f4ce6923f3484ea480596', k.SimbleeUuidReceive);
     });
-    it('Service', function () {
+    it('Write', function () {
       assert.equal('2d30c083f39f4ce6923f3484ea480596', k.SimbleeUuidSend);
     });
-    it('Service', function () {
+    it('Disconnect', function () {
       assert.equal('2d30c084f39f4ce6923f3484ea480596', k.SimbleeUuidDisconnect);
+    });
+  });
+  describe('RFduino BLE UUID', function () {
+    it('Service', function () {
+      assert.equal(k.RFduinoUuidService, '2220');
+    });
+    it('Receive', function () {
+      assert.equal(k.RFduinoUuidReceive, '2221');
+    });
+    it('Write/Notify/Subscribe', function () {
+      assert.equal(k.RFduinoUuidSend, '2222');
+    });
+    it('supposed to be a send but can\'t get it working', function () {
+      assert.equal(k.RFduinoUuidSendTwo, '2223');
+    });
+  });
+  describe('Cyton BLE', function () {
+    it('3 samples per packet', function () {
+      assert.equal(k.OBCICytonBLESamplesPerPacket, 3);
     });
   });
   describe('noble', function () {

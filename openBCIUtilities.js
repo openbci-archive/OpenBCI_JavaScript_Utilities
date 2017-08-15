@@ -118,7 +118,22 @@ var utilitiesModule = {
       'rawDataPackets': rawDataPackets
     };
   },
+  extractRawBLEDataPackets: (dataBuffer) => {
+    // Verify the packet is of length 20
+    if (dataBuffer.byteLength !== k.OBCIPacketSizeBLERaw) throw new Error(k.OBCIErrorInvalidByteLength);
+    let rawDataPackets = [];
 
+    const firstSampleNumber = dataBuffer[1];
+    let secondSampleNumber = firstSampleNumber + 1;
+    if (secondSampleNumber > 255) secondSampleNumber -= 255;
+    let thirdSampleNumber = secondSampleNumber + 1;
+    if (thirdSampleNumber > 255) thirdSampleNumber -= 255;
+    for (let i = 0; i < k.OBCICytonBLESamplesPerPacket; i++) {
+
+    }
+
+
+  },
   transformRawDataPacketToSample,
   transformRawDataPacketsToSample,
   getRawPacketType,
@@ -549,6 +564,9 @@ var utilitiesModule = {
   },
   samplePacketUserDefined: () => {
     return new Buffer([0xA0, 0x00, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, makeTailByteFromPacketType(k.OBCIStreamPacketUserDefinedType)]);
+  },
+  samplePacketCytonBLE: sampleNumber => {
+    return new Buffer([0xC0, sampleNumberNormalize(sampleNumber), 0, 0, 1, 0, 0, 2, 0, 0, 10, 0, 0, 20, 0, 0, 100, 0, 0, 200]);
   },
   makeDaisySampleObject,
   makeDaisySampleObjectWifi,
@@ -1016,6 +1034,16 @@ function transformRawDataPacketToSample (o) {
 }
 
 /**
+ * @description Used transform raw data packets into fully qualified packets
+ * @param o {RawDataToSample} - Used to hold data and configuration settings
+ * @return {Array} samples An array of {Sample}
+ * @author AJ Keller (@pushtheworldllc)
+ */
+function transformRawCytonBLEPacketsToSample (o) {
+
+}
+
+/**
  * @description This function takes a raw data buffer of 4 3-byte signed integers for ganglion
  * @param o {Object} - The input object
  * @param o.data {Buffer} - An allocated and filled buffer of length 12
@@ -1194,6 +1222,59 @@ function parsePacketTimeSyncedAccel (o) {
 }
 
 /**
+ * @description Raw aux
+ * @param o {Object} - The input object
+ * @param o.rawDataPacket {Buffer} - The 33byte raw time synced accel packet
+ * @param o.channelSettings {Array} - An array of channel settings that is an Array that has shape similar to the one
+ *                  calling k.channelSettingsArrayInit(). The most important rule here is that it is
+ *                  Array of objects that have key-value pair {gain:NUMBER}
+ * @param o.timeOffset {Number} - The difference between board time and current time calculated with sync methods.
+ * @param o.scale {Boolean} - Do you want to scale the results? Default is true
+ * @param o.lastSampleNumber {Number} - The last sample number
+ * @returns {Sample} - A sample object. NOTE: The aux data is placed in a 2 byte buffer
+ */
+function parsePacketTimeSyncedRawAux (o) {
+  // Ths packet has 'A0','00'....,'AA','AA','FF','FF','FF','FF','C4'
+  //  where the 'AA's form an accel 16bit num and 'FF's form a 32 bit time in ms
+  // Check to make sure data is not null.
+  if (k.isUndefined(o) || k.isUndefined(o.rawDataPacket) || k.isNull(o.rawDataPacket)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  // Check to make sure the buffer is the right size.
+  if (o.rawDataPacket.byteLength !== k.OBCIPacketSize) throw new Error(k.OBCIErrorInvalidByteLength);
+  // Verify the correct stop byte.
+  if (o.rawDataPacket[0] !== k.OBCIByteStart) throw new Error(k.OBCIErrorInvalidByteStart);
+
+  // The sample object we are going to build
+  var sampleObject = {};
+
+  // Get the sample number
+  sampleObject.sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
+  // Get the start byte
+  sampleObject.startByte = o.rawDataPacket[0];
+  // Get the stop byte
+  sampleObject.stopByte = o.rawDataPacket[k.OBCIPacketPositionStopByte];
+
+  // Get the board time
+  sampleObject.boardTime = getFromTimePacketTime(o.rawDataPacket);
+  if (o.hasOwnProperty('timeOffset')) {
+    sampleObject.timestamp = sampleObject.boardTime + o.timeOffset;
+  } else {
+    sampleObject.timestamp = Date.now();
+  }
+
+  // Extract the aux data
+  sampleObject.auxData = getFromTimePacketRawAux(o.rawDataPacket);
+
+  // Grab the channel data.
+  if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
+  if (o.scale) sampleObject.channelData = getChannelDataArray(o);
+  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
+
+  sampleObject.valid = true;
+
+  return sampleObject;
+}
+
+/**
  * Use reg ex to parse a `str` register query for a boolean `offset` from index. Throws errors
  * @param str {String} - The string to search
  * @param regEx {RegExp} - The key to match to
@@ -1275,15 +1356,12 @@ function setChSetFromADSRegisterQuery (str, channelSettings) {
  * @param o {Object}
  * @param o.channelSettings {Array} - The standard channel settings object
  * @param o.data {Buffer} - The buffer of raw query data
- * @param o.majorFirmwareVersion {Number} - The major firmware version
  */
 function syncChannelSettingsWithRawData (o) {
   // Check to make sure data is not null.
   if (k.isUndefined(o) || k.isUndefined(o.channelSettings) || k.isNull(o.channelSettings) || k.isUndefined(o.data) || k.isNull(o.data) || k.isUndefined(o.majorFirmwareVersion) || k.isNull(o.majorFirmwareVersion)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
   // Check to make sure channel settings is array
   if (!Array.isArray(o.channelSettings)) throw new Error(`${k.OBCIErrorInvalidType} channelSettings`);
-  // Check to make sure majorFirmwareVersion is a number
-  if (!k.isNumber(o.majorFirmwareVersion)) throw new Error(`${k.OBCIErrorInvalidType} majorFirmwareVersion`);
   // Check to make sure the rawDataPacket buffer is the right size.
 
   if (o.channelSettings.length === k.OBCINumberOfChannelsCyton) {
@@ -1331,59 +1409,6 @@ function syncChannelSettingsWithRawData (o) {
         cs.srb1 = usingSRB1Daisy;
       }
     });
-}
-
-/**
- * @description Raw aux
- * @param o {Object} - The input object
- * @param o.rawDataPacket {Buffer} - The 33byte raw time synced accel packet
- * @param o.channelSettings {Array} - An array of channel settings that is an Array that has shape similar to the one
- *                  calling k.channelSettingsArrayInit(). The most important rule here is that it is
- *                  Array of objects that have key-value pair {gain:NUMBER}
- * @param o.timeOffset {Number} - The difference between board time and current time calculated with sync methods.
- * @param o.scale {Boolean} - Do you want to scale the results? Default is true
- * @param o.lastSampleNumber {Number} - The last sample number
- * @returns {Sample} - A sample object. NOTE: The aux data is placed in a 2 byte buffer
- */
-function parsePacketTimeSyncedRawAux (o) {
-  // Ths packet has 'A0','00'....,'AA','AA','FF','FF','FF','FF','C4'
-  //  where the 'AA's form an accel 16bit num and 'FF's form a 32 bit time in ms
-  // Check to make sure data is not null.
-  if (k.isUndefined(o) || k.isUndefined(o.rawDataPacket) || k.isNull(o.rawDataPacket)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
-  // Check to make sure the buffer is the right size.
-  if (o.rawDataPacket.byteLength !== k.OBCIPacketSize) throw new Error(k.OBCIErrorInvalidByteLength);
-  // Verify the correct stop byte.
-  if (o.rawDataPacket[0] !== k.OBCIByteStart) throw new Error(k.OBCIErrorInvalidByteStart);
-
-  // The sample object we are going to build
-  var sampleObject = {};
-
-  // Get the sample number
-  sampleObject.sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
-  // Get the start byte
-  sampleObject.startByte = o.rawDataPacket[0];
-  // Get the stop byte
-  sampleObject.stopByte = o.rawDataPacket[k.OBCIPacketPositionStopByte];
-
-  // Get the board time
-  sampleObject.boardTime = getFromTimePacketTime(o.rawDataPacket);
-  if (o.hasOwnProperty('timeOffset')) {
-    sampleObject.timestamp = sampleObject.boardTime + o.timeOffset;
-  } else {
-    sampleObject.timestamp = Date.now();
-  }
-
-  // Extract the aux data
-  sampleObject.auxData = getFromTimePacketRawAux(o.rawDataPacket);
-
-  // Grab the channel data.
-  if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
-  if (o.scale) sampleObject.channelData = getChannelDataArray(o);
-  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
-
-  sampleObject.valid = true;
-
-  return sampleObject;
 }
 
 /**

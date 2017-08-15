@@ -231,12 +231,14 @@ const obciRadioCmdSystemStatus = 0x07;
 
 /** Possible number of channels */
 const obciNumberOfChannelsCyton = 8;
+const obciNumberOfChannelsCytonBLE = 2;
 const obciNumberOfChannelsDaisy = 16;
 const obciNumberOfChannelsDefault = obciNumberOfChannelsCyton;
 const obciNumberOfChannelsGanglion = 4;
 
 /** Possible OpenBCI board types */
 const obciBoardCyton = 'cyton';
+const obciBoardCytonBLE = 'cytonBLE';
 const obciBoardDaisy = 'daisy';
 const obciBoardDefault = 'default';
 const obciBoardGanglion = 'ganglion';
@@ -476,6 +478,15 @@ const simbleeUuidService = 'fe84';
 const simbleeUuidReceive = '2d30c082f39f4ce6923f3484ea480596';
 const simbleeUuidSend = '2d30c083f39f4ce6923f3484ea480596';
 const simbleeUuidDisconnect = '2d30c084f39f4ce6923f3484ea480596';
+
+/** RFduino BLE UUID */
+const rfduinoUuidService = '2220';
+const rfduinoUuidReceive = '2221';
+const rfduinoUuidSend = '2222';
+const rfduinoUuidSendTwo = '2223';
+
+/** Cyton BLE */
+const obciCytonBLESamplesPerPacket = 3;
 
 /** Noble */
 const obciNobleEmitterPeripheralConnect = 'connect';
@@ -909,11 +920,13 @@ const constantsModule = {
   OBCITrigger: obciTrigger,
   /** Possible number of channels */
   OBCINumberOfChannelsCyton: obciNumberOfChannelsCyton,
+  OBCINumberOfChannelsCytonBLE: obciNumberOfChannelsCytonBLE,
   OBCINumberOfChannelsDaisy: obciNumberOfChannelsDaisy,
   OBCINumberOfChannelsDefault: obciNumberOfChannelsDefault,
   OBCINumberOfChannelsGanglion: obciNumberOfChannelsGanglion,
   /** Possible OpenBCI board types */
   OBCIBoardCyton: obciBoardCyton,
+  OBCIBoardCytonBLE: obciBoardCytonBLE,
   OBCIBoardDaisy: obciBoardDaisy,
   OBCIBoardDefault: obciBoardDefault,
   OBCIBoardGanglion: obciBoardGanglion,
@@ -1199,6 +1212,13 @@ const constantsModule = {
   SimbleeUuidReceive: simbleeUuidReceive,
   SimbleeUuidSend: simbleeUuidSend,
   SimbleeUuidDisconnect: simbleeUuidDisconnect,
+  /** RFduino BLE UUID */
+  RFduinoUuidService: rfduinoUuidService,
+  RFduinoUuidReceive: rfduinoUuidReceive,
+  RFduinoUuidSend: rfduinoUuidSend,
+  RFduinoUuidSendTwo: rfduinoUuidSendTwo,
+  /** Cyton BLE */
+  OBCICytonBLESamplesPerPacket: obciCytonBLESamplesPerPacket,
   /** Accel scale factor */
   OBCIGanglionAccelScaleFactor: obciGanglionAccelScaleFactor,
   /** Noble */

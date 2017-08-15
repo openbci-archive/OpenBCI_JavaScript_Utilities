@@ -1,5 +1,5 @@
 'use strict';
-/* global describe, it, after, afterEach */
+/* global describe, it, after, afterEach, beforeEach */
 const bluebirdChecks = require('./bluebirdChecks');
 const bufferEqual = require('buffer-equal');
 const chai = require('chai');
