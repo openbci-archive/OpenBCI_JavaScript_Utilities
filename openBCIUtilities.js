@@ -1262,7 +1262,8 @@ function getNumFromThreeCSVADSRegisterQuery (str, regEx, offset) {
  * @returns {boolean}
  */
 function setChSetFromADSRegisterQuery (str, channelSettings) {
-  const key = k.OBCIRegisterQueryNameCHnSET[channelSettings.channelNumber];
+  let key = k.OBCIRegisterQueryNameCHnSET[channelSettings.channelNumber];
+  if (_.isUndefined(key)) key = k.OBCIRegisterQueryNameCHnSET[channelSettings.channelNumber - k.OBCINumberOfChannelsCyton];
   channelSettings.powerDown = getBooleanFromRegisterQuery(str, key, 16);
   channelSettings.gain = k.gainForCommand(getNumFromThreeCSVADSRegisterQuery(str, key, 19));
   channelSettings.inputType = k.inputTypeForCommand(getNumFromThreeCSVADSRegisterQuery(str, key, 31));
@@ -1309,7 +1310,7 @@ function syncChannelSettingsWithRawData (o) {
   }
   if (o.channelSettings.length > k.OBCINumberOfChannelsCyton) {
     let regExArrDaisy = o.data.toString().match(/Daisy ADS/);
-    adsDaisy = o.data.toString().slice(regExArrDaisy.index, k.OBCIRegisterQueryCytonDaisy.length);
+    adsDaisy = o.data.toString().slice(regExArrDaisy.index, regExArrDaisy.index + k.OBCIRegisterQueryCytonDaisy.length);
     if (getSRB1FromADSRegisterQuery(adsCyton)) {
       usingSRB1Daisy = true;
     }
@@ -1326,7 +1327,7 @@ function syncChannelSettingsWithRawData (o) {
         cs.srb1 = usingSRB1Cyton;
       } else {
         setChSetFromADSRegisterQuery(adsDaisy, cs);
-        cs.bias = getBiasSetFromADSRegisterQuery(adsDaisy, cs.channelNumber);
+        cs.bias = getBiasSetFromADSRegisterQuery(adsDaisy, cs.channelNumber - k.OBCINumberOfChannelsCyton);
         cs.srb1 = usingSRB1Daisy;
       }
     });

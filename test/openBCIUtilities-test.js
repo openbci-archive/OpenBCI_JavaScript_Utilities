@@ -471,6 +471,20 @@ describe('openBCIUtilities', function () {
       expect(channelSettings.srb2).to.be.true();
       expect(channelSettings.inputType).to.equal('normal');
     });
+    it('should return correct values for raw config and account for daisy offset', function () {
+      const str = '0, 0, 0, 0, 1, 0\nCH3SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH4SET, 06, 68,';
+      const expectedChannelNumber = 10;
+      const channelSettings = k.channelSettingsObjectDefault(expectedChannelNumber);
+      channelSettings.powerDown = true;
+      channelSettings.gain = 50;
+      channelSettings.srb2 = false;
+      channelSettings.inputType = k.OBCIStringADCMvdd;
+      openBCIUtilities.setChSetFromADSRegisterQuery(str, channelSettings);
+      expect(channelSettings.powerDown).to.be.false();
+      expect(channelSettings.gain).to.equal(24);
+      expect(channelSettings.srb2).to.be.true();
+      expect(channelSettings.inputType).to.equal('normal');
+    });
     it('should return false it 0', function () {
       expect(openBCIUtilities.getSRB1FromADSRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.be.false();
     });
