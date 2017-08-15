@@ -1354,7 +1354,7 @@ function setChSetFromADSRegisterQuery (str, channelSettings) {
  */
 function syncChannelSettingsWithRawData (o) {
   // Check to make sure data is not null.
-  if (k.isUndefined(o) || k.isUndefined(o.channelSettings) || k.isNull(o.channelSettings) || k.isUndefined(o.data) || k.isNull(o.data) || k.isUndefined(o.majorFirmwareVersion) || k.isNull(o.majorFirmwareVersion)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  if (k.isUndefined(o) || k.isUndefined(o.channelSettings) || k.isNull(o.channelSettings) || k.isUndefined(o.data) || k.isNull(o.data)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
   // Check to make sure channel settings is array
   if (!Array.isArray(o.channelSettings)) throw new Error(`${k.OBCIErrorInvalidType} channelSettings`);
   // Check to make sure the rawDataPacket buffer is the right size.

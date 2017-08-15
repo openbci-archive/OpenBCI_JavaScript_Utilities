@@ -1,3 +1,10 @@
+# 0.1.4
+
+### Bug Fixes
+
+* E-patch on new function added 0.1.3
+
+
 # 0.1.3
 
 ### New Features
