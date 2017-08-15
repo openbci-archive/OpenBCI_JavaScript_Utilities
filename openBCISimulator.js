@@ -15,7 +15,7 @@ const _options = {
   daisy: false,
   daisyCanBeAttached: true,
   drift: 0,
-  firmwareVersion: [k.OBCIFirmwareV1, k.OBCIFirmwareV2],
+  firmwareVersion: [k.OBCIFirmwareV1, k.OBCIFirmwareV2, k.OBCIFirmwareV3],
   fragmentation: [k.OBCISimulatorFragmentationNone, k.OBCISimulatorFragmentationRandom, k.OBCISimulatorFragmentationFullBuffers, k.OBCISimulatorFragmentationOneByOne],
   latencyTime: 16,
   bufferSize: 4096,
@@ -279,12 +279,15 @@ Simulator.prototype.write = function (data, callback) {
       }
       break;
     case k.OBCIMiscQueryRegisterSettings:
-      let outputString = obciUtilities.sampleRegisterQueryCyton();
+      let outputString = k.OBCIRegisterQueryCyton;
       if (this.options.daisy) {
-        outputString += obciUtilities.sampleRegisterQueryCytonDaisy();
+        outputString += k.OBCIRegisterQueryCytonDaisy;
       }
-      outputString += obciUtilities.sampleRegisterQueryAccelerometer();
-
+      if (this.options.firmwareVersion === k.OBCIFirmwareV3) {
+        outputString += k.OBCIRegisterQueryAccelerometerFirmwareV3;
+      } else {
+        outputString += k.OBCIRegisterQueryAccelerometerFirmwareV1;
+      }
       this._output(Buffer.from(outputString));
       this._printEOT();
       break;

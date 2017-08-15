@@ -167,7 +167,7 @@ describe('openBCISimulator', function () {
       });
       simulator.once('data', function (data) {
         console.log(data.toString());
-        expect(data.toString()).to.equal(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryAccelerometerFirmwareV1());
+        expect(data.toString()).to.equal(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV1);
         done();
       });
 
@@ -181,7 +181,7 @@ describe('openBCISimulator', function () {
       });
       simulator.once('data', function (data) {
         console.log(data.toString());
-        expect(data.toString()).to.equal(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
+        expect(data.toString()).to.equal(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV3);
         done();
       });
 
@@ -196,7 +196,7 @@ describe('openBCISimulator', function () {
       });
       simulator.once('data', function (data) {
         console.log(data.toString());
-        expect(data.toString()).to.equal(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryCytonDaisy() + k.OBCIRegisterQueryAccelerometerFirmwareV1());
+        expect(data.toString()).to.equal(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV1);
         done();
       });
 
@@ -211,24 +211,8 @@ describe('openBCISimulator', function () {
       });
       simulator.once('data', function (data) {
         console.log(data.toString());
-        expect(data.toString()).to.equal(k.OBCIRegisterQueryCyton() + k.OBCIRegisterQueryCytonDaisy() + k.OBCIRegisterQueryAccelerometerFirmwareV3());
+        expect(data.toString()).to.equal(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV3);
         done();
-      });
-
-      simulator.once('open', () => {
-        simulator.write('?');
-      });
-    });
-    it('should send back the register query when daisy settings', function (done) {
-      let simulator = new OpenBCISimulator(k.OBCISimulatorPortName, {
-        daisy: true
-      });
-      simulator.on('data', function (data) {
-        console.log(data.toString());
-        if (data.toString().match(k.OBCIParseEOT)) {
-          simulator.removeAllListeners('data');
-          done('fail');
-        }
       });
 
       simulator.once('open', () => {
@@ -402,8 +386,8 @@ describe('openBCISimulator', function () {
         simulator.options.daisy = false;
         simulator.options.daisyCanBeAttached = true;
         simulator.on('data', function (data) {
-          expect(_.eq(data.toString(), 'daisy attached16')).to.be.true();
-          if (_.eq(data.toString(), (k.OBCIParseEOT))) {
+          expect(data.toString().match(/daisy attached16/)).to.not.equal(null);
+          if (data.toString().match(k.OBCIParseEOT)) {
             expect(simulator.options.daisy).to.equal(true);
             simulator.removeAllListeners('data');
             done();
@@ -415,8 +399,8 @@ describe('openBCISimulator', function () {
         simulator.options.daisy = false;
         simulator.options.daisyCanBeAttached = false;
         simulator.on('data', function (data) {
-          expect(_.eq(data.toString(), 'no daisy to attach!')).to.be.true();
-          if (_.eq(data.toString(), k.OBCIParseEOT)) {
+          expect(data.toString().match(/no daisy to attach!/)).to.not.equal(null);
+          if (data.toString().match(k.OBCIParseEOT)) {
             simulator.removeAllListeners('data');
             done();
           }

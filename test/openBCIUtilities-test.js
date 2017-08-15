@@ -496,7 +496,6 @@ describe('openBCIUtilities', function () {
         expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorInvalidData);
       });
     });
-
   });
   describe('#getBiasSetFromADSRegisterQuery', function () {
     it('should work for 8 channels', function () {
