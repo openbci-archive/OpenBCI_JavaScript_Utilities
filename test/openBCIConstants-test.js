@@ -1078,7 +1078,7 @@ describe('OpenBCIConstants', function () {
       expect(k.OBCIBoardCyton).to.equal('cyton');
     });
     it('should get right name for chan cyton BLE', function () {
-      expect(k.OBCIBoardCyton).to.equal('cytonBLE');
+      expect(k.OBCIBoardCytonBLE).to.equal('cytonBLE');
     });
     it('should get right name for chan ganglion', function () {
       expect(k.OBCIBoardGanglion).to.equal('ganglion');
@@ -1904,6 +1904,9 @@ describe('OpenBCIConstants', function () {
   describe('Packet Size', function () {
     it('Standard packet size', function () {
       assert.equal(33, k.OBCIPacketSize);
+    });
+    it('Cyton BLE packet size', function () {
+      assert.equal(20, k.OBCIPacketSizeBLECyton);
     });
     it('Small packet size', function () {
       assert.equal(12, k.OBCIPacketSizeBLERaw);

@@ -278,6 +278,7 @@ const obciSampleNumberMax = 255;
 
 /** Packet Size */
 const obciPacketSize = 33;
+const obciPacketSizeBLECyton = 20;
 const obciPacketSizeBLERaw = 12;
 
 /** OpenBCI V3 Standard Packet Positions */
@@ -939,6 +940,8 @@ const constantsModule = {
         return obciNumberOfChannelsGanglion;
       case obciBoardNone:
         return 0;
+      case obciBoardCytonBLE:
+        return obciNumberOfChannelsCytonBLE;
       case obciBoardCyton:
       default:
         return obciNumberOfChannelsDefault;
@@ -952,6 +955,8 @@ const constantsModule = {
         return obciBoardGanglion;
       case 0:
         return obciBoardNone;
+      case obciNumberOfChannelsCytonBLE:
+        return obciBoardCytonBLE;
       case obciNumberOfChannelsDefault:
       default:
         return obciBoardCyton;
@@ -978,6 +983,7 @@ const constantsModule = {
   OBCISampleNumberMax: obciSampleNumberMax,
   /** Packet Size */
   OBCIPacketSize: obciPacketSize,
+  OBCIPacketSizeBLECyton: obciPacketSizeBLECyton,
   OBCIPacketSizeBLERaw: obciPacketSizeBLERaw,
   /** Notable Bytes */
   OBCIByteStart: obciByteStart,

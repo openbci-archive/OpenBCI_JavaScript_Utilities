@@ -119,20 +119,25 @@ var utilitiesModule = {
     };
   },
   extractRawBLEDataPackets: (dataBuffer) => {
-    // Verify the packet is of length 20
-    if (dataBuffer.byteLength !== k.OBCIPacketSizeBLERaw) throw new Error(k.OBCIErrorInvalidByteLength);
     let rawDataPackets = [];
-
-    const firstSampleNumber = dataBuffer[1];
-    let secondSampleNumber = firstSampleNumber + 1;
-    if (secondSampleNumber > 255) secondSampleNumber -= 255;
-    let thirdSampleNumber = secondSampleNumber + 1;
-    if (thirdSampleNumber > 255) thirdSampleNumber -= 255;
+    if (!_.isBuffer(dataBuffer)) return rawDataPackets;
+    // Verify the packet is of length 20
+    if (dataBuffer.byteLength !== k.OBCIPacketSizeBLECyton) return rawDataPackets;
+    let sampleNumbers = [0, 0, 0];
+    sampleNumbers[0] = dataBuffer[1];
+    sampleNumbers[1] = sampleNumbers[0] + 1;
+    if (sampleNumbers[1] > 255) sampleNumbers[1] -= 255;
+    sampleNumbers[2] = sampleNumbers[1] + 1;
+    if (sampleNumbers[2] > 255) sampleNumbers[2] -= 255;
     for (let i = 0; i < k.OBCICytonBLESamplesPerPacket; i++) {
-
+      let rawDataPacket = Buffer.alloc(k.OBCIPacketSize);
+      rawDataPacket[0] = k.OBCIByteStart;
+      rawDataPacket[k.OBCIPacketPositionStopByte] = dataBuffer[0];
+      rawDataPacket[k.OBCIPacketPositionSampleNumber] = sampleNumbers[i];
+      dataBuffer.copy(rawDataPacket, k.OBCIPacketPositionChannelDataStart, k.OBCIPacketPositionChannelDataStart + (i * 6), k.OBCIPacketPositionChannelDataStart + 6 + (i * 6));
+      rawDataPackets.push(rawDataPacket);
     }
-
-
+    return rawDataPackets;
   },
   transformRawDataPacketToSample,
   transformRawDataPacketsToSample,
@@ -1031,16 +1036,6 @@ function transformRawDataPacketToSample (o) {
     if (o.verbose) console.log(err);
   }
   return sample;
-}
-
-/**
- * @description Used transform raw data packets into fully qualified packets
- * @param o {RawDataToSample} - Used to hold data and configuration settings
- * @return {Array} samples An array of {Sample}
- * @author AJ Keller (@pushtheworldllc)
- */
-function transformRawCytonBLEPacketsToSample (o) {
-
 }
 
 /**
