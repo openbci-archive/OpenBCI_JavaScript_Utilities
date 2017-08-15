@@ -2,21 +2,22 @@
 * Created by ajk on 12/16/15.
 */
 'use strict';
-var bluebirdChecks = require('./bluebirdChecks');
-var assert = require('assert');
-var k = require('../openBCIConstants');
-var chai = require('chai');
-var expect = chai.expect;
-var should = chai.should(); // eslint-disable-line no-unused-vars
-var chaiAsPromised = require('chai-as-promised');
+/* global describe, it, afterEach */
+let bluebirdChecks = require('./bluebirdChecks');
+let assert = require('assert');
+let k = require('../openBCIConstants');
+let chai = require('chai');
+let expect = chai.expect;
+let should = chai.should(); // eslint-disable-line no-unused-vars
+let chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 
-var getListOfPeripheralsOfSize = (perifsToMake) => {
+let getListOfPeripheralsOfSize = (perifsToMake) => {
   perifsToMake = perifsToMake || 3;
 
   let output = [];
 
-  for (var i = 0; i < perifsToMake; i++) {
+  for (let i = 0; i < perifsToMake; i++) {
     output.push({
       advertisement: {
         localName: makeLocalName(i),
@@ -30,7 +31,7 @@ var getListOfPeripheralsOfSize = (perifsToMake) => {
   return output;
 };
 
-var makeLocalName = (num) => {
+let makeLocalName = (num) => {
   let localName = `${k.OBCIGanglionPrefix}-00`;
   if (num < 10) {
     localName = `${localName}0${num}`;
@@ -244,6 +245,102 @@ describe('OpenBCIConstants', function () {
         assert.equal('6', k.OBCIChannelCmdGain24);
       });
     });
+    describe('#commandForGain', function () {
+      it('gain of 1', function () {
+        let expectation = '0';
+        let result = k.commandForGain(1);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('gain of 2', function () {
+        let expectation = '1';
+        let result = k.commandForGain(2);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('gain of 4', function () {
+        let expectation = '2';
+        let result = k.commandForGain(4);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('gain of 6', function () {
+        let expectation = '3';
+        let result = k.commandForGain(6);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('gain of 8', function () {
+        let expectation = '4';
+        let result = k.commandForGain(8);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('gain of 12', function () {
+        let expectation = '5';
+        let result = k.commandForGain(12);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('gain of 24', function () {
+        let expectation = '6';
+        let result = k.commandForGain(24);
+        return expect(result).to.eventually.equal(expectation);
+      });
+      it('Invalid command request', function () {
+        let result = k.commandForGain('taco');
+        return expect(result).to.be.rejected;
+      });
+    });
+    describe('#gainForCommand', function () {
+      it('gain of 1', function () {
+        assert.equal(1, k.gainForCommand(k.OBCIChannelCmdGain1));
+      });
+      it('gain of 2', function () {
+        assert.equal(2, k.gainForCommand(k.OBCIChannelCmdGain2));
+      });
+      it('gain of 4', function () {
+        assert.equal(4, k.gainForCommand(k.OBCIChannelCmdGain4));
+      });
+      it('gain of 6', function () {
+        assert.equal(6, k.gainForCommand(k.OBCIChannelCmdGain6));
+      });
+      it('gain of 8', function () {
+        assert.equal(8, k.gainForCommand(k.OBCIChannelCmdGain8));
+      });
+      it('gain of 12', function () {
+        assert.equal(12, k.gainForCommand(k.OBCIChannelCmdGain12));
+      });
+      it('gain of 24', function () {
+        assert.equal(24, k.gainForCommand(k.OBCIChannelCmdGain24));
+      });
+      it('Invalid command request', function () {
+        expect(k.gainForCommand.bind(k, '8')).to.throw(`Invalid gain setting of 8 gain must be (0,1,2,3,4,5,6)`);
+      });
+    });
+    describe('#inputTypeForCommand', function () {
+      it('Normal', function () {
+        assert.equal(k.OBCIStringADCNormal, k.inputTypeForCommand(0));
+      });
+      it('Shorted', function () {
+        assert.equal(k.OBCIStringADCShorted, k.inputTypeForCommand(1));
+      });
+      it('Bias Method', function () {
+        assert.equal(k.OBCIStringADCBiasMethod, k.inputTypeForCommand(2));
+      });
+      it('MVDD', function () {
+        assert.equal(k.OBCIStringADCMvdd, k.inputTypeForCommand(3));
+      });
+      it('Temp', function () {
+        assert.equal(k.OBCIStringADCTemp, k.inputTypeForCommand(4));
+      });
+      it('Test Signal', function () {
+        assert.equal(k.OBCIStringADCTestSig, k.inputTypeForCommand(5));
+      });
+      it('Bias Dr P', function () {
+        assert.equal(k.OBCIStringADCBiasDrp, k.inputTypeForCommand(6));
+      });
+      it('Bias Dr N', function () {
+        assert.equal(k.OBCIStringADCBiasDrn, k.inputTypeForCommand(7));
+      });
+      it('Invalid command request', function () {
+        expect(k.inputTypeForCommand.bind(k, '8')).to.throw('Invalid input type, must be less than 8');
+      });
+    });
     describe('ADC Channel Input Soruce', function () {
       it('Normal', function () {
         assert.equal('0', k.OBCIChannelCmdADCNormal);
@@ -400,52 +497,52 @@ describe('OpenBCIConstants', function () {
   });
   describe('#sdSettingForString', function () {
     it('correct command for 1 hour', function () {
-      var expectation = k.OBCISDLogForHour1;
-      var result = k.sdSettingForString('1hour');
+      let expectation = k.OBCISDLogForHour1;
+      let result = k.sdSettingForString('1hour');
       return expect(result).to.eventually.equal(expectation);
     });
     it('correct command for 2 hour', function () {
-      var expectation = k.OBCISDLogForHour2;
-      var result = k.sdSettingForString('2hour');
+      let expectation = k.OBCISDLogForHour2;
+      let result = k.sdSettingForString('2hour');
       return expect(result).to.eventually.equal(expectation);
     });
     it('correct command for 4 hour', function () {
-      var expectation = k.OBCISDLogForHour4;
-      var result = k.sdSettingForString('4hour');
+      let expectation = k.OBCISDLogForHour4;
+      let result = k.sdSettingForString('4hour');
       return expect(result).to.eventually.equal(expectation);
     });
     it('correct command for 12 hour', function () {
-      var expectation = k.OBCISDLogForHour12;
-      var result = k.sdSettingForString('12hour');
+      let expectation = k.OBCISDLogForHour12;
+      let result = k.sdSettingForString('12hour');
       return expect(result).to.eventually.equal(expectation);
     });
     it('correct command for 24 hour', function () {
-      var expectation = k.OBCISDLogForHour24;
-      var result = k.sdSettingForString('24hour');
+      let expectation = k.OBCISDLogForHour24;
+      let result = k.sdSettingForString('24hour');
       return expect(result).to.eventually.equal(expectation);
     });
     it('correct command for 5 min', function () {
-      var expectation = k.OBCISDLogForMin5;
-      var result = k.sdSettingForString('5min');
+      let expectation = k.OBCISDLogForMin5;
+      let result = k.sdSettingForString('5min');
       return expect(result).to.eventually.equal(expectation);
     });
     it('correct command for 15 min', function () {
-      var expectation = k.OBCISDLogForMin15;
-      var result = k.sdSettingForString('15min');
+      let expectation = k.OBCISDLogForMin15;
+      let result = k.sdSettingForString('15min');
       return expect(result).to.eventually.equal(expectation);
     });
     it('correct command for 30 min', function () {
-      var expectation = k.OBCISDLogForMin30;
-      var result = k.sdSettingForString('30min');
+      let expectation = k.OBCISDLogForMin30;
+      let result = k.sdSettingForString('30min');
       return expect(result).to.eventually.equal(expectation);
     });
     it('correct command for 14 seconds', function () {
-      var expectation = k.OBCISDLogForSec14;
-      var result = k.sdSettingForString('14sec');
+      let expectation = k.OBCISDLogForSec14;
+      let result = k.sdSettingForString('14sec');
       return expect(result).to.eventually.equal(expectation);
     });
     it('Invalid command request', function () {
-      var result = k.sdSettingForString('taco');
+      let result = k.sdSettingForString('taco');
       return expect(result).to.be.rejected;
     });
   });
@@ -548,384 +645,384 @@ describe('OpenBCIConstants', function () {
   });
   describe('should return the right command for each channel', function () {
     it('Channel 1', function () {
-      var expectation = '1';
-      var result = k.commandChannelForCmd(1);
+      let expectation = '1';
+      let result = k.commandChannelForCmd(1);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 2', function () {
-      var expectation = '2';
-      var result = k.commandChannelForCmd(2);
+      let expectation = '2';
+      let result = k.commandChannelForCmd(2);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 3', function () {
-      var expectation = '3';
-      var result = k.commandChannelForCmd(3);
+      let expectation = '3';
+      let result = k.commandChannelForCmd(3);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 4', function () {
-      var expectation = '4';
-      var result = k.commandChannelForCmd(4);
+      let expectation = '4';
+      let result = k.commandChannelForCmd(4);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 5', function () {
-      var expectation = '5';
-      var result = k.commandChannelForCmd(5);
+      let expectation = '5';
+      let result = k.commandChannelForCmd(5);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 6', function () {
-      var expectation = '6';
-      var result = k.commandChannelForCmd(6);
+      let expectation = '6';
+      let result = k.commandChannelForCmd(6);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 7', function () {
-      var expectation = '7';
-      var result = k.commandChannelForCmd(7);
+      let expectation = '7';
+      let result = k.commandChannelForCmd(7);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 8', function () {
-      var expectation = '8';
-      var result = k.commandChannelForCmd(8);
+      let expectation = '8';
+      let result = k.commandChannelForCmd(8);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 9', function () {
-      var expectation = 'Q';
-      var result = k.commandChannelForCmd(9);
+      let expectation = 'Q';
+      let result = k.commandChannelForCmd(9);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 10', function () {
-      var expectation = 'W';
-      var result = k.commandChannelForCmd(10);
+      let expectation = 'W';
+      let result = k.commandChannelForCmd(10);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 11', function () {
-      var expectation = 'E';
-      var result = k.commandChannelForCmd(11);
+      let expectation = 'E';
+      let result = k.commandChannelForCmd(11);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 12', function () {
-      var expectation = 'R';
-      var result = k.commandChannelForCmd(12);
+      let expectation = 'R';
+      let result = k.commandChannelForCmd(12);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 13', function () {
-      var expectation = 'T';
-      var result = k.commandChannelForCmd(13);
+      let expectation = 'T';
+      let result = k.commandChannelForCmd(13);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 14', function () {
-      var expectation = 'Y';
-      var result = k.commandChannelForCmd(14);
+      let expectation = 'Y';
+      let result = k.commandChannelForCmd(14);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 15', function () {
-      var expectation = 'U';
-      var result = k.commandChannelForCmd(15);
+      let expectation = 'U';
+      let result = k.commandChannelForCmd(15);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 16', function () {
-      var expectation = 'I';
-      var result = k.commandChannelForCmd(16);
+      let expectation = 'I';
+      let result = k.commandChannelForCmd(16);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Invalid channel request', function () {
-      var result = k.commandChannelForCmd(17);
+      let result = k.commandChannelForCmd(17);
       return expect(result).to.be.rejected;
     });
   });
   describe('should return correct channel off command for number', function () {
     it('Channel 1', function () {
-      var expectation = '1';
-      var result = k.commandChannelOff(1);
+      let expectation = '1';
+      let result = k.commandChannelOff(1);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 2', function () {
-      var expectation = '2';
-      var result = k.commandChannelOff(2);
+      let expectation = '2';
+      let result = k.commandChannelOff(2);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 3', function () {
-      var expectation = '3';
-      var result = k.commandChannelOff(3);
+      let expectation = '3';
+      let result = k.commandChannelOff(3);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 4', function () {
-      var expectation = '4';
-      var result = k.commandChannelOff(4);
+      let expectation = '4';
+      let result = k.commandChannelOff(4);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 5', function () {
-      var expectation = '5';
-      var result = k.commandChannelOff(5);
+      let expectation = '5';
+      let result = k.commandChannelOff(5);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 6', function () {
-      var expectation = '6';
-      var result = k.commandChannelOff(6);
+      let expectation = '6';
+      let result = k.commandChannelOff(6);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 7', function () {
-      var expectation = '7';
-      var result = k.commandChannelOff(7);
+      let expectation = '7';
+      let result = k.commandChannelOff(7);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 8', function () {
-      var expectation = '8';
-      var result = k.commandChannelOff(8);
+      let expectation = '8';
+      let result = k.commandChannelOff(8);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 9', function () {
-      var expectation = 'q';
-      var result = k.commandChannelOff(9);
+      let expectation = 'q';
+      let result = k.commandChannelOff(9);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 10', function () {
-      var expectation = 'w';
-      var result = k.commandChannelOff(10);
+      let expectation = 'w';
+      let result = k.commandChannelOff(10);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 11', function () {
-      var expectation = 'e';
-      var result = k.commandChannelOff(11);
+      let expectation = 'e';
+      let result = k.commandChannelOff(11);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 12', function () {
-      var expectation = 'r';
-      var result = k.commandChannelOff(12);
+      let expectation = 'r';
+      let result = k.commandChannelOff(12);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 13', function () {
-      var expectation = 't';
-      var result = k.commandChannelOff(13);
+      let expectation = 't';
+      let result = k.commandChannelOff(13);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 14', function () {
-      var expectation = 'y';
-      var result = k.commandChannelOff(14);
+      let expectation = 'y';
+      let result = k.commandChannelOff(14);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 15', function () {
-      var expectation = 'u';
-      var result = k.commandChannelOff(15);
+      let expectation = 'u';
+      let result = k.commandChannelOff(15);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 16', function () {
-      var expectation = 'i';
-      var result = k.commandChannelOff(16);
+      let expectation = 'i';
+      let result = k.commandChannelOff(16);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Invalid channel request', function () {
-      var result = k.commandChannelOff(17);
+      let result = k.commandChannelOff(17);
       return expect(result).to.be.rejected;
     });
   });
   describe('should return the right command for each sample rate for cyton', function () {
     it('sample rate 16000', function () {
-      var expectation = '0';
-      var result = k.commandSampleRateForCmdCyton(16000);
+      let expectation = '0';
+      let result = k.commandSampleRateForCmdCyton(16000);
       return expect(result).to.eventually.equal(expectation);
     });
     it('sample rate 8000', function () {
-      var expectation = '1';
-      var result = k.commandSampleRateForCmdCyton(8000);
+      let expectation = '1';
+      let result = k.commandSampleRateForCmdCyton(8000);
       return expect(result).to.eventually.equal(expectation);
     });
     it('sample rate 4000', function () {
-      var expectation = '2';
-      var result = k.commandSampleRateForCmdCyton(4000);
+      let expectation = '2';
+      let result = k.commandSampleRateForCmdCyton(4000);
       return expect(result).to.eventually.equal(expectation);
     });
     it('sample rate 2000', function () {
-      var expectation = '3';
-      var result = k.commandSampleRateForCmdCyton(2000);
+      let expectation = '3';
+      let result = k.commandSampleRateForCmdCyton(2000);
       return expect(result).to.eventually.equal(expectation);
     });
     it('sample rate 1000', function () {
-      var expectation = '4';
-      var result = k.commandSampleRateForCmdCyton(1000);
+      let expectation = '4';
+      let result = k.commandSampleRateForCmdCyton(1000);
       return expect(result).to.eventually.equal(expectation);
     });
     it('sample rate 500', function () {
-      var expectation = '5';
-      var result = k.commandSampleRateForCmdCyton(500);
+      let expectation = '5';
+      let result = k.commandSampleRateForCmdCyton(500);
       return expect(result).to.eventually.equal(expectation);
     });
     it('sample rate 250', function () {
-      var expectation = '6';
-      var result = k.commandSampleRateForCmdCyton(250);
+      let expectation = '6';
+      let result = k.commandSampleRateForCmdCyton(250);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Invalid sample rate', function () {
-      var result = k.commandSampleRateForCmdCyton(17);
+      let result = k.commandSampleRateForCmdCyton(17);
       return expect(result).to.be.rejected;
     });
     it('Invalid sample rate type', function () {
-      var result = k.commandSampleRateForCmdCyton('taco');
+      let result = k.commandSampleRateForCmdCyton('taco');
       return expect(result).to.be.rejected;
     });
   });
   describe('should return the right command for each sample rate for ganglion', function () {
     it('sample rate 25600', function () {
-      var expectation = '0';
-      var result = k.commandSampleRateForCmdGanglion(25600);
+      let expectation = '0';
+      let result = k.commandSampleRateForCmdGanglion(25600);
       return expect(result).to.eventually.equal(expectation);
     });
     it('sample rate 12800', function () {
-      var expectation = '1';
-      var result = k.commandSampleRateForCmdGanglion(12800);
+      let expectation = '1';
+      let result = k.commandSampleRateForCmdGanglion(12800);
       return expect(result).to.eventually.equal(expectation);
     });
     it('sample rate 6400', function () {
-      var expectation = '2';
-      var result = k.commandSampleRateForCmdGanglion(6400);
+      let expectation = '2';
+      let result = k.commandSampleRateForCmdGanglion(6400);
       return expect(result).to.eventually.equal(expectation);
     });
     it('sample rate 3200', function () {
-      var expectation = '3';
-      var result = k.commandSampleRateForCmdGanglion(3200);
+      let expectation = '3';
+      let result = k.commandSampleRateForCmdGanglion(3200);
       return expect(result).to.eventually.equal(expectation);
     });
     it('sample rate 1600', function () {
-      var expectation = '4';
-      var result = k.commandSampleRateForCmdGanglion(1600);
+      let expectation = '4';
+      let result = k.commandSampleRateForCmdGanglion(1600);
       return expect(result).to.eventually.equal(expectation);
     });
     it('sample rate 800', function () {
-      var expectation = '5';
-      var result = k.commandSampleRateForCmdGanglion(800);
+      let expectation = '5';
+      let result = k.commandSampleRateForCmdGanglion(800);
       return expect(result).to.eventually.equal(expectation);
     });
     it('sample rate 400', function () {
-      var expectation = '6';
-      var result = k.commandSampleRateForCmdGanglion(400);
+      let expectation = '6';
+      let result = k.commandSampleRateForCmdGanglion(400);
       return expect(result).to.eventually.equal(expectation);
     });
     it('sample rate 200', function () {
-      var expectation = '7';
-      var result = k.commandSampleRateForCmdGanglion(200);
+      let expectation = '7';
+      let result = k.commandSampleRateForCmdGanglion(200);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Invalid sample rate', function () {
-      var result = k.commandSampleRateForCmdGanglion(17);
+      let result = k.commandSampleRateForCmdGanglion(17);
       return expect(result).to.be.rejected;
     });
     it('Invalid sample rate type', function () {
-      var result = k.commandSampleRateForCmdGanglion('taco');
+      let result = k.commandSampleRateForCmdGanglion('taco');
       return expect(result).to.be.rejected;
     });
   });
   describe('should return the right command for each board mode', function () {
     it('board mode default', function () {
-      var expectation = '0';
-      var result = k.commandBoardModeForMode('default');
+      let expectation = '0';
+      let result = k.commandBoardModeForMode('default');
       return expect(result).to.eventually.equal(expectation);
     });
     it('board mode debug', function () {
-      var expectation = '1';
-      var result = k.commandBoardModeForMode('debug');
+      let expectation = '1';
+      let result = k.commandBoardModeForMode('debug');
       return expect(result).to.eventually.equal(expectation);
     });
     it('board mode 2', function () {
-      var expectation = '2';
-      var result = k.commandBoardModeForMode('analog');
+      let expectation = '2';
+      let result = k.commandBoardModeForMode('analog');
       return expect(result).to.eventually.equal(expectation);
     });
     it('board mode 3', function () {
-      var expectation = '3';
-      var result = k.commandBoardModeForMode('digital');
+      let expectation = '3';
+      let result = k.commandBoardModeForMode('digital');
       return expect(result).to.eventually.equal(expectation);
     });
     it('Invalid board mode', function () {
-      var result = k.commandBoardModeForMode(10);
+      let result = k.commandBoardModeForMode(10);
       return expect(result).to.be.rejected;
     });
     it('Invalid board mode', function () {
-      var result = k.commandBoardModeForMode('taco');
+      let result = k.commandBoardModeForMode('taco');
       return expect(result).to.be.rejected;
     });
   });
   describe('should return correct channel on command for number', function () {
     it('Channel 1', function () {
-      var expectation = '!';
-      var result = k.commandChannelOn(1);
+      let expectation = '!';
+      let result = k.commandChannelOn(1);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 2', function () {
-      var expectation = '@';
-      var result = k.commandChannelOn(2);
+      let expectation = '@';
+      let result = k.commandChannelOn(2);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 3', function () {
-      var expectation = '#';
-      var result = k.commandChannelOn(3);
+      let expectation = '#';
+      let result = k.commandChannelOn(3);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 4', function () {
-      var expectation = '$';
-      var result = k.commandChannelOn(4);
+      let expectation = '$';
+      let result = k.commandChannelOn(4);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 5', function () {
-      var expectation = '%';
-      var result = k.commandChannelOn(5);
+      let expectation = '%';
+      let result = k.commandChannelOn(5);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 6', function () {
-      var expectation = '^';
-      var result = k.commandChannelOn(6);
+      let expectation = '^';
+      let result = k.commandChannelOn(6);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 7', function () {
-      var expectation = '&';
-      var result = k.commandChannelOn(7);
+      let expectation = '&';
+      let result = k.commandChannelOn(7);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 8', function () {
-      var expectation = '*';
-      var result = k.commandChannelOn(8);
+      let expectation = '*';
+      let result = k.commandChannelOn(8);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 9', function () {
-      var expectation = 'Q';
-      var result = k.commandChannelOn(9);
+      let expectation = 'Q';
+      let result = k.commandChannelOn(9);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 10', function () {
-      var expectation = 'W';
-      var result = k.commandChannelOn(10);
+      let expectation = 'W';
+      let result = k.commandChannelOn(10);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 11', function () {
-      var expectation = 'E';
-      var result = k.commandChannelOn(11);
+      let expectation = 'E';
+      let result = k.commandChannelOn(11);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 12', function () {
-      var expectation = 'R';
-      var result = k.commandChannelOn(12);
+      let expectation = 'R';
+      let result = k.commandChannelOn(12);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 13', function () {
-      var expectation = 'T';
-      var result = k.commandChannelOn(13);
+      let expectation = 'T';
+      let result = k.commandChannelOn(13);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 14', function () {
-      var expectation = 'Y';
-      var result = k.commandChannelOn(14);
+      let expectation = 'Y';
+      let result = k.commandChannelOn(14);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 15', function () {
-      var expectation = 'U';
-      var result = k.commandChannelOn(15);
+      let expectation = 'U';
+      let result = k.commandChannelOn(15);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Channel 16', function () {
-      var expectation = 'I';
-      var result = k.commandChannelOn(16);
+      let expectation = 'I';
+      let result = k.commandChannelOn(16);
       return expect(result).to.eventually.equal(expectation);
     });
     it('Invalid channel request', function () {
-      var result = k.commandChannelOn(17);
+      let result = k.commandChannelOn(17);
       return expect(result).to.be.rejected;
     });
   });
@@ -935,6 +1032,12 @@ describe('OpenBCIConstants', function () {
     });
     it('Default', function () {
       assert.equal(8, k.OBCINumberOfChannelsDefault);
+    });
+    it('Cyton', function () {
+      assert.equal(8, k.OBCINumberOfChannelsCyton);
+    });
+    it('Cyton', function () {
+      assert.equal(2, k.OBCINumberOfChannelsCytonBLE);
     });
     it('Ganglion', function () {
       assert.equal(4, k.OBCINumberOfChannelsGanglion);
@@ -974,6 +1077,9 @@ describe('OpenBCIConstants', function () {
     it('should get right name for chan cyton', function () {
       expect(k.OBCIBoardCyton).to.equal('cyton');
     });
+    it('should get right name for chan cyton BLE', function () {
+      expect(k.OBCIBoardCytonBLE).to.equal('cytonBLE');
+    });
     it('should get right name for chan ganglion', function () {
       expect(k.OBCIBoardGanglion).to.equal('ganglion');
     });
@@ -988,6 +1094,9 @@ describe('OpenBCIConstants', function () {
     it('should get right num chan for cyton board', function () {
       expect(k.numberOfChannelsForBoardType(k.OBCIBoardCyton)).to.equal(8);
     });
+    it('should get right num chan for cyton BLE board', function () {
+      expect(k.numberOfChannelsForBoardType(k.OBCIBoardCytonBLE)).to.equal(2);
+    });
     it('should get right num chan for ganglion', function () {
       expect(k.numberOfChannelsForBoardType(k.OBCIBoardGanglion)).to.equal(4);
     });
@@ -1001,6 +1110,9 @@ describe('OpenBCIConstants', function () {
     });
     it('should get cyton board right for num chan', function () {
       expect(k.boardTypeForNumberOfChannels(8)).to.equal(k.OBCIBoardCyton);
+    });
+    it('should get cyton BLE board right for num chan', function () {
+      expect(k.boardTypeForNumberOfChannels(2)).to.equal(k.OBCIBoardCytonBLE);
     });
     it('should get ganglion right for num chan', function () {
       expect(k.boardTypeForNumberOfChannels(4)).to.equal(k.OBCIBoardGanglion);
@@ -1464,45 +1576,45 @@ describe('OpenBCIConstants', function () {
   });
   describe('#getTestSignalCommand', function () {
     it('ground', function () {
-      var expectation = '0';
-      var result = k.getTestSignalCommand('ground');
+      let expectation = '0';
+      let result = k.getTestSignalCommand('ground');
       return expect(result).to.eventually.equal(expectation);
     });
     it('dc', function () {
-      var expectation = 'p';
-      var result = k.getTestSignalCommand('dc');
+      let expectation = 'p';
+      let result = k.getTestSignalCommand('dc');
       return expect(result).to.eventually.equal(expectation);
     });
     it('Pulse 1x Fast', function () {
-      var expectation = '=';
-      var result = k.getTestSignalCommand('pulse1xFast');
+      let expectation = '=';
+      let result = k.getTestSignalCommand('pulse1xFast');
       return expect(result).to.eventually.equal(expectation);
     });
     it('Pulse 1x Slow', function () {
-      var expectation = '-';
-      var result = k.getTestSignalCommand('pulse1xSlow');
+      let expectation = '-';
+      let result = k.getTestSignalCommand('pulse1xSlow');
       return expect(result).to.eventually.equal(expectation);
     });
     it('Pulse 2x Fast', function () {
-      var expectation = ']';
-      var result = k.getTestSignalCommand('pulse2xFast');
+      let expectation = ']';
+      let result = k.getTestSignalCommand('pulse2xFast');
       return expect(result).to.eventually.equal(expectation);
     });
     it('Pulse 2x Slow', function () {
-      var expectation = '[';
-      var result = k.getTestSignalCommand('pulse2xSlow');
+      let expectation = '[';
+      let result = k.getTestSignalCommand('pulse2xSlow');
       return expect(result).to.eventually.equal(expectation);
     });
     it('none', function () {
-      var expectation = 'd';
-      var result = k.getTestSignalCommand('none');
+      let expectation = 'd';
+      let result = k.getTestSignalCommand('none');
       return expect(result).to.eventually.equal(expectation);
     });
   });
   describe('#getVersionNumber', function () {
     it('should get the major version number from a github standard version string', () => {
-      var expectedVersion = 6;
-      var inputStringVersion = 'v6.0.0';
+      let expectedVersion = 6;
+      let inputStringVersion = 'v6.0.0';
 
       expect(k.getVersionNumber(inputStringVersion)).to.equal(expectedVersion);
     });
@@ -1757,6 +1869,69 @@ describe('OpenBCIConstants', function () {
       assert.equal('sample', k.OBCIEmitterSample);
     });
   });
+  describe('Errors', function () {
+    it('errorInvalidByteLength', function () {
+      assert.equal(k.OBCIErrorInvalidByteLength, 'Invalid Packet Byte Length');
+    });
+    it('errorInvalidByteStart', function () {
+      assert.equal(k.OBCIErrorInvalidByteStart, 'Invalid Start Byte');
+    });
+    it('errorInvalidByteStop', function () {
+      assert.equal(k.OBCIErrorInvalidByteStop, 'Invalid Stop Byte');
+    });
+    it('OBCIErrorInvalidData', function () {
+      assert.equal(k.OBCIErrorInvalidData, 'Invalid data - try again');
+    });
+    it('errorInvalidType', function () {
+      assert.equal(k.OBCIErrorInvalidType, 'Invalid type - check comments for input type');
+    });
+    it('errorMissingRegisterSetting', function () {
+      assert.equal(k.OBCIErrorMissingRegisterSetting, 'Missing register setting');
+    });
+    it('errorMissingRequiredProperty', function () {
+      assert.equal(k.OBCIErrorMissingRequiredProperty, 'Missing property in JSON');
+    });
+    it('errorTimeSyncIsNull', function () {
+      assert.equal(k.OBCIErrorTimeSyncIsNull, "'this.sync.curSyncObj' must not be null");
+    });
+    it('errorTimeSyncNoComma', function () {
+      assert.equal(k.OBCIErrorTimeSyncNoComma, 'Missed the time sync sent confirmation. Try sync again');
+    });
+    it('errorUndefinedOrNullInput', function () {
+      assert.equal(k.OBCIErrorUndefinedOrNullInput, 'Undefined or Null Input');
+    });
+  });
+  describe('Packet Size', function () {
+    it('Standard packet size', function () {
+      assert.equal(33, k.OBCIPacketSize);
+    });
+    it('Cyton BLE packet size', function () {
+      assert.equal(20, k.OBCIPacketSizeBLECyton);
+    });
+    it('Small packet size', function () {
+      assert.equal(12, k.OBCIPacketSizeBLERaw);
+    });
+  });
+  describe('Register Query on Cyton', function () {
+    assert.equal(k.OBCIRegisterQueryAccelerometerFirmwareV1, '\nLIS3DH Registers\n0x07.0\n0x08.0\n0x09.0\n0x0A.0\n0x0B.0\n0x0C.0\n0x0D.0\n0x0E.0\n0x0F.33\n\n0x1F.0\n0x20.8\n0x21.0\n0x22.0\n0x23.18\n0x24.0\n0x25.0\n0x26.0\n0x27.0\n0x28.0\n0x29.0\n0x2A.0\n0x2B.0\n0x2C.0\n0x2D.0\n0x2E.0\n0x2F.20\n0x30.0\n0x31.0\n0x32.0\n0x33.0\n\n0x38.0\n0x39.0\n0x3A.0\n0x3B.0\n0x3C.0\n0x3D.0\n');
+    assert.equal(k.OBCIRegisterQueryAccelerometerFirmwareV3, '\nLIS3DH Registers\n0x07 00\n0x08 00\n0x09 00\n0x0A 00\n0x0B 00\n0x0C 00\n0x0D 00\n0x0E 00\n0x0F 33\n\n0x1F 00\n0x20 08\n0x21 00\n0x22 00\n0x23 18\n0x24 00\n0x25 00\n0x26 00\n0x27 00\n0x28 00\n0x29 00\n0x2A 00\n0x2B 00\n0x2C 00\n0x2D 00\n0x2E 00\n0x2F 20\n0x30 00\n0x31 00\n0x32 00\n0x33 00\n\n0x38 00\n0x39 00\n0x3A 00\n0x3B 00\n0x3C 00\n0x3D 00\n');
+    assert.equal(k.OBCIRegisterQueryCyton, '\nBoard ADS Registers\nADS_ID, 00, 3E, 0, 0, 1, 1, 1, 1, 1, 0\nCONFIG1, 01, 96, 1, 0, 0, 1, 0, 1, 1, 0\nCONFIG2, 02, C0, 1, 1, 0, 0, 0, 0, 0, 0\nCONFIG3, 03, EC, 1, 1, 1, 0, 1, 1, 0, 0\nLOFF, 04, 02, 0, 0, 0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH2SET, 06, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH3SET, 07, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH4SET, 08, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH5SET, 09, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH6SET, 0A, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH7SET, 0B, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH8SET, 0C, 68, 0, 1, 1, 0, 1, 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\nBIAS_SENSN, 0E, FF, 1, 1, 1, 1, 1, 1, 1, 1\nLOFF_SENSP, 0F, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_SENSN, 10, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_FLIP, 11, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_STATP, 12, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_STATN, 13, 00, 0, 0, 0, 0, 0, 0, 0, 0\nGPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0\nMISC2, 16, 00, 0, 0, 0, 0, 0, 0, 0, 0\nCONFIG4, 17, 00, 0, 0, 0, 0, 0, 0, 0, 0\n');
+    assert.equal(k.OBCIRegisterQueryCytonDaisy, '\nDaisy ADS Registers\nADS_ID, 00, 3E, 0, 0, 1, 1, 1, 1, 1, 0\nCONFIG1, 01, 96, 1, 0, 0, 1, 0, 1, 1, 0\nCONFIG2, 02, C0, 1, 1, 0, 0, 0, 0, 0, 0\nCONFIG3, 03, EC, 1, 1, 1, 0, 1, 1, 0, 0\nLOFF, 04, 02, 0, 0, 0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH2SET, 06, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH3SET, 07, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH4SET, 08, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH5SET, 09, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH6SET, 0A, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH7SET, 0B, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH8SET, 0C, 68, 0, 1, 1, 0, 1, 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\nBIAS_SENSN, 0E, FF, 1, 1, 1, 1, 1, 1, 1, 1\nLOFF_SENSP, 0F, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_SENSN, 10, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_FLIP, 11, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_STATP, 12, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_STATN, 13, 00, 0, 0, 0, 0, 0, 0, 0, 0\nGPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0\nMISC2, 16, 00, 0, 0, 0, 0, 0, 0, 0, 0\nCONFIG4, 17, 00, 0, 0, 0, 0, 0, 0, 0, 0\n');
+    assert.equal(k.OBCIRegisterQuerySizeCytonFirmwareV1, k.OBCIRegisterQueryCyton.length + k.OBCIRegisterQueryAccelerometerFirmwareV1.length);
+    assert.equal(k.OBCIRegisterQuerySizeCytonDaisyFirmwareV1, k.OBCIRegisterQueryCyton.length + k.OBCIRegisterQueryCytonDaisy.length + k.OBCIRegisterQueryAccelerometerFirmwareV1.length);
+    assert.equal(k.OBCIRegisterQuerySizeCytonFirmwareV3, k.OBCIRegisterQueryCyton.length + k.OBCIRegisterQueryAccelerometerFirmwareV3.length);
+    assert.equal(k.OBCIRegisterQuerySizeCytonDaisyFirmwareV3, k.OBCIRegisterQueryCyton.length + k.OBCIRegisterQueryCytonDaisy.length + k.OBCIRegisterQueryAccelerometerFirmwareV3.length);
+    assert.equal(k.OBCIRegisterQueryNameMISC1, 'MISC1');
+    assert.equal(k.OBCIRegisterQueryNameBIASSENSP, 'BIAS_SENSP');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[0], 'CH1SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[1], 'CH2SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[2], 'CH3SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[3], 'CH4SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[4], 'CH5SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[5], 'CH6SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[6], 'CH7SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[7], 'CH8SET');
+  });
   describe('General', function () {
     it('Ganglion prefix', function () {
       assert.equal('Ganglion', k.OBCIGanglionPrefix);
@@ -1848,11 +2023,30 @@ describe('OpenBCIConstants', function () {
     it('Receive', function () {
       assert.equal('2d30c082f39f4ce6923f3484ea480596', k.SimbleeUuidReceive);
     });
-    it('Service', function () {
+    it('Write', function () {
       assert.equal('2d30c083f39f4ce6923f3484ea480596', k.SimbleeUuidSend);
     });
-    it('Service', function () {
+    it('Disconnect', function () {
       assert.equal('2d30c084f39f4ce6923f3484ea480596', k.SimbleeUuidDisconnect);
+    });
+  });
+  describe('RFduino BLE UUID', function () {
+    it('Service', function () {
+      assert.equal(k.RFduinoUuidService, '2220');
+    });
+    it('Receive', function () {
+      assert.equal(k.RFduinoUuidReceive, '2221');
+    });
+    it('Write/Notify/Subscribe', function () {
+      assert.equal(k.RFduinoUuidSend, '2222');
+    });
+    it('supposed to be a send but can\'t get it working', function () {
+      assert.equal(k.RFduinoUuidSendTwo, '2223');
+    });
+  });
+  describe('Cyton BLE', function () {
+    it('3 samples per packet', function () {
+      assert.equal(k.OBCICytonBLESamplesPerPacket, 3);
     });
   });
   describe('noble', function () {
@@ -1896,7 +2090,7 @@ describe('OpenBCIConstants', function () {
       let perifs = getListOfPeripheralsOfSize(numPerifs);
       k.getPeripheralLocalNames(perifs).then(list => {
         expect(list.length).to.equal(numPerifs);
-        for (var i = 0; i < list.length; i++) {
+        for (let i = 0; i < list.length; i++) {
           expect(list[i]).to.equal(makeLocalName(i));
         }
         done();

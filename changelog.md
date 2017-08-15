@@ -1,3 +1,9 @@
+# 0.1.3
+
+### New Features
+
+* A bunch of functions to support synchronization of channel settings with cyton. Will be used by both the Wifi and the Cyton node modules.
+
 # 0.1.2
 
 ### Bug Fixes

@@ -3,6 +3,7 @@
 */
 'use strict';
 // jshint expr: true
+/* global describe, it, after, afterEach, before, beforeEach */
 const bluebirdChecks = require('./bluebirdChecks');
 const openBCIUtilities = require('../openBCIUtilities');
 const sinon = require('sinon');
@@ -19,6 +20,7 @@ chai.use(sinonChai);
 chai.use(dirtyChai);
 const bufferEqual = require('buffer-equal');
 const Buffer = require('safe-buffer').Buffer;
+const _ = require('lodash');
 
 let k = require('../openBCIConstants');
 
@@ -35,8 +37,80 @@ describe('openBCIUtilities', function () {
     accelArray = [0, 0, 0];
   });
   afterEach(() => bluebirdChecks.noPendingPromises());
-  describe('#transformRawDataPacketsToSample', function () {
-    // TODO: Add tests
+  describe('#ganglionFillRawDataPacket', function () {
+    it('should fill the packet with values from data', function () {
+      const numChannels = k.numberOfChannelsForBoardType(k.OBCIBoardGanglion);
+      let rawDataPacket = k.rawDataToSampleObjectDefault(numChannels).rawDataPacket;
+      rawDataPacket.fill(0); // fill with zeros
+      let data = openBCIUtilities.sampleBLERaw();
+      const sampleNumber = 23;
+      openBCIUtilities.ganglionFillRawDataPacket({
+        data,
+        rawDataPacket,
+        sampleNumber
+      });
+      expect(bufferEqual(rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw), data), `expected ${data.toString('hex')} but got ${rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw).toString('hex')}`).to.be.true();
+      expect(rawDataPacket[k.OBCIPacketPositionSampleNumber]).to.equal(sampleNumber);
+      expect(rawDataPacket[k.OBCIPacketPositionStartByte]).to.equal(k.OBCIByteStart);
+      expect(rawDataPacket[k.OBCIPacketPositionStopByte]).to.equal(k.OBCIStreamPacketStandardRawAux);
+    });
+    describe('#errorConditions', function () {
+      it('send undefined data buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send null data buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: null,
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send undefined rawDataPacket buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send null rawDataPacket buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: null,
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('no sample number', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize)
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('wrong number of bytes rawDataPacket', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: Buffer.alloc(5),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+      it('wrong number of bytes data', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(5),
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+      it('undefined', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities)).to.throw(k.OBCIErrorUndefinedOrNullInput);
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities), {
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize)
+        }).to.throw(k.OBCIErrorUndefinedOrNullInput);
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities), {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw)
+        }).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+    });
   });
   describe('#parsePacketStandardAccel', function () {
     it('should return the packet', function () {
@@ -325,6 +399,326 @@ describe('openBCIUtilities', function () {
         expect(openBCIUtilities.parsePacketStandardRawAux.bind(openBCIUtilities, {
           rawDataPacket: new Buffer(5)
         })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+    });
+  });
+  describe('#getBooleanFromRegisterQuery', function () {
+    it('should return true if 1', function () {
+      const retVal = openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 1, 0, 0, 0, 0, 0', /MISC1/, 21);
+      expect(retVal).to.be.true();
+    });
+    it('should return false it 0', function () {
+      expect(openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0', /MISC1/, 21)).to.be.false();
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getBooleanFromRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!", 'MISC', 20)).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getBooleanFromRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0', 'MISC', 20)).to.throw(k.OBCIErrorInvalidData);
+      });
+    });
+  });
+  describe('#getSRB1FromADSRegisterQuery', function () {
+    it('should return true if 1', function () {
+      const retVal = openBCIUtilities.getSRB1FromADSRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 1, 0, 0, 0, 0, 0');
+      expect(retVal).to.be.true();
+    });
+    it('should return false it 0', function () {
+      expect(openBCIUtilities.getSRB1FromADSRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.be.false();
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!")).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorInvalidData);
+      });
+    });
+  });
+  describe('#getNumFromThreeCSVADSRegisterQuery', function () {
+    it('should return 1', function () {
+      const str = '0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 0, 0, 1, 1, 0, 0, 0\nCH2SET, 06, 68,';
+      const retVal = openBCIUtilities.getNumFromThreeCSVADSRegisterQuery(str, k.OBCIRegisterQueryNameCHnSET[0], 19);
+      expect(retVal).to.be.equal(1);
+    });
+    it('should return 6', function () {
+      const str = '0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH2SET, 06, 68,';
+      const retVal = openBCIUtilities.getNumFromThreeCSVADSRegisterQuery(str, k.OBCIRegisterQueryNameCHnSET[0], 19);
+      expect(retVal).to.be.equal(6);
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getNumFromThreeCSVADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!", 'MISC', 20)).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getNumFromThreeCSVADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0', 'MISC', 21)).to.throw(k.OBCIErrorInvalidData);
+      });
+    });
+  });
+  describe('#setChSetFromADSRegisterQuery', function () {
+    it('should return correct values for raw config', function () {
+      const str = '0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH2SET, 06, 68,';
+      const expectedChannelNumber = 0;
+      const channelSettings = k.channelSettingsObjectDefault(expectedChannelNumber);
+      channelSettings.powerDown = true;
+      channelSettings.gain = 50;
+      channelSettings.srb2 = false;
+      channelSettings.inputType = k.OBCIStringADCMvdd;
+      openBCIUtilities.setChSetFromADSRegisterQuery(str, channelSettings);
+      expect(channelSettings.powerDown).to.be.false();
+      expect(channelSettings.gain).to.equal(24);
+      expect(channelSettings.srb2).to.be.true();
+      expect(channelSettings.inputType).to.equal('normal');
+    });
+    it('should return correct values for raw config and account for daisy offset', function () {
+      const str = '0, 0, 0, 0, 1, 0\nCH3SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH4SET, 06, 68,';
+      const expectedChannelNumber = 10;
+      const channelSettings = k.channelSettingsObjectDefault(expectedChannelNumber);
+      channelSettings.powerDown = true;
+      channelSettings.gain = 50;
+      channelSettings.srb2 = false;
+      channelSettings.inputType = k.OBCIStringADCMvdd;
+      openBCIUtilities.setChSetFromADSRegisterQuery(str, channelSettings);
+      expect(channelSettings.powerDown).to.be.false();
+      expect(channelSettings.gain).to.equal(24);
+      expect(channelSettings.srb2).to.be.true();
+      expect(channelSettings.inputType).to.equal('normal');
+    });
+    it('should return false it 0', function () {
+      expect(openBCIUtilities.getSRB1FromADSRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.be.false();
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!")).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorInvalidData);
+      });
+    });
+  });
+  describe('#getBiasSetFromADSRegisterQuery', function () {
+    it('should work for 8 channels', function () {
+      const input = ', 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 0, 1, 0, 1, 0, 1, 0\nBIAS_SENSN, 0E, ';
+      for (let i = 0; i < k.OBCINumberOfChannelsCyton; i++) {
+        if (i % 2 === 0) {
+          expect(openBCIUtilities.getBiasSetFromADSRegisterQuery(input, i)).to.be.true();
+        } else {
+          expect(openBCIUtilities.getBiasSetFromADSRegisterQuery(input, i)).to.be.false();
+        }
+      }
+    });
+    it('should return true if 1', function () {
+      const input = ', 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\nBIAS_SENSN, 0E, ';
+      for (let i = 0; i < k.OBCINumberOfChannelsCyton; i++) {
+        expect(openBCIUtilities.getBiasSetFromADSRegisterQuery(input, i)).to.be.true();
+      }
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getBiasSetFromADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!")).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getBiasSetFromADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+    });
+  });
+  describe('#syncChannelSettingsWithRawData', function () {
+    it('should set the channel settings from the data buffer for cyton for firmware version 1', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV1);
+      const majorFirmwareVersion = 1;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton));
+    });
+    it('should set the channel settings from the data buffer for cyton for firmware version 2', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV1);
+      const majorFirmwareVersion = 2;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton));
+    });
+    it('should set the channel settings from the data buffer for cyton for firmware version 3', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+      const majorFirmwareVersion = 3;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton));
+    });
+    it('should set the channel settings from the data buffer for cyton for firmware version 10', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+      const majorFirmwareVersion = 10;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton));
+    });
+    it('should set the channel settings from the data buffer for daisy for firmware version 1', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV1);
+      const majorFirmwareVersion = 1;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy));
+    });
+    it('should set the channel settings from the data buffer for daisy for firmware version 9', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+      const majorFirmwareVersion = 9;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy));
+    });
+    describe('#errorConditions', function () {
+      it('channelSettings not array', function () {
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          channelSettings: 0,
+          majorFirmwareVersion: 1
+        })).to.throw(`${k.OBCIErrorInvalidType} channelSettings`);
+      });
+      it('throw error when raw data is for cyton, but channel settings is for daisy with firmware version 1', function () {
+        let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV1);
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          channelSettings,
+          majorFirmwareVersion: 1
+        })).to.throw('raw data mismatch - expected daisy register info but none found');
+      });
+      it('throw error when raw data is for daisy, but channel settings is for cyton with firmware version 1', function () {
+        let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV1);
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          channelSettings,
+          majorFirmwareVersion: 1
+        })).to.throw('raw data mismatch - expected only cyton register info but also found daisy');
+      });
+      it('throw error when raw data is for cyton, but channel settings is for daisy with firmware version 3', function () {
+        let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          channelSettings,
+          majorFirmwareVersion: 3
+        })).to.throw('raw data mismatch - expected daisy register info but none found');
+      });
+      it('throw error when raw data is for daisy, but channel settings is for cyton with firmware version 3', function () {
+        let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          channelSettings,
+          majorFirmwareVersion: 3
+        })).to.throw('raw data mismatch - expected only cyton register info but also found daisy');
+      });
+      it('data is undefined', function () {
+        let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+        const majorFirmwareVersion = 3;
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          channelSettings,
+          majorFirmwareVersion
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('channelSettings is undefined', function () {
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+        const majorFirmwareVersion = 3;
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          majorFirmwareVersion
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('majorFirmwareVersion is undefined', function () {
+        let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          channelSettings,
+          data
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('invalid channel settings', function () {
+        let channelSettings = [];
+        for (let i = 0; i < k.OBCINumberOfChannelsCyton; i++) {
+          channelSettings.push({taco: 'gordo'});
+        }
+        const majorFirmwareVersion = 3;
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          channelSettings,
+          data,
+          majorFirmwareVersion
+        })).to.throw(k.OBCIErrorMissingRequiredProperty);
       });
     });
   });
@@ -1077,7 +1471,6 @@ describe('openBCIUtilities', function () {
       expect(daisySampleObjectNoScale).to.have.property('accelData');
     });
   });
-
   describe('#makeDaisySampleObjectWifi', function () {
     let lowerSampleObject, upperSampleObject, daisySampleObject;
     let lowerSampleObjectNoScale, upperSampleObjectNoScale, daisySampleObjectNoScale;
@@ -1516,7 +1909,6 @@ $$$`);
       expect(openBCIUtilities.isSuccessInBuffer(buf)).to.equal(true);
     });
   });
-
   describe('#isStopByte', function () {
     it('should return true for a normal stop byte', () => {
       expect(openBCIUtilities.isStopByte(0xC0)).to.be.true();
@@ -1531,7 +1923,6 @@ $$$`);
       expect(openBCIUtilities.isStopByte(0x00)).to.be.false();
     });
   });
-
   describe('#isTimeSyncSetConfirmationInBuffer', function () {
     // Attn: 0x2C is ASCII for ','
     let comma = 0x2C;
@@ -1796,6 +2187,35 @@ $$$`);
         impedanceArray = openBCIUtilities.impedanceCalculateArray(newRandomSample(i), impTestObj);
       }
       expect(impedanceArray.length).to.equal(numberOfChannels);
+    });
+  });
+  describe('#extractRawBLEDataPackets', function () {
+    it('should do nothing when empty buffer inserted', () => {
+      let buffer = null;
+
+      // Test the function
+      let rawDataPackets = openBCIUtilities.extractRawBLEDataPackets(buffer);
+
+      expect(rawDataPackets).to.deep.equal([]);
+    });
+    it('should return an unaltered buffer if there is less than a packets worth of data in it', () => {
+      let expectedString = 'AJ';
+      let buffer = new Buffer(expectedString);
+
+      // Test the function
+      let rawDataPackets = openBCIUtilities.extractRawBLEDataPackets(buffer);
+
+      // Convert the buffer to a string and ensure that it equals the expected string
+      expect(rawDataPackets).to.deep.equal([]);
+    });
+    it('should identify three packets packet', () => {
+      let buffer = openBCIUtilities.samplePacketCytonBLE(0);
+
+      // Call the function under test
+      let rawDataPackets = openBCIUtilities.extractRawBLEDataPackets(buffer);
+
+      // The buffer should not have anything in it any more
+      expect(rawDataPackets.length).to.equal(3);
     });
   });
 });

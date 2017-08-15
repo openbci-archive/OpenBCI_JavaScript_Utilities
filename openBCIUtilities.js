@@ -3,6 +3,7 @@ const gaussian = require('gaussian');
 const k = require('./openBCIConstants');
 const StreamSearch = require('streamsearch');
 const Buffer = require('safe-buffer').Buffer;
+const _ = require('lodash');
 
 /** Constants for interpreting the EEG data */
 // Reference voltage for ADC in ADS1299.
@@ -117,13 +118,34 @@ var utilitiesModule = {
       'rawDataPackets': rawDataPackets
     };
   },
-
+  extractRawBLEDataPackets: (dataBuffer) => {
+    let rawDataPackets = [];
+    if (!_.isBuffer(dataBuffer)) return rawDataPackets;
+    // Verify the packet is of length 20
+    if (dataBuffer.byteLength !== k.OBCIPacketSizeBLECyton) return rawDataPackets;
+    let sampleNumbers = [0, 0, 0];
+    sampleNumbers[0] = dataBuffer[1];
+    sampleNumbers[1] = sampleNumbers[0] + 1;
+    if (sampleNumbers[1] > 255) sampleNumbers[1] -= 255;
+    sampleNumbers[2] = sampleNumbers[1] + 1;
+    if (sampleNumbers[2] > 255) sampleNumbers[2] -= 255;
+    for (let i = 0; i < k.OBCICytonBLESamplesPerPacket; i++) {
+      let rawDataPacket = Buffer.alloc(k.OBCIPacketSize);
+      rawDataPacket[0] = k.OBCIByteStart;
+      rawDataPacket[k.OBCIPacketPositionStopByte] = dataBuffer[0];
+      rawDataPacket[k.OBCIPacketPositionSampleNumber] = sampleNumbers[i];
+      dataBuffer.copy(rawDataPacket, k.OBCIPacketPositionChannelDataStart, k.OBCIPacketPositionChannelDataStart + (i * 6), k.OBCIPacketPositionChannelDataStart + 6 + (i * 6));
+      rawDataPackets.push(rawDataPacket);
+    }
+    return rawDataPackets;
+  },
   transformRawDataPacketToSample,
   transformRawDataPacketsToSample,
   getRawPacketType,
   getFromTimePacketAccel,
   getFromTimePacketTime,
   getFromTimePacketRawAux,
+  ganglionFillRawDataPacket,
   parsePacketStandardAccel,
   parsePacketStandardRawAux,
   parsePacketTimeSyncedAccel,
@@ -548,6 +570,9 @@ var utilitiesModule = {
   samplePacketUserDefined: () => {
     return new Buffer([0xA0, 0x00, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, makeTailByteFromPacketType(k.OBCIStreamPacketUserDefinedType)]);
   },
+  samplePacketCytonBLE: sampleNumber => {
+    return new Buffer([0xC0, sampleNumberNormalize(sampleNumber), 0, 0, 1, 0, 0, 2, 0, 0, 10, 0, 0, 20, 0, 0, 100, 0, 0, 200]);
+  },
   makeDaisySampleObject,
   makeDaisySampleObjectWifi,
   getChannelDataArray,
@@ -561,6 +586,12 @@ var utilitiesModule = {
   isTimeSyncSetConfirmationInBuffer,
   makeTailByteFromPacketType,
   isStopByte,
+  getBooleanFromRegisterQuery,
+  getSRB1FromADSRegisterQuery,
+  getBiasSetFromADSRegisterQuery,
+  getNumFromThreeCSVADSRegisterQuery,
+  setChSetFromADSRegisterQuery,
+  syncChannelSettingsWithRawData,
   newSyncObject,
   stripToEOTBuffer,
   /**
@@ -626,6 +657,9 @@ var utilitiesModule = {
         0b00000000, // 17
         0b00001000  // 18
       ]);
+  },
+  sampleBLERaw: () => {
+    return new Buffer([0, 0, 1, 0, 0, 2, 0, 0, 3, 0, 0, 4]);
   },
   sampleImpedanceChannel1: () => {
     return new Buffer([k.OBCIGanglionByteIdImpedanceChannel1, 0, 0, 1]);
@@ -1005,6 +1039,29 @@ function transformRawDataPacketToSample (o) {
 }
 
 /**
+ * @description This function takes a raw data buffer of 4 3-byte signed integers for ganglion
+ * @param o {Object} - The input object
+ * @param o.data {Buffer} - An allocated and filled buffer of length 12
+ * @param o.rawDataPacket {Buffer} - An allocated buffer of length 33
+ * @param o.sampleNumber {Number} - The sample number to load into the `rawDataPacket`
+ */
+function ganglionFillRawDataPacket (o) {
+  // Check to make sure data is not null.
+  if (k.isUndefined(o) || k.isUndefined(o.rawDataPacket) || k.isNull(o.rawDataPacket) || k.isUndefined(o.data) || k.isNull(o.data)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  // Check to make sure sampleNumber is inside object
+  if (!o.hasOwnProperty('sampleNumber')) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  // Check to make sure the rawDataPacket buffer is the right size.
+  if (o.rawDataPacket.byteLength !== k.OBCIPacketSize) throw new Error(k.OBCIErrorInvalidByteLength);
+  // Check to make sure the rawDataPacket buffer is the right size.
+  if (o.data.byteLength !== k.OBCIPacketSizeBLERaw) throw new Error(k.OBCIErrorInvalidByteLength);
+
+  o.data.copy(o.rawDataPacket, k.OBCIPacketPositionChannelDataStart);
+  o.rawDataPacket[k.OBCIPacketPositionSampleNumber] = o.sampleNumber;
+  o.rawDataPacket[k.OBCIPacketPositionStartByte] = k.OBCIByteStart;
+  o.rawDataPacket[k.OBCIPacketPositionStopByte] = k.OBCIStreamPacketStandardRawAux;
+}
+
+/**
  * @description This method parses a 33 byte OpenBCI V3 packet and converts to a sample object
  * @param o {Object} - The input object
  * @param o.rawDataPacket {Buffer} - The 33byte raw packet
@@ -1210,6 +1267,143 @@ function parsePacketTimeSyncedRawAux (o) {
   sampleObject.valid = true;
 
   return sampleObject;
+}
+
+/**
+ * Use reg ex to parse a `str` register query for a boolean `offset` from index. Throws errors
+ * @param str {String} - The string to search
+ * @param regEx {RegExp} - The key to match to
+ * @param offset {Number} - The number of bytes to offset from the index of the reg ex hit
+ * @returns {boolean} The converted and parsed value from `str`
+ */
+function getBooleanFromRegisterQuery (str, regEx, offset) {
+  let regExArr = str.match(regEx);
+  if (regExArr) {
+    const num = parseInt(str.charAt(regExArr.index + offset));
+    if (!_.isNaN(num)) {
+      return Boolean(num);
+    } else {
+      throw new Error(k.OBCIErrorInvalidData);
+    }
+  } else {
+    throw new Error(k.OBCIErrorMissingRegisterSetting);
+  }
+}
+
+/**
+ * Used to get the truth value fo srb1 within the system
+ * @param str {String} - The raw query data
+ * @returns {boolean}
+ */
+function getSRB1FromADSRegisterQuery (str) {
+  return getBooleanFromRegisterQuery(str, k.OBCIRegisterQueryNameMISC1, 21);
+}
+
+/**
+ * Used to get bias setting from raw query
+ * @param str {String} - The raw query data
+ * @param channelNumber {Number} - Zero indexed, please send `channelNumber` directly to this function.
+ * @returns {boolean}
+ */
+function getBiasSetFromADSRegisterQuery (str, channelNumber) {
+  return getBooleanFromRegisterQuery(str, k.OBCIRegisterQueryNameBIASSENSP, 20 + (channelNumber * 3));
+}
+
+/**
+ * Used to get a number from the raw query data
+ * @param str {String} - The raw query data
+ * @param regEx {RegExp} - The regular expression to index off of
+ * @param offset {Number} - The number of bytes offset from index to start
+ */
+function getNumFromThreeCSVADSRegisterQuery (str, regEx, offset) {
+  let regExArr = str.match(regEx);
+  if (regExArr) {
+    const bit2 = parseInt(str.charAt(regExArr.index + offset));
+    const bit1 = parseInt(str.charAt(regExArr.index + offset + 3));
+    const bit0 = parseInt(str.charAt(regExArr.index + offset + 6));
+    if (!_.isNaN(bit2) && !_.isNaN(bit1) && !_.isNaN(bit0)) {
+      return bit2 << 2 | bit1 << 1 | bit0;
+    } else {
+      throw new Error(k.OBCIErrorInvalidData);
+    }
+  } else {
+    throw new Error(k.OBCIErrorMissingRegisterSetting);
+  }
+}
+
+/**
+ * Used to get bias setting from raw query
+ * @param str {String} - The raw query data
+ * @param channelSettings {ChannelSettingsObject} - Just your standard channel setting object
+ * @returns {boolean}
+ */
+function setChSetFromADSRegisterQuery (str, channelSettings) {
+  let key = k.OBCIRegisterQueryNameCHnSET[channelSettings.channelNumber];
+  if (_.isUndefined(key)) key = k.OBCIRegisterQueryNameCHnSET[channelSettings.channelNumber - k.OBCINumberOfChannelsCyton];
+  channelSettings.powerDown = getBooleanFromRegisterQuery(str, key, 16);
+  channelSettings.gain = k.gainForCommand(getNumFromThreeCSVADSRegisterQuery(str, key, 19));
+  channelSettings.inputType = k.inputTypeForCommand(getNumFromThreeCSVADSRegisterQuery(str, key, 31));
+  channelSettings.srb2 = getBooleanFromRegisterQuery(str, key, 28);
+}
+
+/**
+ *
+ * @param o {Object}
+ * @param o.channelSettings {Array} - The standard channel settings object
+ * @param o.data {Buffer} - The buffer of raw query data
+ */
+function syncChannelSettingsWithRawData (o) {
+  // Check to make sure data is not null.
+  if (k.isUndefined(o) || k.isUndefined(o.channelSettings) || k.isNull(o.channelSettings) || k.isUndefined(o.data) || k.isNull(o.data) || k.isUndefined(o.majorFirmwareVersion) || k.isNull(o.majorFirmwareVersion)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  // Check to make sure channel settings is array
+  if (!Array.isArray(o.channelSettings)) throw new Error(`${k.OBCIErrorInvalidType} channelSettings`);
+  // Check to make sure the rawDataPacket buffer is the right size.
+
+  if (o.channelSettings.length === k.OBCINumberOfChannelsCyton) {
+    if (o.data.toString().match(/Daisy ADS/)) throw new Error('raw data mismatch - expected only cyton register info but also found daisy');
+    if (_.isNull(o.data.toString().match(/Board ADS/))) throw new Error(k.OBCIErrorInvalidData);
+  } else {
+    if (_.isNull(o.data.toString().match(/Daisy ADS/))) throw new Error('raw data mismatch - expected daisy register info but none found');
+    if (_.isNull(o.data.toString().match(/Board ADS/))) throw new Error('no Board ADS info found');
+  }
+
+  _.forEach((o.channelSettings), (cs) => {
+    if (!cs.hasOwnProperty('channelNumber') || !cs.hasOwnProperty('powerDown') || !cs.hasOwnProperty('gain') || !cs.hasOwnProperty('inputType') || !cs.hasOwnProperty('bias') || !cs.hasOwnProperty('srb2') || !cs.hasOwnProperty('srb1')) {
+      throw new Error(k.OBCIErrorMissingRequiredProperty);
+    }
+  });
+
+  let adsDaisy = null;
+  let usingSRB1Cyton = false;
+  let usingSRB1Daisy = false;
+  let regExArr = o.data.toString().match(/Board ADS/);
+  let adsCyton = o.data.toString().slice(regExArr.index, k.OBCIRegisterQueryCyton.length);
+  if (getSRB1FromADSRegisterQuery(adsCyton)) {
+    usingSRB1Cyton = true;
+  }
+  if (o.channelSettings.length > k.OBCINumberOfChannelsCyton) {
+    let regExArrDaisy = o.data.toString().match(/Daisy ADS/);
+    adsDaisy = o.data.toString().slice(regExArrDaisy.index, regExArrDaisy.index + k.OBCIRegisterQueryCytonDaisy.length);
+    if (getSRB1FromADSRegisterQuery(adsCyton)) {
+      usingSRB1Daisy = true;
+    }
+  }
+  _.forEach(o.channelSettings,
+    /**
+     * Set each channel
+     * @param cs {ChannelSettingsObject}
+     */
+    (cs) => {
+      if (cs.channelNumber < k.OBCINumberOfChannelsCyton) {
+        setChSetFromADSRegisterQuery(adsCyton, cs);
+        cs.bias = getBiasSetFromADSRegisterQuery(adsCyton, cs.channelNumber);
+        cs.srb1 = usingSRB1Cyton;
+      } else {
+        setChSetFromADSRegisterQuery(adsDaisy, cs);
+        cs.bias = getBiasSetFromADSRegisterQuery(adsDaisy, cs.channelNumber - k.OBCINumberOfChannelsCyton);
+        cs.srb1 = usingSRB1Daisy;
+      }
+    });
 }
 
 /**

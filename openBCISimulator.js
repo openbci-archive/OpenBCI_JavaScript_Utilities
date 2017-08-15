@@ -3,7 +3,7 @@ const EventEmitter = require('events').EventEmitter;
 const util = require('util');
 const stream = require('stream');
 
-const openBCISample = require('./openBCIUtilities');
+const obciUtilities = require('./openBCIUtilities');
 const k = require('./openBCIConstants');
 const now = require('performance-now');
 const Buffer = require('safe-buffer').Buffer;
@@ -15,7 +15,7 @@ const _options = {
   daisy: false,
   daisyCanBeAttached: true,
   drift: 0,
-  firmwareVersion: [k.OBCIFirmwareV1, k.OBCIFirmwareV2],
+  firmwareVersion: [k.OBCIFirmwareV1, k.OBCIFirmwareV2, k.OBCIFirmwareV3],
   fragmentation: [k.OBCISimulatorFragmentationNone, k.OBCISimulatorFragmentationRandom, k.OBCISimulatorFragmentationFullBuffers, k.OBCISimulatorFragmentationOneByOne],
   latencyTime: 16,
   bufferSize: 4096,
@@ -30,14 +30,14 @@ function Simulator (portName, options) {
     return new Simulator(portName, options);
   }
   options = options || {};
-  var opts = {};
+  let opts = {};
 
   stream.Stream.call(this);
 
   /** Configuring Options */
-  var o;
+  let o;
   for (o in _options) {
-    var userValue = options[o];
+    let userValue = options[o];
     delete options[o];
 
     if (typeof _options[o] === 'object') {
@@ -82,7 +82,7 @@ function Simulator (portName, options) {
   this.pollTime = 80;
   this.sampleNumber = -1; // So the first sample is 0
   // Objects
-  this.sampleGenerator = openBCISample.randomSample(k.OBCINumberOfChannelsDefault, this.options.sampleRate, this.options.alpha, this.options.lineNoise);
+  this.sampleGenerator = obciUtilities.randomSample(k.OBCINumberOfChannelsDefault, this.options.sampleRate, this.options.alpha, this.options.lineNoise);
   this.time = {
     current: 0,
     start: now(),
@@ -122,7 +122,7 @@ Simulator.prototype._partialDrain = function (size) {
   if (size > this.outputBuffered) size = this.outputBuffered;
 
   // buffer is copied because presently openBCICyton.js reuses it
-  var outBuffer = new Buffer(this.outputBuffer.slice(0, size));
+  let outBuffer = new Buffer(this.outputBuffer.slice(0, size));
 
   this.outputBuffer.copy(this.outputBuffer, 0, size, this.outputBuffered);
   this.outputBuffered -= size;
@@ -134,7 +134,7 @@ Simulator.prototype._partialDrain = function (size) {
 Simulator.prototype._output = function (dataBuffer) {
   // drain full buffers until there is no overflow
   while (this.outputBuffered + dataBuffer.length > this.outputBuffer.length) {
-    var len = dataBuffer.copy(this.outputBuffer, this.outputBuffered);
+    let len = dataBuffer.copy(this.outputBuffer, this.outputBuffered);
     dataBuffer = dataBuffer.slice(len);
     this.outputBuffered += len;
 
@@ -146,15 +146,15 @@ Simulator.prototype._output = function (dataBuffer) {
   this.outputBuffered += dataBuffer.length;
 
   if (!this.outputLoopHandle) {
-    var latencyTime = this.options.latencyTime;
+    let latencyTime = this.options.latencyTime;
     if (this.options.fragmentation === k.OBCISimulatorFragmentationOneByOne ||
       this.options.fragmentation === k.OBCISimulatorFragmentationNone) {
       // no need to wait for latencyTime
       // note that this is the only difference between 'none' and 'fullBuffers'
       latencyTime = 0;
     }
-    var outputLoop = () => {
-      var size;
+    let outputLoop = () => {
+      let size;
       switch (this.options.fragmentation) {
         case k.OBCISimulatorFragmentationRandom:
           if (Math.random() < 0.5) {
@@ -278,6 +278,19 @@ Simulator.prototype.write = function (data, callback) {
         }
       }
       break;
+    case k.OBCIMiscQueryRegisterSettings:
+      let outputString = k.OBCIRegisterQueryCyton;
+      if (this.options.daisy) {
+        outputString += k.OBCIRegisterQueryCytonDaisy;
+      }
+      if (this.options.firmwareVersion === k.OBCIFirmwareV3) {
+        outputString += k.OBCIRegisterQueryAccelerometerFirmwareV3;
+      } else {
+        outputString += k.OBCIRegisterQueryAccelerometerFirmwareV1;
+      }
+      this._output(Buffer.from(outputString));
+      this._printEOT();
+      break;
     default:
       break;
   }
@@ -307,32 +320,32 @@ Simulator.prototype.close = function (callback) {
 };
 
 Simulator.prototype._startStream = function () {
-  var intervalInMS = 1000 / this.options.sampleRate;
+  let intervalInMS = 1000 / this.options.sampleRate;
 
   if (intervalInMS < 2) intervalInMS = 2;
 
-  var getNewPacket = sampNumber => {
+  let getNewPacket = sampNumber => {
     if (this.options.accel) {
       if (this.synced) {
         if (this.sendSyncSetPacket) {
           this.sendSyncSetPacket = false;
-          return openBCISample.convertSampleToPacketAccelTimeSyncSet(this.sampleGenerator(sampNumber), now().toFixed(0));
+          return obciUtilities.convertSampleToPacketAccelTimeSyncSet(this.sampleGenerator(sampNumber), now().toFixed(0));
         } else {
-          return openBCISample.convertSampleToPacketAccelTimeSynced(this.sampleGenerator(sampNumber), now().toFixed(0));
+          return obciUtilities.convertSampleToPacketAccelTimeSynced(this.sampleGenerator(sampNumber), now().toFixed(0));
         }
       } else {
-        return openBCISample.convertSampleToPacketStandard(this.sampleGenerator(sampNumber));
+        return obciUtilities.convertSampleToPacketStandard(this.sampleGenerator(sampNumber));
       }
     } else {
       if (this.synced) {
         if (this.sendSyncSetPacket) {
           this.sendSyncSetPacket = false;
-          return openBCISample.convertSampleToPacketRawAuxTimeSyncSet(this.sampleGenerator(sampNumber), now().toFixed(0), new Buffer([0, 0, 0, 0, 0, 0]));
+          return obciUtilities.convertSampleToPacketRawAuxTimeSyncSet(this.sampleGenerator(sampNumber), now().toFixed(0), new Buffer([0, 0, 0, 0, 0, 0]));
         } else {
-          return openBCISample.convertSampleToPacketRawAuxTimeSynced(this.sampleGenerator(sampNumber), now().toFixed(0), new Buffer([0, 0, 0, 0, 0, 0]));
+          return obciUtilities.convertSampleToPacketRawAuxTimeSynced(this.sampleGenerator(sampNumber), now().toFixed(0), new Buffer([0, 0, 0, 0, 0, 0]));
         }
       } else {
-        return openBCISample.convertSampleToPacketRawAux(this.sampleGenerator(sampNumber), new Buffer([0, 0, 0, 0, 0, 0]));
+        return obciUtilities.convertSampleToPacketRawAux(this.sampleGenerator(sampNumber), new Buffer([0, 0, 0, 0, 0, 0]));
       }
     }
   };
