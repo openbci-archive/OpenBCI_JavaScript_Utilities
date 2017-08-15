@@ -1203,7 +1203,7 @@ function parsePacketTimeSyncedAccel (o) {
 function getBooleanFromRegisterQuery (str, regEx, offset) {
   let regExArr = str.match(regEx);
   if (regExArr) {
-    const num = Number(str.charAt(regExArr.index + offset));
+    const num = parseInt(str.charAt(regExArr.index + offset));
     if (!_.isNaN(num)) {
       return Boolean(num);
     } else {
@@ -1242,9 +1242,9 @@ function getBiasSetFromADSRegisterQuery (str, channelNumber) {
 function getNumFromThreeCSVADSRegisterQuery (str, regEx, offset) {
   let regExArr = str.match(regEx);
   if (regExArr) {
-    const bit2 = Number(str.charAt(regExArr.index + offset));
-    const bit1 = Number(str.charAt(regExArr.index + offset + 3));
-    const bit0 = Number(str.charAt(regExArr.index + offset + 6));
+    const bit2 = parseInt(str.charAt(regExArr.index + offset));
+    const bit1 = parseInt(str.charAt(regExArr.index + offset + 3));
+    const bit0 = parseInt(str.charAt(regExArr.index + offset + 6));
     if (!_.isNaN(bit2) && !_.isNaN(bit1) && !_.isNaN(bit0)) {
       return bit2 << 2 | bit1 << 1 | bit0;
     } else {
@@ -1263,11 +1263,10 @@ function getNumFromThreeCSVADSRegisterQuery (str, regEx, offset) {
  */
 function setChSetFromADSRegisterQuery (str, channelSettings) {
   const key = k.OBCIRegisterQueryNameCHnSET[channelSettings.channelNumber];
-
   channelSettings.powerDown = getBooleanFromRegisterQuery(str, key, 16);
   channelSettings.gain = k.gainForCommand(getNumFromThreeCSVADSRegisterQuery(str, key, 19));
-  channelSettings.srb2 = getBooleanFromRegisterQuery(str, key, 28);
   channelSettings.inputType = k.inputTypeForCommand(getNumFromThreeCSVADSRegisterQuery(str, key, 31));
+  channelSettings.srb2 = getBooleanFromRegisterQuery(str, key, 28);
 }
 
 /**
@@ -1285,47 +1284,31 @@ function syncChannelSettingsWithRawData (o) {
   // Check to make sure majorFirmwareVersion is a number
   if (!k.isNumber(o.majorFirmwareVersion)) throw new Error(`${k.OBCIErrorInvalidType} majorFirmwareVersion`);
   // Check to make sure the rawDataPacket buffer is the right size.
-  if (o.majorFirmwareVersion < 3) {
-    if (o.channelSettings.length === k.OBCINumberOfChannelsCyton) {
-      if (o.data.byteLength === k.OBCIRegisterQuerySizeCytonDaisyFirmwareV1) throw new Error('raw data mismatch - expected only cyton register info but also found daisy');
-      if (o.data.byteLength !== k.OBCIRegisterQuerySizeCytonFirmwareV1) throw new Error(k.OBCIErrorInvalidByteLength);
-    } else {
-      if (o.data.byteLength === k.OBCIRegisterQuerySizeCytonFirmwareV1) throw new Error('raw data mismatch - expected daisy register info but none found');
-      if (o.data.byteLength !== k.OBCIRegisterQuerySizeCytonDaisyFirmwareV1) throw new Error(k.OBCIErrorInvalidByteLength);
-    }
+
+  if (o.channelSettings.length === k.OBCINumberOfChannelsCyton) {
+    if (o.data.toString().match(/Daisy ADS/)) throw new Error('raw data mismatch - expected only cyton register info but also found daisy');
+    if (_.isNull(o.data.toString().match(/Board ADS/))) throw new Error(k.OBCIErrorInvalidData);
   } else {
-    if (o.channelSettings.length === k.OBCINumberOfChannelsCyton) {
-      if (o.data.byteLength === k.OBCIRegisterQuerySizeCytonDaisyFirmwareV3) throw new Error('raw data mismatch - expected only cyton register info but also found daisy');
-      if (o.data.byteLength !== k.OBCIRegisterQuerySizeCytonFirmwareV3) throw new Error(k.OBCIErrorInvalidByteLength);
-    } else {
-      if (o.data.byteLength === k.OBCIRegisterQuerySizeCytonFirmwareV3) throw new Error('raw data mismatch - expected daisy register info but none found');
-      if (o.data.byteLength !== k.OBCIRegisterQuerySizeCytonDaisyFirmwareV3) throw new Error(k.OBCIErrorInvalidByteLength);
-    }
+    if (_.isNull(o.data.toString().match(/Daisy ADS/))) throw new Error('raw data mismatch - expected daisy register info but none found');
+    if (_.isNull(o.data.toString().match(/Board ADS/))) throw new Error('no Board ADS info found');
   }
 
-  if (!o.channelSettings.hasOwnProperty('channelNumber') || !o.channelSettings.hasOwnProperty('powerDown') || !o.channelSettings.hasOwnProperty('gain') || !o.channelSettings.hasOwnProperty('inputType') || !o.channelSettings.hasOwnProperty('bias') || !o.channelSettings.hasOwnProperty('srb2') || !o.channelSettings.hasOwnProperty('srb1')) {
-    throw new Error(k.OBCIErrorMissingRequiredProperty);
-  }
-  let adsCyton = null;
+  _.forEach((o.channelSettings), (cs) => {
+    if (!cs.hasOwnProperty('channelNumber') || !cs.hasOwnProperty('powerDown') || !cs.hasOwnProperty('gain') || !cs.hasOwnProperty('inputType') || !cs.hasOwnProperty('bias') || !cs.hasOwnProperty('srb2') || !cs.hasOwnProperty('srb1')) {
+      throw new Error(k.OBCIErrorMissingRequiredProperty);
+    }
+  });
+
   let adsDaisy = null;
   let usingSRB1Cyton = false;
   let usingSRB1Daisy = false;
-  if (o.channelSettings.length === k.OBCINumberOfChannelsCyton) {
-    let regExArr = o.data.toString().match(/Board ADS/);
-    if (k.isNull(regExArr)) throw new Error(`No Board ADS found in raw query data`);
-    adsCyton = o.data.toString().slice(regExArr.index, k.OBCIRegisterQueryCyton.length);
-    if (getSRB1FromADSRegisterQuery(adsCyton)) {
-      usingSRB1Cyton = true;
-    }
-  } else {
-    let regExArrCyton = o.data.toString().match(/Board ADS/);
-    if (k.isNull(regExArrCyton)) throw new Error(`No Board ADS found in raw query data`);
-    adsCyton = o.data.toString().slice(regExArrCyton.index, k.OBCIRegisterQueryCyton.length);
-    if (getSRB1FromADSRegisterQuery(adsCyton)) {
-      usingSRB1Cyton = true;
-    }
-    let regExArrDaisy = o.data.toString().match(/Board ADS/);
-    if (k.isNull(regExArrDaisy)) throw new Error(`No Board ADS found in raw query data`);
+  let regExArr = o.data.toString().match(/Board ADS/);
+  let adsCyton = o.data.toString().slice(regExArr.index, k.OBCIRegisterQueryCyton.length);
+  if (getSRB1FromADSRegisterQuery(adsCyton)) {
+    usingSRB1Cyton = true;
+  }
+  if (o.channelSettings.length > k.OBCINumberOfChannelsCyton) {
+    let regExArrDaisy = o.data.toString().match(/Daisy ADS/);
     adsDaisy = o.data.toString().slice(regExArrDaisy.index, k.OBCIRegisterQueryCytonDaisy.length);
     if (getSRB1FromADSRegisterQuery(adsCyton)) {
       usingSRB1Daisy = true;
@@ -1338,9 +1321,13 @@ function syncChannelSettingsWithRawData (o) {
      */
     (cs) => {
       if (cs.channelNumber < k.OBCINumberOfChannelsCyton) {
-
+        setChSetFromADSRegisterQuery(adsCyton, cs);
+        cs.bias = getBiasSetFromADSRegisterQuery(adsCyton, cs.channelNumber);
         cs.srb1 = usingSRB1Cyton;
-
+      } else {
+        setChSetFromADSRegisterQuery(adsDaisy, cs);
+        cs.bias = getBiasSetFromADSRegisterQuery(adsDaisy, cs.channelNumber);
+        cs.srb1 = usingSRB1Daisy;
       }
     });
 }

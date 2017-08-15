@@ -248,37 +248,37 @@ describe('OpenBCIConstants', function () {
     describe('#commandForGain', function () {
       it('gain of 1', function () {
         let expectation = '0';
-        let result = k.commandForGain(k.OBCIChannelCmdGain1);
+        let result = k.commandForGain(1);
         return expect(result).to.eventually.equal(expectation);
       });
       it('gain of 2', function () {
         let expectation = '1';
-        let result = k.commandForGain(k.OBCIChannelCmdGain2);
+        let result = k.commandForGain(2);
         return expect(result).to.eventually.equal(expectation);
       });
       it('gain of 4', function () {
         let expectation = '2';
-        let result = k.commandForGain(k.OBCIChannelCmdGain4);
+        let result = k.commandForGain(4);
         return expect(result).to.eventually.equal(expectation);
       });
       it('gain of 6', function () {
         let expectation = '3';
-        let result = k.commandForGain(k.OBCIChannelCmdGain6);
+        let result = k.commandForGain(6);
         return expect(result).to.eventually.equal(expectation);
       });
       it('gain of 8', function () {
         let expectation = '4';
-        let result = k.commandForGain(k.OBCIChannelCmdGain8);
+        let result = k.commandForGain(8);
         return expect(result).to.eventually.equal(expectation);
       });
       it('gain of 12', function () {
         let expectation = '5';
-        let result = k.commandForGain(k.OBCIChannelCmdGain12);
+        let result = k.commandForGain(12);
         return expect(result).to.eventually.equal(expectation);
       });
       it('gain of 24', function () {
         let expectation = '6';
-        let result = k.commandForGain(k.OBCIChannelCmdGain24);
+        let result = k.commandForGain(24);
         return expect(result).to.eventually.equal(expectation);
       });
       it('Invalid command request', function () {
@@ -288,25 +288,25 @@ describe('OpenBCIConstants', function () {
     });
     describe('#gainForCommand', function () {
       it('gain of 1', function () {
-        assert.equal(1, k.gainForCommand('0'));
+        assert.equal(1, k.gainForCommand(k.OBCIChannelCmdGain1));
       });
       it('gain of 2', function () {
-        assert.equal(2, k.gainForCommand('1'));
+        assert.equal(2, k.gainForCommand(k.OBCIChannelCmdGain2));
       });
       it('gain of 4', function () {
-        assert.equal(4, k.gainForCommand('2'));
+        assert.equal(4, k.gainForCommand(k.OBCIChannelCmdGain4));
       });
       it('gain of 6', function () {
-        assert.equal(6, k.gainForCommand('3'));
+        assert.equal(6, k.gainForCommand(k.OBCIChannelCmdGain6));
       });
       it('gain of 8', function () {
-        assert.equal(8, k.gainForCommand('4'));
+        assert.equal(8, k.gainForCommand(k.OBCIChannelCmdGain8));
       });
       it('gain of 12', function () {
-        assert.equal(12, k.gainForCommand('5'));
+        assert.equal(12, k.gainForCommand(k.OBCIChannelCmdGain12));
       });
       it('gain of 24', function () {
-        assert.equal(24, k.gainForCommand('6'));
+        assert.equal(24, k.gainForCommand(k.OBCIChannelCmdGain24));
       });
       it('Invalid command request', function () {
         expect(k.gainForCommand.bind(k, '8')).to.throw(`Invalid gain setting of 8 gain must be (0,1,2,3,4,5,6)`);
@@ -339,29 +339,6 @@ describe('OpenBCIConstants', function () {
       });
       it('Invalid command request', function () {
         expect(k.inputTypeForCommand.bind(k, '8')).to.throw('Invalid input type, must be less than 8');
-      });
-    });
-    describe('#gainForCommand', function () {
-      it('1', function () {
-        assert.equal('0', k.commandForGain(k.OBCIChannelCmdGain1));
-      });
-      it('2', function () {
-        assert.equal('1', k.commandForGain(k.OBCIChannelCmdGain2));
-      });
-      it('4', function () {
-        assert.equal('2', k.commandForGain(k.OBCIChannelCmdGain4));
-      });
-      it('6', function () {
-        assert.equal('3', k.commandForGain(k.OBCIChannelCmdGain6));
-      });
-      it('8', function () {
-        assert.equal('4', k.commandForGain(k.OBCIChannelCmdGain8));
-      });
-      it('12', function () {
-        assert.equal('5', k.commandForGain(k.OBCIChannelCmdGain12));
-      });
-      it('24', function () {
-        assert.equal('6', k.commandForGain(k.OBCIChannelCmdGain24));
       });
     });
     describe('ADC Channel Input Soruce', function () {
@@ -1928,14 +1905,14 @@ describe('OpenBCIConstants', function () {
     assert.equal(k.OBCIRegisterQuerySizeCytonDaisyFirmwareV3, k.OBCIRegisterQueryCyton.length + k.OBCIRegisterQueryCytonDaisy.length + k.OBCIRegisterQueryAccelerometerFirmwareV3.length);
     assert.equal(k.OBCIRegisterQueryNameMISC1, 'MISC1');
     assert.equal(k.OBCIRegisterQueryNameBIASSENSP, 'BIAS_SENSP');
-    assert.equal(k.OBCIRegisterQueryNameCHnSET[0], 'CH1SET)');
-    assert.equal(k.OBCIRegisterQueryNameCHnSET[1], 'CH2SET)');
-    assert.equal(k.OBCIRegisterQueryNameCHnSET[2], 'CH3SET)');
-    assert.equal(k.OBCIRegisterQueryNameCHnSET[3], 'CH4SET)');
-    assert.equal(k.OBCIRegisterQueryNameCHnSET[4], 'CH5SET)');
-    assert.equal(k.OBCIRegisterQueryNameCHnSET[5], 'CH6SET)');
-    assert.equal(k.OBCIRegisterQueryNameCHnSET[6], 'CH7SET)');
-    assert.equal(k.OBCIRegisterQueryNameCHnSET[7], 'CH8SET)');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[0], 'CH1SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[1], 'CH2SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[2], 'CH3SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[3], 'CH4SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[4], 'CH5SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[5], 'CH6SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[6], 'CH7SET');
+    assert.equal(k.OBCIRegisterQueryNameCHnSET[7], 'CH8SET');
   });
   describe('General', function () {
     it('Ganglion prefix', function () {

@@ -1221,7 +1221,6 @@ const constantsModule = {
   commandSampleRateForCmdGanglion,
   commandBoardModeForMode,
   rawDataToSampleObjectDefault,
-  getChannelSettingsFromQuery,
   /** Protocols */
   OBCIProtocolBLE: obciProtocolBLE,
   OBCIProtocolSerial: obciProtocolSerial,

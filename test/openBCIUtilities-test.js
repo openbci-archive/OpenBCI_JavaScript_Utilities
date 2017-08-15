@@ -404,18 +404,18 @@ describe('openBCIUtilities', function () {
   });
   describe('#getBooleanFromRegisterQuery', function () {
     it('should return true if 1', function () {
-      const retVal = openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 1, 0, 0, 0, 0, 0', 'MISC1', 20);
+      const retVal = openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 1, 0, 0, 0, 0, 0', /MISC1/, 21);
       expect(retVal).to.be.true();
     });
     it('should return false it 0', function () {
-      expect(openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0', 'MISC', 20)).to.be.false();
+      expect(openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0', /MISC1/, 21)).to.be.false();
     });
     describe('#errorConditions', function () {
       it('should throw an error when none found', function () {
         expect(openBCIUtilities.getBooleanFromRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!", 'MISC', 20)).to.throw(k.OBCIErrorMissingRegisterSetting);
       });
       it('should throw an error other wise', function () {
-        expect(openBCIUtilities.getBooleanFromRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0', 'MISC', 20)).to.throw(k.OBCIErrorInvalidData);
+        expect(openBCIUtilities.getBooleanFromRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0', 'MISC', 20)).to.throw(k.OBCIErrorInvalidData);
       });
     });
   });
@@ -452,25 +452,24 @@ describe('openBCIUtilities', function () {
         expect(openBCIUtilities.getNumFromThreeCSVADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!", 'MISC', 20)).to.throw(k.OBCIErrorMissingRegisterSetting);
       });
       it('should throw an error other wise', function () {
-        expect(openBCIUtilities.getNumFromThreeCSVADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0', 'MISC', 20)).to.throw(k.OBCIErrorInvalidData);
+        expect(openBCIUtilities.getNumFromThreeCSVADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0', 'MISC', 21)).to.throw(k.OBCIErrorInvalidData);
       });
     });
   });
   describe('#setChSetFromADSRegisterQuery', function () {
     it('should return correct values for raw config', function () {
       const str = '0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH2SET, 06, 68,';
-      const expected_channelNumber = 0;
-      const channelSettings = k.channelSettingsObjectDefault(expected_channelNumber);
+      const expectedChannelNumber = 0;
+      const channelSettings = k.channelSettingsObjectDefault(expectedChannelNumber);
       channelSettings.powerDown = true;
       channelSettings.gain = 50;
       channelSettings.srb2 = false;
       channelSettings.inputType = k.OBCIStringADCMvdd;
-      const o = {
-        channelSettings,
-        str
-      }
-      const retVal = openBCIUtilities.setChSetFromADSRegisterQuery(o);
-      expect(retVal.powerDown).
+      openBCIUtilities.setChSetFromADSRegisterQuery(str, channelSettings);
+      expect(channelSettings.powerDown).to.be.false();
+      expect(channelSettings.gain).to.equal(24);
+      expect(channelSettings.srb2).to.be.true();
+      expect(channelSettings.inputType).to.equal('normal');
     });
     it('should return false it 0', function () {
       expect(openBCIUtilities.getSRB1FromADSRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.be.false();
@@ -502,10 +501,6 @@ describe('openBCIUtilities', function () {
         expect(openBCIUtilities.getBiasSetFromADSRegisterQuery(input, i)).to.be.true();
       }
     });
-    it('should return false it 0', function () {
-      const input = ', 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\nBIAS_SENSN, 0E, FF, 1,  0';
-      expect(openBCIUtilities.getBiasSetFromADSRegisterQuery(input)).to.be.true();
-    });
     describe('#errorConditions', function () {
       it('should throw an error when none found', function () {
         expect(openBCIUtilities.getBiasSetFromADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!")).to.throw(k.OBCIErrorMissingRegisterSetting);
@@ -519,7 +514,6 @@ describe('openBCIUtilities', function () {
     it('should set the channel settings from the data buffer for cyton for firmware version 1', function () {
       let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
       _.forEach(channelSettings, (channelSetting) => {
-        channelSetting.channelNumber = 50;
         channelSetting.powerDown = true;
         channelSetting.gain = 59;
         channelSetting.inputType = k.OBCIStringADCBiasDrn;
@@ -539,7 +533,6 @@ describe('openBCIUtilities', function () {
     it('should set the channel settings from the data buffer for cyton for firmware version 2', function () {
       let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
       _.forEach(channelSettings, (channelSetting) => {
-        channelSetting.channelNumber = 50;
         channelSetting.powerDown = true;
         channelSetting.gain = 59;
         channelSetting.inputType = k.OBCIStringADCBiasDrn;
@@ -559,7 +552,6 @@ describe('openBCIUtilities', function () {
     it('should set the channel settings from the data buffer for cyton for firmware version 3', function () {
       let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
       _.forEach(channelSettings, (channelSetting) => {
-        channelSetting.channelNumber = 50;
         channelSetting.powerDown = true;
         channelSetting.gain = 59;
         channelSetting.inputType = k.OBCIStringADCBiasDrn;
@@ -579,7 +571,6 @@ describe('openBCIUtilities', function () {
     it('should set the channel settings from the data buffer for cyton for firmware version 10', function () {
       let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
       _.forEach(channelSettings, (channelSetting) => {
-        channelSetting.channelNumber = 50;
         channelSetting.powerDown = true;
         channelSetting.gain = 59;
         channelSetting.inputType = k.OBCIStringADCBiasDrn;
@@ -599,7 +590,6 @@ describe('openBCIUtilities', function () {
     it('should set the channel settings from the data buffer for daisy for firmware version 1', function () {
       let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
       _.forEach(channelSettings, (channelSetting) => {
-        channelSetting.channelNumber = 50;
         channelSetting.powerDown = true;
         channelSetting.gain = 59;
         channelSetting.inputType = k.OBCIStringADCBiasDrn;
@@ -619,7 +609,6 @@ describe('openBCIUtilities', function () {
     it('should set the channel settings from the data buffer for daisy for firmware version 9', function () {
       let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
       _.forEach(channelSettings, (channelSetting) => {
-        channelSetting.channelNumber = 50;
         channelSetting.powerDown = true;
         channelSetting.gain = 59;
         channelSetting.inputType = k.OBCIStringADCBiasDrn;
