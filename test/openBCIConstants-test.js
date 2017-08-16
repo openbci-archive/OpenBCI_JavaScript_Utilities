@@ -1865,6 +1865,9 @@ describe('OpenBCIConstants', function () {
     it('Event Emitter Ready', function () {
       assert.equal('ready', k.OBCIEmitterReady);
     });
+    it('Event Emitter RFduino', function () {
+      assert.equal('rfduino', k.OBCIEmitterRFduino);
+    });
     it('Event Emitter Sample', function () {
       assert.equal('sample', k.OBCIEmitterSample);
     });
