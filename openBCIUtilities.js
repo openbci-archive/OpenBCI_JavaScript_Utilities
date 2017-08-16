@@ -1506,11 +1506,7 @@ function getChannelDataArray (o) {
   if (!Array.isArray(o.channelSettings)) {
     throw new Error('Error [getChannelDataArray]: Channel Settings must be an array!');
   }
-  if (o.hasOwnProperty('protocol')) {
-    if (o.protocol !== k.OBCIProtocolSerial && o.protocol !== k.OBCIProtocolWifi) {
-      throw new Error(`Error [getChannelDataArray]: Invalid protocol must be ${k.OBCIProtocolWifi} or ${k.OBCIProtocolSerial}`);
-    }
-  } else {
+  if (!o.hasOwnProperty('protocol')) {
     o.protocol = k.OBCIProtocolSerial;
   }
   let channelData = [];
@@ -1518,7 +1514,8 @@ function getChannelDataArray (o) {
   const numChannels = o.channelSettings.length;
   const sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
   const daisy = numChannels === k.OBCINumberOfChannelsDaisy;
-  const channelsInPacket = numChannels > k.OBCINumberOfChannelsGanglion ? k.OBCINumberOfChannelsDefault : k.OBCINumberOfChannelsGanglion;
+  let channelsInPacket = k.OBCINumberOfChannelsCyton;
+  if (!daisy) channelsInPacket = o.channelSettings.length;
   // Channel data arrays are always 8 long
   for (let i = 0; i < channelsInPacket; i++) {
     if (!o.channelSettings[i].hasOwnProperty('gain')) {
@@ -1548,6 +1545,10 @@ function getChannelDataArray (o) {
       } else {
         scaleFactor = k.OBCIGanglionScaleFactorPerCountVolts;
       }
+    } else if (o.protocol === k.OBCIProtocolBLE) { // For cyton ble not ganglion
+      scaleFactor = ADS1299_VREF / o.channelSettings[i].gain / (Math.pow(2, 23) - 1);
+    } else {
+      throw new Error('Error [getChannelDataArray]: Invalid protocol must be wifi or serial');
     }
 
     // Convert the three byte signed integer and convert it

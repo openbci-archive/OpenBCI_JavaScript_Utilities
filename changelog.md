@@ -3,6 +3,7 @@
 ### Bug Fixes
 
 * Was missing errors in constants used by ganglion and other ble projects.
+* Fixed getChannelData functions to support 2 channel cytons
 
 # 0.1.4
 

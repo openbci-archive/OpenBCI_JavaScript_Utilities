@@ -535,11 +535,9 @@ describe('openBCIUtilities', function () {
         channelSetting.srb1 = true;
       });
       let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV1);
-      const majorFirmwareVersion = 1;
       openBCIUtilities.syncChannelSettingsWithRawData({
         channelSettings,
-        data,
-        majorFirmwareVersion
+        data
       });
       expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton));
     });
@@ -699,25 +697,15 @@ describe('openBCIUtilities', function () {
           majorFirmwareVersion
         })).to.throw(k.OBCIErrorUndefinedOrNullInput);
       });
-      it('majorFirmwareVersion is undefined', function () {
-        let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
-        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV3);
-        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
-          channelSettings,
-          data
-        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
-      });
       it('invalid channel settings', function () {
         let channelSettings = [];
         for (let i = 0; i < k.OBCINumberOfChannelsCyton; i++) {
           channelSettings.push({taco: 'gordo'});
         }
-        const majorFirmwareVersion = 3;
         let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV3);
         expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
           channelSettings,
-          data,
-          majorFirmwareVersion
+          data
         })).to.throw(k.OBCIErrorMissingRequiredProperty);
       });
     });
@@ -1764,6 +1752,22 @@ describe('openBCIUtilities', function () {
         });
         for (let j = 0; j < k.OBCINumberOfChannelsDefault; j++) {
           // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`)
+          expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
+        }
+      });
+    });
+    describe('BLE', function () {
+      it('should multiply each channel by the proper scale value', function () {
+        let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCytonBLE); // Not in daisy mode
+        let scaleFactor = 4.5 / 24 / (Math.pow(2, 23) - 1);
+        // Call the function under test
+        let valueArray = openBCIUtilities.getChannelDataArray({
+          rawDataPacket: sampleBuf,
+          channelSettings: chanArr,
+          protocol: k.OBCIProtocolBLE
+        });
+        for (let j = 0; j < k.OBCINumberOfChannelsCytonBLE; j++) {
+          // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`);
           expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
         }
       });
