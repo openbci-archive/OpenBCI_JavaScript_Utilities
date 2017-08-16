@@ -1891,6 +1891,15 @@ describe('OpenBCIConstants', function () {
     it('errorMissingRequiredProperty', function () {
       assert.equal(k.OBCIErrorMissingRequiredProperty, 'Missing property in JSON');
     });
+    it('errorNobleAlreadyScanning', function () {
+      assert.equal(k.OBCIErrorNobleAlreadyScanning, 'Scan already under way');
+    });
+    it('errorNobleNotAlreadyScanning', function () {
+      assert.equal(k.OBCIErrorNobleNotAlreadyScanning, 'No scan started');
+    });
+    it('errorNobleNotInPoweredOnState', function () {
+      assert.equal(k.OBCIErrorNobleNotInPoweredOnState, 'Please turn blue tooth on.');
+    });
     it('errorTimeSyncIsNull', function () {
       assert.equal(k.OBCIErrorTimeSyncIsNull, "'this.sync.curSyncObj' must not be null");
     });

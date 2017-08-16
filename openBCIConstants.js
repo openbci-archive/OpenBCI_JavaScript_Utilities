@@ -309,6 +309,9 @@ const errorInvalidData = 'Invalid data - try again';
 const errorInvalidType = 'Invalid type - check comments for input type';
 const errorMissingRegisterSetting = 'Missing register setting';
 const errorMissingRequiredProperty = 'Missing property in JSON';
+const errorNobleAlreadyScanning = 'Scan already under way';
+const errorNobleNotAlreadyScanning = 'No scan started';
+const errorNobleNotInPoweredOnState = 'Please turn blue tooth on.';
 const errorTimeSyncIsNull = "'this.sync.curSyncObj' must not be null";
 const errorTimeSyncNoComma = 'Missed the time sync sent confirmation. Try sync again';
 const errorUndefinedOrNullInput = 'Undefined or Null Input';
@@ -996,6 +999,9 @@ const constantsModule = {
   OBCIErrorInvalidType: errorInvalidType,
   OBCIErrorMissingRegisterSetting: errorMissingRegisterSetting,
   OBCIErrorMissingRequiredProperty: errorMissingRequiredProperty,
+  OBCIErrorNobleAlreadyScanning: errorNobleAlreadyScanning,
+  OBCIErrorNobleNotAlreadyScanning: errorNobleNotAlreadyScanning,
+  OBCIErrorNobleNotInPoweredOnState: errorNobleNotInPoweredOnState,
   OBCIErrorTimeSyncIsNull: errorTimeSyncIsNull,
   OBCIErrorTimeSyncNoComma: errorTimeSyncNoComma,
   OBCIErrorUndefinedOrNullInput: errorUndefinedOrNullInput,
