@@ -179,6 +179,15 @@ describe('openBCIUtilities', function () {
         expect(accelValue).to.equal(openBCIUtilities.scaleFactorAux * index);
       });
     });
+    it('all the auxs should have the same number value as their index', function () {
+      let sample = openBCIUtilities.parsePacketStandardAccel({
+        channelSettings: defaultChannelSettingsArray,
+        rawDataPacket: sampleBuf,
+        scale: false
+      });
+
+      expect(sample.accelDataCounts).to.deep.equal([0, 1, 2]);
+    });
     it('check to see if negative numbers work on channel data', function () {
       let temp = openBCIUtilities.samplePacket();
       // console.log(temp)
@@ -723,35 +732,58 @@ describe('openBCIUtilities', function () {
     });
   });
   describe('#getFromTimePacketAccel', function () {
-    let packet;
-
+    let rawDataPacket;
     it('should emit and array if z axis i.e. sampleNumber % 10 === 9', function () {
       // Make a packet with a sample number that represents z axis
-      packet = openBCIUtilities.samplePacketAccelTimeSynced(9);
-      let isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
+      rawDataPacket = openBCIUtilities.samplePacketAccelTimeSynced(9);
+      let isZAxis = openBCIUtilities.getFromTimePacketAccel({
+        rawDataPacket,
+        accelArray,
+        scale: false
+      });
       expect(isZAxis).to.be.true();
     });
     it(`false if sample number is not sampleNumber % 10 === ${k.OBCIAccelAxisZ}`, function () {
       // Make a packet that is anything but the z axis
-      packet = openBCIUtilities.samplePacketAccelTimeSynced(k.OBCIAccelAxisX);
-      let isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
+      rawDataPacket = openBCIUtilities.samplePacketAccelTimeSynced(k.OBCIAccelAxisX);
+      let isZAxis = openBCIUtilities.getFromTimePacketAccel({
+        rawDataPacket,
+        accelArray,
+        scale: true
+      });
       expect(isZAxis).to.be.false();
 
-      packet = openBCIUtilities.samplePacketAccelTimeSynced(k.OBCIAccelAxisY);
-      isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
+      rawDataPacket = openBCIUtilities.samplePacketAccelTimeSynced(k.OBCIAccelAxisY);
+      isZAxis = openBCIUtilities.getFromTimePacketAccel({
+        rawDataPacket,
+        accelArray,
+        scale: true
+      });
       expect(isZAxis).to.be.false();
 
-      packet = openBCIUtilities.samplePacketAccelTimeSynced(34);
-      isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
+      rawDataPacket = openBCIUtilities.samplePacketAccelTimeSynced(34);
+      isZAxis = openBCIUtilities.getFromTimePacketAccel({
+        rawDataPacket,
+        accelArray,
+        scale: true
+      });
       expect(isZAxis).to.be.false();
 
-      packet = openBCIUtilities.samplePacketAccelTimeSynced(100);
-      isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
+      rawDataPacket = openBCIUtilities.samplePacketAccelTimeSynced(100);
+      isZAxis = openBCIUtilities.getFromTimePacketAccel({
+        rawDataPacket,
+        accelArray,
+        scale: true
+      });
       expect(isZAxis).to.be.false();
     });
     describe('#errorConditions', function () {
       it('wrong number of bytes', function () {
-        expect(openBCIUtilities.getFromTimePacketAccel.bind(openBCIUtilities, new Buffer(5))).to.throw(k.OBCIErrorInvalidByteLength);
+        expect(openBCIUtilities.getFromTimePacketAccel.bind(openBCIUtilities, {
+          rawDataPacket: new Buffer(5),
+          accelArray,
+          scale: false
+        })).to.throw(k.OBCIErrorInvalidByteLength);
       });
     });
   });
@@ -791,6 +823,15 @@ describe('openBCIUtilities', function () {
         accelArray
       });
       expect(sample).to.have.property('accelData');
+
+      sample = openBCIUtilities.parsePacketTimeSyncedAccel({
+        rawDataPacket: packet3,
+        channelSettings: defaultChannelSettingsArray,
+        timeOffset: 0,
+        accelArray,
+        scale: false
+      });
+      expect(sample).to.have.property('accelDataCounts');
     });
     it("should convert raw numbers into g's with scale factor", function () {
       // Generate three packets, packets only get one axis value per packet
@@ -907,6 +948,22 @@ describe('openBCIUtilities', function () {
           timeOffset: 0,
           accelArray
         })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+    });
+  });
+  describe('#getDataArrayAccel', function () {
+    it('compute scaled accel values', function () {
+      const accelData = openBCIUtilities.getDataArrayAccel(sampleBuf.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+      accelData.forEach((accelValue, index) => {
+        expect(accelValue).to.equal(openBCIUtilities.scaleFactorAux * index);
+      });
+    });
+  });
+  describe('#getDataArrayAccelNoScale', function () {
+    it('compute scaled accel values', function () {
+      const accelDataCounts = openBCIUtilities.getDataArrayAccelNoScale(sampleBuf.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+      accelDataCounts.forEach((accelValue, index) => {
+        expect(accelValue).to.equal(index);
       });
     });
   });

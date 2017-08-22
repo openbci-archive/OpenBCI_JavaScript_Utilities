@@ -1,3 +1,9 @@
+# 0.2.0
+
+### New Feature
+
+* With scale option false, `.parsePacketStandardAccel()` `.parsePacketTimeSyncedAccel()` will now return array called will now return `accelDataCounts` property with un-scaled data.
+
 # 0.1.5
 
 ### Bug Fixes
