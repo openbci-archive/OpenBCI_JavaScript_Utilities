@@ -15,7 +15,7 @@ const SCALE_FACTOR_ACCEL = 0.002 / Math.pow(2, 4);
 const ACCEL_NUMBER_AXIS = 3;
 // Default ADS1299 gains array
 
-var utilitiesModule = {
+let utilitiesModule = {
 
   /**
    * @typedef {Object} ProcessedBuffer
@@ -45,7 +45,7 @@ var utilitiesModule = {
    * @param dataBuffer {Buffer} - A buffer to parse for samples
    * @returns {ProcessedBuffer} - Object with parsed raw packets and remaining buffer. Calling function shall maintain
    *  the buffer in it's scope.
-   * @author AJ Keller (@pushtheworldllc)
+   * @author AJ Keller (@aj-ptw)
    */
   extractRawDataPackets: (dataBuffer) => {
     if (!dataBuffer) {
@@ -156,7 +156,7 @@ var utilitiesModule = {
   * @returns {Buffer}
   */
   convertSampleToPacketStandard: (sample) => {
-    var packetBuffer = new Buffer(k.OBCIPacketSize);
+    let packetBuffer = new Buffer(k.OBCIPacketSize);
     packetBuffer.fill(0);
 
     // start byte
@@ -166,16 +166,16 @@ var utilitiesModule = {
     packetBuffer[1] = sample.sampleNumber;
 
     // channel data
-    for (var i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
-      var threeByteBuffer = floatTo3ByteBuffer(sample.channelData[i]);
+    for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
+      let threeByteBuffer = floatTo3ByteBuffer(sample.channelData[i]);
 
       threeByteBuffer.copy(packetBuffer, 2 + (i * 3));
     }
 
-    for (var j = 0; j < 3; j++) {
-      var twoByteBuffer = floatTo2ByteBuffer(sample.auxData[j]);
+    for (let j = 0; j < 3; j++) {
+      let twoByteBuffer = floatTo2ByteBuffer(sample.auxData[j]);
 
-      twoByteBuffer.copy(packetBuffer, (k.OBCIPacketSize - 1 - 6) + (i * 2));
+      twoByteBuffer.copy(packetBuffer, (k.OBCIPacketSize - 1 - 6) + (j * 2));
     }
 
     // stop byte
@@ -190,7 +190,7 @@ var utilitiesModule = {
   * @returns {Buffer} - A 33 byte long buffer
   */
   convertSampleToPacketRawAux: (sample, rawAux) => {
-    var packetBuffer = new Buffer(k.OBCIPacketSize);
+    let packetBuffer = new Buffer(k.OBCIPacketSize);
     packetBuffer.fill(0);
 
     // start byte
@@ -200,8 +200,8 @@ var utilitiesModule = {
     packetBuffer[1] = sample.sampleNumber;
 
     // channel data
-    for (var i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
-      var threeByteBuffer = floatTo3ByteBuffer(sample.channelData[i]);
+    for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
+      let threeByteBuffer = floatTo3ByteBuffer(sample.channelData[i]);
 
       threeByteBuffer.copy(packetBuffer, 2 + (i * 3));
     }
@@ -221,7 +221,7 @@ var utilitiesModule = {
   * @returns {Buffer} - A time sync accel packet
   */
   convertSampleToPacketAccelTimeSyncSet: (sample, time) => {
-    var buf = convertSampleToPacketAccelTimeSynced(sample, time);
+    let buf = convertSampleToPacketAccelTimeSynced(sample, time);
     buf[k.OBCIPacketPositionStopByte] = makeTailByteFromPacketType(k.OBCIStreamPacketAccelTimeSyncSet);
     return buf;
   },
@@ -240,7 +240,7 @@ var utilitiesModule = {
   * @returns {Buffer} - A time sync raw aux packet
   */
   convertSampleToPacketRawAuxTimeSyncSet: (sample, time, rawAux) => {
-    var buf = convertSampleToPacketRawAuxTimeSynced(sample, time, rawAux);
+    let buf = convertSampleToPacketRawAuxTimeSynced(sample, time, rawAux);
     buf[k.OBCIPacketPositionStopByte] = makeTailByteFromPacketType(k.OBCIStreamPacketRawAuxTimeSyncSet);
     return buf;
   },
@@ -252,11 +252,11 @@ var utilitiesModule = {
       console.log('-- Sample --');
       console.log('---- Start Byte: ' + sample.startByte);
       console.log('---- Sample Number: ' + sample.sampleNumber);
-      for (var i = 0; i < 8; i++) {
+      for (let i = 0; i < 8; i++) {
         console.log('---- Channel Data ' + (i + 1) + ': ' + sample.channelData[i]);
       }
       if (sample.accelData) {
-        for (var j = 0; j < 3; j++) {
+        for (let j = 0; j < 3; j++) {
           console.log('---- Accel Data ' + j + ': ' + sample.accelData[j]);
         }
       }
@@ -307,12 +307,12 @@ var utilitiesModule = {
       if (sampleObject.channelData === undefined || sampleObject.channelData === null) reject(Error('Channel cannot be null or undefined'));
       if (channelNumber < 1 || channelNumber > k.OBCINumberOfChannelsDefault) reject(Error('Channel number invalid.'));
 
-      var index = channelNumber - 1;
+      let index = channelNumber - 1;
 
       if (sampleObject.channelData[index] < 0) {
         sampleObject.channelData[index] *= -1;
       }
-      var impedance = (sqrt2 * sampleObject.channelData[index]) / k.OBCILeadOffDriveInAmps;
+      let impedance = (sqrt2 * sampleObject.channelData[index]) / k.OBCILeadOffDriveInAmps;
       // if (index === 0) console.log("Voltage: " + (sqrt2*sampleObject.channelData[index]) + " leadoff amps: " + k.OBCILeadOffDriveInAmps + " impedance: " + impedance)
       resolve(impedance);
     });
@@ -329,13 +329,13 @@ var utilitiesModule = {
       if (sampleObject === undefined || sampleObject === null) reject(Error('Sample Object cannot be null or undefined'));
       if (sampleObject.channelData === undefined || sampleObject.channelData === null) reject(Error('Channel cannot be null or undefined'));
 
-      var sampleImpedances = [];
-      var numChannels = sampleObject.channelData.length;
-      for (var index = 0; index < numChannels; index++) {
+      let sampleImpedances = [];
+      let numChannels = sampleObject.channelData.length;
+      for (let index = 0; index < numChannels; index++) {
         if (sampleObject.channelData[index] < 0) {
           sampleObject.channelData[index] *= -1;
         }
-        var impedance = (sqrt2 * sampleObject.channelData[index]) / k.OBCILeadOffDriveInAmps;
+        let impedance = (sqrt2 * sampleObject.channelData[index]) / k.OBCILeadOffDriveInAmps;
         sampleImpedances.push(impedance);
 
       // if (index === 0) console.log("Voltage: " + (sqrt2*sampleObject.channelData[index]) + " leadoff amps: " + k.OBCILeadOffDriveInAmps + " impedance: " + impedance)
@@ -347,7 +347,7 @@ var utilitiesModule = {
     });
   },
   interpret16bitAsInt32: twoByteBuffer => {
-    var prefix = 0;
+    let prefix = 0;
 
     if (twoByteBuffer[0] > 127) {
       // console.log('\t\tNegative number')
@@ -357,7 +357,7 @@ var utilitiesModule = {
     return (prefix << 16) | (twoByteBuffer[0] << 8) | twoByteBuffer[1];
   },
   interpret24bitAsInt32: threeByteBuffer => {
-    var prefix = 0;
+    let prefix = 0;
 
     if (threeByteBuffer[0] > 127) {
       // console.log('\t\tNegative number')
@@ -367,8 +367,8 @@ var utilitiesModule = {
     return (prefix << 24) | (threeByteBuffer[0] << 16) | (threeByteBuffer[1] << 8) | threeByteBuffer[2];
   },
   impedanceArray: numberOfChannels => {
-    var impedanceArray = [];
-    for (var i = 0; i < numberOfChannels; i++) {
+    let impedanceArray = [];
+    for (let i = 0; i < numberOfChannels; i++) {
       impedanceArray.push(newImpedanceObject(i + 1));
     }
     return impedanceArray;
@@ -401,29 +401,29 @@ var utilitiesModule = {
     const sineWaveFreqHz60 = 60;
     const uVolts = 1000000;
 
-    var sinePhaseRad = new Array(numberOfChannels + 1); // prevent index error with '+1'
+    let sinePhaseRad = new Array(numberOfChannels + 1); // prevent index error with '+1'
     sinePhaseRad.fill(0);
 
-    var auxData = [0, 0, 0];
-    var accelCounter = 0;
+    let auxData = [0, 0, 0];
+    let accelCounter = 0;
     // With 250Hz, every 10 samples, with 125Hz, every 5...
-    var samplesPerAccelRate = Math.floor(sampleRateHz / 25); // best to make this an integer
+    let samplesPerAccelRate = Math.floor(sampleRateHz / 25); // best to make this an integer
     if (samplesPerAccelRate < 1) samplesPerAccelRate = 1;
 
     // Init arrays to hold coefficients for each channel and init to 0
     //  This gives the 1/f filter memory on each iteration
-    var b0 = new Array(numberOfChannels).fill(0);
-    var b1 = new Array(numberOfChannels).fill(0);
-    var b2 = new Array(numberOfChannels).fill(0);
+    let b0 = new Array(numberOfChannels).fill(0);
+    let b1 = new Array(numberOfChannels).fill(0);
+    let b2 = new Array(numberOfChannels).fill(0);
 
     /**
     * @description Use a 1/f filter
     * @param previousSampleNumber {Number} - The previous sample number
     */
     return previousSampleNumber => {
-      var sample = newSample();
-      var whiteNoise;
-      for (var i = 0; i < numberOfChannels; i++) { // channels are 0 indexed
+      let sample = newSample();
+      let whiteNoise;
+      for (let i = 0; i < numberOfChannels; i++) { // channels are 0 indexed
         // This produces white noise
         whiteNoise = distribution.ppf(Math.random()) * Math.sqrt(sampleRateHz / 2) / uVolts;
 
@@ -476,7 +476,7 @@ var utilitiesModule = {
       */
       if (accelCounter === samplesPerAccelRate) {
         // Initialize a new array
-        var accelArray = [0, 0, 0];
+        let accelArray = [0, 0, 0];
         // Calculate X
         accelArray[0] = (Math.random() * 0.1 * (Math.random() > 0.5 ? -1 : 1));
         // Calculate Y
@@ -573,27 +573,30 @@ var utilitiesModule = {
   samplePacketCytonBLE: sampleNumber => {
     return new Buffer([0xC0, sampleNumberNormalize(sampleNumber), 0, 0, 1, 0, 0, 2, 0, 0, 10, 0, 0, 20, 0, 0, 100, 0, 0, 200]);
   },
-  makeDaisySampleObject,
-  makeDaisySampleObjectWifi,
-  getChannelDataArray,
-  isEven,
-  isOdd,
   countADSPresent,
   doesBufferHaveEOT,
+  getBiasSetFromADSRegisterQuery,
+  getBooleanFromRegisterQuery,
+  getChannelDataArray,
+  getChannelDataArrayNoScale,
+  getDataArrayAccel,
+  getDataArrayAccelNoScale,
   getFirmware,
+  getSRB1FromADSRegisterQuery,
+  getNumFromThreeCSVADSRegisterQuery,
+  isEven,
   isFailureInBuffer,
+  isOdd,
+  isStopByte,
   isSuccessInBuffer,
   isTimeSyncSetConfirmationInBuffer,
+  makeDaisySampleObject,
+  makeDaisySampleObjectWifi,
   makeTailByteFromPacketType,
-  isStopByte,
-  getBooleanFromRegisterQuery,
-  getSRB1FromADSRegisterQuery,
-  getBiasSetFromADSRegisterQuery,
-  getNumFromThreeCSVADSRegisterQuery,
-  setChSetFromADSRegisterQuery,
-  syncChannelSettingsWithRawData,
   newSyncObject,
+  setChSetFromADSRegisterQuery,
   stripToEOTBuffer,
+  syncChannelSettingsWithRawData,
   /**
   * @description Checks to make sure the previous sample number is one less
   *  then the new sample number. Takes into account sample numbers wrapping
@@ -614,17 +617,17 @@ var utilitiesModule = {
       return null;
     }
 
-    var missedPacketArray = [];
+    let missedPacketArray = [];
 
     if (previousSampleNumber > newSampleNumber) {
-      var numMised = k.OBCISampleNumberMax - previousSampleNumber;
-      for (var i = 0; i < numMised; i++) {
+      let numMised = k.OBCISampleNumberMax - previousSampleNumber;
+      for (let i = 0; i < numMised; i++) {
         missedPacketArray.push(previousSampleNumber + i + 1);
       }
       previousSampleNumber = -1;
     }
 
-    for (var j = 1; j < (newSampleNumber - previousSampleNumber); j++) {
+    for (let j = 1; j < (newSampleNumber - previousSampleNumber); j++) {
       missedPacketArray.push(previousSampleNumber + j);
     }
     return missedPacketArray;
@@ -975,7 +978,7 @@ function newSyncObject () {
  * @description Used transform raw data packets into fully qualified packets
  * @param o {RawDataToSample} - Used to hold data and configuration settings
  * @return {Array} samples An array of {Sample}
- * @author AJ Keller (@pushtheworldllc)
+ * @author AJ Keller (@aj-ptw)
  */
 function transformRawDataPacketsToSample (o) {
   let samples = [];
@@ -996,7 +999,7 @@ function transformRawDataPacketsToSample (o) {
  * @description Used transform raw data packets into fully qualified packets
  * @param o {RawDataToSample} - Used to hold data and configuration settings
  * @return {Array} samples An array of {Sample}
- * @author AJ Keller (@pushtheworldllc)
+ * @author AJ Keller (@aj-ptw)
  */
 function transformRawDataPacketToSample (o) {
   let sample;
@@ -1081,9 +1084,12 @@ function parsePacketStandardAccel (o) {
   if (o.rawDataPacket[0] !== k.OBCIByteStart) throw new Error(k.OBCIErrorInvalidByteStart);
 
   const sampleObject = {};
-  sampleObject.accelData = getDataArrayAccel(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
 
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
+
+  if (o.scale) sampleObject.accelData = getDataArrayAccel(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+  else sampleObject.accelDataCounts = getDataArrayAccelNoScale(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+
   if (o.scale) sampleObject.channelData = getChannelDataArray(o);
   else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
 
@@ -1202,14 +1208,15 @@ function parsePacketTimeSyncedAccel (o) {
   // Extract the aux data
   sampleObject.auxData = getFromTimePacketRawAux(o.rawDataPacket);
 
-  // Grab the accelData only if `getFromTimePacketAccel` returns true.
-  if (getFromTimePacketAccel(o.rawDataPacket, o.accelArray)) {
-    sampleObject.accelData = o.accelArray;
-  }
-
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
   if (o.scale) sampleObject.channelData = getChannelDataArray(o);
   else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
+
+  // Grab the accelData only if `getFromTimePacketAccel` returns true.
+  if (getFromTimePacketAccel(o)) {
+    if (o.scale) sampleObject.accelData = o.accelArray;
+    else sampleObject.accelDataCounts = o.accelArray;
+  }
 
   sampleObject.valid = true;
 
@@ -1239,7 +1246,7 @@ function parsePacketTimeSyncedRawAux (o) {
   if (o.rawDataPacket[0] !== k.OBCIByteStart) throw new Error(k.OBCIErrorInvalidByteStart);
 
   // The sample object we are going to build
-  var sampleObject = {};
+  let sampleObject = {};
 
   // Get the sample number
   sampleObject.sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
@@ -1410,7 +1417,7 @@ function syncChannelSettingsWithRawData (o) {
 * @description Extract a time from a time packet in ms.
 * @param dataBuf - A raw packet with 33 bytes of data
 * @returns {Number} - Board time in milli seconds
-* @author AJ Keller (@pushtheworldllc)
+* @author AJ Keller (@aj-ptw)
 */
 function getFromTimePacketTime (dataBuf) {
   // Ths packet has 'A0','00'....,'00','00','FF','FF','FF','FF','C3' where the 'FF's are times
@@ -1424,32 +1431,35 @@ function getFromTimePacketTime (dataBuf) {
 }
 
 /**
-* @description Grabs an accel value from a raw but time synced packet. Important that this utilizes the fact that:
-*      X axis data is sent with every sampleNumber % 10 === 7
-*      Y axis data is sent with every sampleNumber % 10 === 8
-*      Z axis data is sent with every sampleNumber % 10 === 9
-* @param dataBuf {Buffer} - The 33byte raw time synced accel packet
-* @param accelArray {Array} - A 3 element array that allows us to have inter packet memory of x and y axis data and emit only on the z axis packets.
-* @returns {boolean} - A boolean that is true only when the accel array is ready to be emitted... i.e. when this is a Z axis packet
-*/
-function getFromTimePacketAccel (dataBuf, accelArray) {
+ * @description Grabs an accel value from a raw but time synced packet. Important that this utilizes the fact that:
+ *      X axis data is sent with every sampleNumber % 10 === 7
+ *      Y axis data is sent with every sampleNumber % 10 === 8
+ *      Z axis data is sent with every sampleNumber % 10 === 9
+ * @param o {Object}
+ * @param o.accelArray {Array} - A 3 element array that allows us to have inter packet memory of x and y axis data and emit only on the z axis packets.
+ * @param o.rawDataPacket {Buffer} - The 33byte raw time synced accel packet
+ * @param o.scale {Boolean} - Do you want to scale the results? Default is true
+ * @returns {boolean} - A boolean that is true only when the accel array is ready to be emitted... i.e. when this is a Z axis packet
+ */
+function getFromTimePacketAccel (o) {
   const accelNumBytes = 2;
   const lastBytePosition = k.OBCIPacketSize - 1 - k.OBCIStreamPacketTimeByteSize - accelNumBytes; // This is 33, but 0 indexed would be 32 minus
 
-  if (dataBuf.byteLength !== k.OBCIPacketSize) {
+  if (o.rawDataPacket.byteLength !== k.OBCIPacketSize) {
     throw new Error(k.OBCIErrorInvalidByteLength);
   }
 
-  var sampleNumber = dataBuf[k.OBCIPacketPositionSampleNumber];
+  let sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
+  let accelCountValue = utilitiesModule.interpret16bitAsInt32(o.rawDataPacket.slice(lastBytePosition, lastBytePosition + 2));
   switch (sampleNumber % 10) { // The accelerometer is on a 25Hz sample rate, so every ten channel samples, we can get new data
     case k.OBCIAccelAxisX:
-      accelArray[0] = utilitiesModule.interpret16bitAsInt32(dataBuf.slice(lastBytePosition, lastBytePosition + 2)) * SCALE_FACTOR_ACCEL; // slice is not inclusive on the right
+      o.accelArray[0] = o.scale ? accelCountValue * SCALE_FACTOR_ACCEL : accelCountValue; // slice is not inclusive on the right
       return false;
     case k.OBCIAccelAxisY:
-      accelArray[1] = utilitiesModule.interpret16bitAsInt32(dataBuf.slice(lastBytePosition, lastBytePosition + 2)) * SCALE_FACTOR_ACCEL; // slice is not inclusive on the right
+      o.accelArray[1] = o.scale ? accelCountValue * SCALE_FACTOR_ACCEL : accelCountValue; // slice is not inclusive on the right
       return false;
     case k.OBCIAccelAxisZ:
-      accelArray[2] = utilitiesModule.interpret16bitAsInt32(dataBuf.slice(lastBytePosition, lastBytePosition + 2)) * SCALE_FACTOR_ACCEL; // slice is not inclusive on the right
+      o.accelArray[2] = o.scale ? accelCountValue * SCALE_FACTOR_ACCEL : accelCountValue; // slice is not inclusive on the right
       return true;
     default:
       return false;
@@ -1477,16 +1487,33 @@ function getFromTimePacketRawAux (dataBuf) {
 *                  of the MPU, values are in ?
 * @param dataBuf - Buffer that is 6 bytes long
 * @returns {Array} - Array of floats 3 elements long
-* @author AJ Keller (@pushtheworldllc)
+* @author AJ Keller (@aj-ptw)
 */
 function getDataArrayAccel (dataBuf) {
-  var accelData = [];
-  for (var i = 0; i < ACCEL_NUMBER_AXIS; i++) {
-    var index = i * 2;
+  let accelData = [];
+  for (let i = 0; i < ACCEL_NUMBER_AXIS; i++) {
+    let index = i * 2;
     accelData.push(utilitiesModule.interpret16bitAsInt32(dataBuf.slice(index, index + 2)) * SCALE_FACTOR_ACCEL);
   }
   return accelData;
 }
+
+/**
+ * @description Takes a buffer filled with 3 16 bit integers from an OpenBCI device and converts based on settings
+ *                  to an int
+ * @param dataBuf - Buffer that is 6 bytes long
+ * @returns {Array} - Array of floats 3 elements long
+ * @author AJ Keller (@aj-ptw)
+ */
+function getDataArrayAccelNoScale (dataBuf) {
+  let accelData = [];
+  for (let i = 0; i < ACCEL_NUMBER_AXIS; i++) {
+    let index = i * 2;
+    accelData.push(utilitiesModule.interpret16bitAsInt32(dataBuf.slice(index, index + 2)));
+  }
+  return accelData;
+}
+
 /**
  * @description Takes a buffer filled with 24 bit signed integers from an OpenBCI device with gain settings in
  *                  channelSettingsArray[index].gain and converts based on settings of ADS1299... spits out an
@@ -1500,7 +1527,7 @@ function getDataArrayAccel (dataBuf) {
  * @param o.lastSampleNumber {Number} - The last sample number
  * @param o.protocol {String} - Either `Serial` or `Wifi` (Default is `Wifi`)
  * @returns {Array} - Array filled with floats for each channel's voltage in VOLTS
- * @author AJ Keller (@pushtheworldllc)
+ * @author AJ Keller (@aj-ptw)
  */
 function getChannelDataArray (o) {
   if (!Array.isArray(o.channelSettings)) {
@@ -1563,10 +1590,10 @@ function getChannelDataArray (o) {
  *                  array of floats in VOLTS
  * @param dataBuf {Buffer} - Buffer with 33 bit signed integers, number of elements is same as channelSettingsArray.length * 3
  * @returns {Array} - Array filled with floats for each channel's voltage in VOLTS
- * @author AJ Keller (@pushtheworldllc)
+ * @author AJ Keller (@aj-ptw)
  */
 function getChannelDataArrayNoScale (dataBuf) {
-  var channelData = [];
+  let channelData = [];
   // Channel data arrays are always 8 long
   for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
     // Convert the three byte signed integer and convert it
@@ -1622,10 +1649,10 @@ function newSample (sampleNumber) {
 * @returns {Buffer} - 3-byte buffer containing the float
 */
 function floatTo3ByteBuffer (float) {
-  var intBuf = new Buffer(3); // 3 bytes for 24 bits
+  let intBuf = new Buffer(3); // 3 bytes for 24 bits
   intBuf.fill(0); // Fill the buffer with 0s
 
-  var temp = float / (ADS1299_VREF / 24 / (Math.pow(2, 23) - 1)); // Convert to counts
+  let temp = float / (ADS1299_VREF / 24 / (Math.pow(2, 23) - 1)); // Convert to counts
 
   temp = Math.floor(temp); // Truncate counts number
 
@@ -1643,10 +1670,10 @@ function floatTo3ByteBuffer (float) {
 * @returns {buffer} - 3-byte buffer containing the float
 */
 function floatTo2ByteBuffer (float) {
-  var intBuf = new Buffer(2); // 2 bytes for 16 bits
+  let intBuf = new Buffer(2); // 2 bytes for 16 bits
   intBuf.fill(0); // Fill the buffer with 0s
 
-  var temp = float / SCALE_FACTOR_ACCEL; // Convert to counts
+  let temp = float / SCALE_FACTOR_ACCEL; // Convert to counts
 
   temp = Math.floor(temp); // Truncate counts number
 
@@ -1675,7 +1702,7 @@ function floatTo2ByteBuffer (float) {
 * @returns {Object} - The new merged daisy sample object
 */
 function makeDaisySampleObject (lowerSampleObject, upperSampleObject) {
-  var daisySampleObject = {};
+  let daisySampleObject = {};
 
   if (lowerSampleObject.hasOwnProperty('channelData')) {
     daisySampleObject['channelData'] = lowerSampleObject.channelData.concat(upperSampleObject.channelData);
@@ -1726,7 +1753,7 @@ function makeDaisySampleObject (lowerSampleObject, upperSampleObject) {
  * @returns {Object} - The new merged daisy sample object
  */
 function makeDaisySampleObjectWifi (lowerSampleObject, upperSampleObject) {
-  var daisySampleObject = {};
+  let daisySampleObject = {};
 
   if (lowerSampleObject.hasOwnProperty('channelData')) {
     daisySampleObject['channelData'] = lowerSampleObject.channelData.concat(upperSampleObject.channelData);
@@ -1907,7 +1934,7 @@ function stripToEOTBuffer (dataBuffer) {
 */
 function isTimeSyncSetConfirmationInBuffer (dataBuffer) {
   if (dataBuffer) {
-    var bufferLength = dataBuffer.length;
+    let bufferLength = dataBuffer.length;
     switch (bufferLength) {
       case 0:
         return false;
@@ -1927,7 +1954,7 @@ function isTimeSyncSetConfirmationInBuffer (dataBuffer) {
         if (dataBuffer[0] === k.OBCISyncTimeSent.charCodeAt(0) && dataBuffer[1] === k.OBCIByteStart) {
           return true;
         }
-        for (var i = 1; i < bufferLength; i++) {
+        for (let i = 1; i < bufferLength; i++) {
           // The base case (last one)
           // console.log(i)
           if (i === (bufferLength - 1)) {
@@ -1955,7 +1982,7 @@ function isTimeSyncSetConfirmationInBuffer (dataBuffer) {
 * @returns {Buffer} - A time sync raw aux packet
 */
 function convertSampleToPacketRawAuxTimeSynced (sample, time, rawAux) {
-  var packetBuffer = new Buffer(k.OBCIPacketSize);
+  let packetBuffer = new Buffer(k.OBCIPacketSize);
   packetBuffer.fill(0);
 
   // start byte
@@ -1965,8 +1992,8 @@ function convertSampleToPacketRawAuxTimeSynced (sample, time, rawAux) {
   packetBuffer[1] = sample.sampleNumber;
 
   // channel data
-  for (var i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
-    var threeByteBuffer = floatTo3ByteBuffer(sample.channelData[i]);
+  for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
+    let threeByteBuffer = floatTo3ByteBuffer(sample.channelData[i]);
 
     threeByteBuffer.copy(packetBuffer, 2 + (i * 3));
   }
@@ -1990,7 +2017,7 @@ function convertSampleToPacketRawAuxTimeSynced (sample, time, rawAux) {
 * @returns {Buffer} - A time sync accel packet
 */
 function convertSampleToPacketAccelTimeSynced (sample, time) {
-  var packetBuffer = new Buffer(k.OBCIPacketSize);
+  let packetBuffer = new Buffer(k.OBCIPacketSize);
   packetBuffer.fill(0);
 
   // start byte
@@ -2000,8 +2027,8 @@ function convertSampleToPacketAccelTimeSynced (sample, time) {
   packetBuffer[1] = sample.sampleNumber;
 
   // channel data
-  for (var i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
-    var threeByteBuffer = floatTo3ByteBuffer(sample.channelData[i]);
+  for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
+    let threeByteBuffer = floatTo3ByteBuffer(sample.channelData[i]);
 
     threeByteBuffer.copy(packetBuffer, 2 + (i * 3));
   }
@@ -2032,7 +2059,7 @@ function makeTailByteFromPacketType (type) {
 *      numbers from 0-F in hex of 0-15 in decimal.
 * @param byte {Number} - The number to test
 * @returns {boolean} - True if `byte` follows the correct form
-* @author AJ Keller (@pushtheworldllc)
+* @author AJ Keller (@aj-ptw)
 */
 function isStopByte (byte) {
   return (byte & 0xF0) === k.OBCIByteStop;
