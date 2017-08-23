@@ -37,6 +37,82 @@ describe('openBCIUtilities', function () {
     accelArray = [0, 0, 0];
   });
   afterEach(() => bluebirdChecks.noPendingPromises());
+  describe('#convertGanglionArrayToBuffer', function () {
+    it('should fill the packet with values from data', function () {
+      const numChannels = k.numberOfChannelsForBoardType(k.OBCIBoardGanglion);
+      let arr = [0,1,2,3];
+      let rawDataPacket = k.rawDataToSampleObjectDefault(numChannels).rawDataPacket;
+      rawDataPacket.fill(0); // fill with zeros
+      let bleRawBuf = openBCIUtilities.convertGanglionArrayToBuffer(arr, data);
+      const sampleNumber = 23;
+      openBCIUtilities.ganglionFillRawDataPacket({
+        data: bleRawBuf,
+        rawDataPacket,
+        sampleNumber
+      });
+      expect(bufferEqual(rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw), bleRawBuf), `expected ${bleRawBuf.toString('hex')} but got ${rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw).toString('hex')}`).to.be.true();
+      expect(rawDataPacket[k.OBCIPacketPositionSampleNumber]).to.equal(sampleNumber);
+      expect(rawDataPacket[k.OBCIPacketPositionStartByte]).to.equal(k.OBCIByteStart);
+      expect(rawDataPacket[k.OBCIPacketPositionStopByte]).to.equal(k.OBCIStreamPacketStandardRawAux);
+    });
+    describe('#errorConditions', function () {
+      it('send undefined data buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send null data buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: null,
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send undefined rawDataPacket buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send null rawDataPacket buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: null,
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('no sample number', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize)
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('wrong number of bytes rawDataPacket', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: Buffer.alloc(5),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+      it('wrong number of bytes data', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(5),
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+      it('undefined', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities)).to.throw(k.OBCIErrorUndefinedOrNullInput);
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities), {
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize)
+        }).to.throw(k.OBCIErrorUndefinedOrNullInput);
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities), {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw)
+        }).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+    });
+  });
   describe('#ganglionFillRawDataPacket', function () {
     it('should fill the packet with values from data', function () {
       const numChannels = k.numberOfChannelsForBoardType(k.OBCIBoardGanglion);

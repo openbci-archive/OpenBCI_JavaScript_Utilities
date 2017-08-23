@@ -1,3 +1,9 @@
+# 0.2.1
+
+### New Features
+
+* Add features for `openbci-ganglion`
+
 # 0.2.0
 
 ### New Feature

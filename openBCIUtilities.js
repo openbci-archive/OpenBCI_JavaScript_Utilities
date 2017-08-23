@@ -141,6 +141,7 @@ let utilitiesModule = {
   },
   transformRawDataPacketToSample,
   transformRawDataPacketsToSample,
+  convertGanglionArrayToBuffer,
   getRawPacketType,
   getFromTimePacketAccel,
   getFromTimePacketTime,
@@ -1039,6 +1040,18 @@ function transformRawDataPacketToSample (o) {
     if (o.verbose) console.log(err);
   }
   return sample;
+}
+
+/**
+ * Used to convert a ganglions decompressed back into a buffer
+ * @param arr {Array} - An array of four numbers
+ * @param data {Buffer} - A buffer to store into
+ */
+function convertGanglionArrayToBuffer (arr, data) {
+  for (let i = 0; i < k.OBCINumberOfChannelsGanglion; i++) {
+    let threeByteBuffer = floatTo3ByteBuffer(arr[i]);
+    threeByteBuffer.copy(data, (i * 3));
+  }
 }
 
 /**
