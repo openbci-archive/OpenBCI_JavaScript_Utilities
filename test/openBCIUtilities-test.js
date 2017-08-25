@@ -40,17 +40,18 @@ describe('openBCIUtilities', function () {
   describe('#convertGanglionArrayToBuffer', function () {
     it('should fill the packet with values from data', function () {
       const numChannels = k.numberOfChannelsForBoardType(k.OBCIBoardGanglion);
-      let arr = [0,1,2,3];
+      let arr = [0, 1, 2, 3];
       let rawDataPacket = k.rawDataToSampleObjectDefault(numChannels).rawDataPacket;
       rawDataPacket.fill(0); // fill with zeros
-      let bleRawBuf = openBCIUtilities.convertGanglionArrayToBuffer(arr, data);
+      let data = Buffer.alloc(k.OBCIPacketSizeBLERaw);
+      openBCIUtilities.convertGanglionArrayToBuffer(arr, data);
       const sampleNumber = 23;
       openBCIUtilities.ganglionFillRawDataPacket({
-        data: bleRawBuf,
+        data,
         rawDataPacket,
         sampleNumber
       });
-      expect(bufferEqual(rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw), bleRawBuf), `expected ${bleRawBuf.toString('hex')} but got ${rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw).toString('hex')}`).to.be.true();
+      expect(bufferEqual(rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw), data), `expected ${data.toString('hex')} but got ${rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw).toString('hex')}`).to.be.true();
       expect(rawDataPacket[k.OBCIPacketPositionSampleNumber]).to.equal(sampleNumber);
       expect(rawDataPacket[k.OBCIPacketPositionStartByte]).to.equal(k.OBCIByteStart);
       expect(rawDataPacket[k.OBCIPacketPositionStopByte]).to.equal(k.OBCIStreamPacketStandardRawAux);
@@ -1520,24 +1521,26 @@ describe('openBCIUtilities', function () {
       lowerSampleObject = openBCIUtilities.newSample(1);
       lowerSampleObject.channelData = [1, 2, 3, 4, 5, 6, 7, 8];
       lowerSampleObject.auxData = [0, 1, 2];
+      lowerSampleObject.accelData = [0, 0, 0];
       lowerSampleObject.timestamp = 4;
-      lowerSampleObject.accelData = [0.5, -0.5, 1];
       // Make the upper sample (channels 9-16)
       upperSampleObject = openBCIUtilities.newSample(2);
       upperSampleObject.channelData = [9, 10, 11, 12, 13, 14, 15, 16];
       upperSampleObject.auxData = [3, 4, 5];
+      upperSampleObject.accelData = [0, 1, 2];
       upperSampleObject.timestamp = 8;
 
       daisySampleObject = openBCIUtilities.makeDaisySampleObject(lowerSampleObject, upperSampleObject);
 
-      lowerSampleObjectNoScale = openBCIUtilities.newSample(1);
+      lowerSampleObjectNoScale = openBCIUtilities.newSampleNoScale(1);
       lowerSampleObjectNoScale.channelDataCounts = [1, 2, 3, 4, 5, 6, 7, 8];
+      lowerSampleObjectNoScale.accelDataCounts = [0, 0, 0];
       lowerSampleObjectNoScale.auxData = [0, 1, 2];
       lowerSampleObjectNoScale.timestamp = 4;
-      lowerSampleObjectNoScale.accelData = [0.5, -0.5, 1];
       // Make the upper sample (channels 9-16)
-      upperSampleObjectNoScale = openBCIUtilities.newSample(2);
+      upperSampleObjectNoScale = openBCIUtilities.newSampleNoScale(2);
       upperSampleObjectNoScale.channelDataCounts = [9, 10, 11, 12, 13, 14, 15, 16];
+      upperSampleObjectNoScale.accelDataCounts = [0, 1, 2];
       upperSampleObjectNoScale.auxData = [3, 4, 5];
       upperSampleObjectNoScale.timestamp = 8;
 
@@ -1589,7 +1592,28 @@ describe('openBCIUtilities', function () {
     });
     it('should store an accelerometer value if present', function () {
       expect(daisySampleObject).to.have.property('accelData');
-      expect(daisySampleObjectNoScale).to.have.property('accelData');
+      expect(daisySampleObject.accelData).to.deep.equal([0, 1, 2]);
+      expect(daisySampleObjectNoScale).to.have.property('accelDataCounts');
+      expect(daisySampleObjectNoScale.accelDataCounts).to.deep.equal([0, 1, 2]);
+    });
+    it('should work for all accel cases to extract the non-zero values', function () {
+      let lowerSample = openBCIUtilities.newSample(1);
+      lowerSample.accelData = [0, 1, 2];
+      let upperSample = openBCIUtilities.newSample(2);
+      upperSample.accelData = [0, 0, 0];
+
+      let lowerSampleNoScale = openBCIUtilities.newSampleNoScale(1);
+      lowerSampleNoScale.accelDataCounts = [0, 1, 2];
+      let upperSampleNoScale = openBCIUtilities.newSampleNoScale(2);
+      upperSampleNoScale.accelDataCounts = [0, 0, 0];
+
+      // Call the function under test
+      let daisySample = openBCIUtilities.makeDaisySampleObject(lowerSample, upperSample);
+      let daisySampleNoScale = openBCIUtilities.makeDaisySampleObject(lowerSampleNoScale, upperSampleNoScale);
+      expect(daisySample).to.have.property('accelData');
+      expect(daisySample.accelData).to.deep.equal([0, 1, 2]);
+      expect(daisySampleNoScale).to.have.property('accelDataCounts');
+      expect(daisySampleNoScale.accelDataCounts).to.deep.equal([0, 1, 2]);
     });
   });
   describe('#makeDaisySampleObjectWifi', function () {

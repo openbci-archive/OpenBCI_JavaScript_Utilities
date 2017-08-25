@@ -1,5 +1,9 @@
 # 0.2.1
 
+### Bug Fixes
+
+* Accel data with counts did not work for cyton with daisy. Also fixed up some test errors with the effected functions.
+
 ### New Features
 
 * Add features for `openbci-ganglion`
