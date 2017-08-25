@@ -37,6 +37,83 @@ describe('openBCIUtilities', function () {
     accelArray = [0, 0, 0];
   });
   afterEach(() => bluebirdChecks.noPendingPromises());
+  describe('#convertGanglionArrayToBuffer', function () {
+    it('should fill the packet with values from data', function () {
+      const numChannels = k.numberOfChannelsForBoardType(k.OBCIBoardGanglion);
+      let arr = [0, 1, 2, 3];
+      let rawDataPacket = k.rawDataToSampleObjectDefault(numChannels).rawDataPacket;
+      rawDataPacket.fill(0); // fill with zeros
+      let data = Buffer.alloc(k.OBCIPacketSizeBLERaw);
+      openBCIUtilities.convertGanglionArrayToBuffer(arr, data);
+      const sampleNumber = 23;
+      openBCIUtilities.ganglionFillRawDataPacket({
+        data,
+        rawDataPacket,
+        sampleNumber
+      });
+      expect(bufferEqual(rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw), data), `expected ${data.toString('hex')} but got ${rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw).toString('hex')}`).to.be.true();
+      expect(rawDataPacket[k.OBCIPacketPositionSampleNumber]).to.equal(sampleNumber);
+      expect(rawDataPacket[k.OBCIPacketPositionStartByte]).to.equal(k.OBCIByteStart);
+      expect(rawDataPacket[k.OBCIPacketPositionStopByte]).to.equal(k.OBCIStreamPacketStandardRawAux);
+    });
+    describe('#errorConditions', function () {
+      it('send undefined data buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send null data buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: null,
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send undefined rawDataPacket buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send null rawDataPacket buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: null,
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('no sample number', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize)
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('wrong number of bytes rawDataPacket', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: Buffer.alloc(5),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+      it('wrong number of bytes data', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(5),
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+      it('undefined', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities)).to.throw(k.OBCIErrorUndefinedOrNullInput);
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities), {
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize)
+        }).to.throw(k.OBCIErrorUndefinedOrNullInput);
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities), {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw)
+        }).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+    });
+  });
   describe('#ganglionFillRawDataPacket', function () {
     it('should fill the packet with values from data', function () {
       const numChannels = k.numberOfChannelsForBoardType(k.OBCIBoardGanglion);
@@ -1444,24 +1521,26 @@ describe('openBCIUtilities', function () {
       lowerSampleObject = openBCIUtilities.newSample(1);
       lowerSampleObject.channelData = [1, 2, 3, 4, 5, 6, 7, 8];
       lowerSampleObject.auxData = [0, 1, 2];
+      lowerSampleObject.accelData = [0, 0, 0];
       lowerSampleObject.timestamp = 4;
-      lowerSampleObject.accelData = [0.5, -0.5, 1];
       // Make the upper sample (channels 9-16)
       upperSampleObject = openBCIUtilities.newSample(2);
       upperSampleObject.channelData = [9, 10, 11, 12, 13, 14, 15, 16];
       upperSampleObject.auxData = [3, 4, 5];
+      upperSampleObject.accelData = [0, 1, 2];
       upperSampleObject.timestamp = 8;
 
       daisySampleObject = openBCIUtilities.makeDaisySampleObject(lowerSampleObject, upperSampleObject);
 
-      lowerSampleObjectNoScale = openBCIUtilities.newSample(1);
+      lowerSampleObjectNoScale = openBCIUtilities.newSampleNoScale(1);
       lowerSampleObjectNoScale.channelDataCounts = [1, 2, 3, 4, 5, 6, 7, 8];
+      lowerSampleObjectNoScale.accelDataCounts = [0, 0, 0];
       lowerSampleObjectNoScale.auxData = [0, 1, 2];
       lowerSampleObjectNoScale.timestamp = 4;
-      lowerSampleObjectNoScale.accelData = [0.5, -0.5, 1];
       // Make the upper sample (channels 9-16)
-      upperSampleObjectNoScale = openBCIUtilities.newSample(2);
+      upperSampleObjectNoScale = openBCIUtilities.newSampleNoScale(2);
       upperSampleObjectNoScale.channelDataCounts = [9, 10, 11, 12, 13, 14, 15, 16];
+      upperSampleObjectNoScale.accelDataCounts = [0, 1, 2];
       upperSampleObjectNoScale.auxData = [3, 4, 5];
       upperSampleObjectNoScale.timestamp = 8;
 
@@ -1513,7 +1592,28 @@ describe('openBCIUtilities', function () {
     });
     it('should store an accelerometer value if present', function () {
       expect(daisySampleObject).to.have.property('accelData');
-      expect(daisySampleObjectNoScale).to.have.property('accelData');
+      expect(daisySampleObject.accelData).to.deep.equal([0, 1, 2]);
+      expect(daisySampleObjectNoScale).to.have.property('accelDataCounts');
+      expect(daisySampleObjectNoScale.accelDataCounts).to.deep.equal([0, 1, 2]);
+    });
+    it('should work for all accel cases to extract the non-zero values', function () {
+      let lowerSample = openBCIUtilities.newSample(1);
+      lowerSample.accelData = [0, 1, 2];
+      let upperSample = openBCIUtilities.newSample(2);
+      upperSample.accelData = [0, 0, 0];
+
+      let lowerSampleNoScale = openBCIUtilities.newSampleNoScale(1);
+      lowerSampleNoScale.accelDataCounts = [0, 1, 2];
+      let upperSampleNoScale = openBCIUtilities.newSampleNoScale(2);
+      upperSampleNoScale.accelDataCounts = [0, 0, 0];
+
+      // Call the function under test
+      let daisySample = openBCIUtilities.makeDaisySampleObject(lowerSample, upperSample);
+      let daisySampleNoScale = openBCIUtilities.makeDaisySampleObject(lowerSampleNoScale, upperSampleNoScale);
+      expect(daisySample).to.have.property('accelData');
+      expect(daisySample.accelData).to.deep.equal([0, 1, 2]);
+      expect(daisySampleNoScale).to.have.property('accelDataCounts');
+      expect(daisySampleNoScale.accelDataCounts).to.deep.equal([0, 1, 2]);
     });
   });
   describe('#makeDaisySampleObjectWifi', function () {

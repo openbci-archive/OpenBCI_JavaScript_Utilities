@@ -141,6 +141,7 @@ let utilitiesModule = {
   },
   transformRawDataPacketToSample,
   transformRawDataPacketsToSample,
+  convertGanglionArrayToBuffer,
   getRawPacketType,
   getFromTimePacketAccel,
   getFromTimePacketTime,
@@ -382,6 +383,7 @@ let utilitiesModule = {
     }
   },
   newSample,
+  newSampleNoScale,
   /**
   * @description Create a configurable function to return samples for a simulator. This implements 1/f filtering injection to create more brain like data.
   * @param numberOfChannels {Number} - The number of channels in the sample... either 8 or 16
@@ -1042,6 +1044,18 @@ function transformRawDataPacketToSample (o) {
 }
 
 /**
+ * Used to convert a ganglions decompressed back into a buffer
+ * @param arr {Array} - An array of four numbers
+ * @param data {Buffer} - A buffer to store into
+ */
+function convertGanglionArrayToBuffer (arr, data) {
+  for (let i = 0; i < k.OBCINumberOfChannelsGanglion; i++) {
+    data.writeInt16BE(arr[i] >> 8, (i * 3));
+    data.writeInt8(arr[i] & 255, (i * 3) + 2);
+  }
+}
+
+/**
  * @description This function takes a raw data buffer of 4 3-byte signed integers for ganglion
  * @param o {Object} - The input object
  * @param o.data {Buffer} - An allocated and filled buffer of length 12
@@ -1643,6 +1657,26 @@ function newSample (sampleNumber) {
   };
 }
 
+function newSampleNoScale (sampleNumber) {
+  if (sampleNumber || sampleNumber === 0) {
+    if (sampleNumber > 255) {
+      sampleNumber = 255;
+    }
+  } else {
+    sampleNumber = 0;
+  }
+  return {
+    startByte: k.OBCIByteStart,
+    sampleNumber: sampleNumber,
+    channelDataCounts: [],
+    accelDataCounts: [],
+    auxData: null,
+    stopByte: k.OBCIByteStop,
+    boardTime: 0,
+    timestamp: 0
+  };
+}
+
 /**
 * @description Convert float number into three byte buffer. This is the opposite of .interpret24bitAsInt32()
 * @param float - The number you want to convert
@@ -1705,34 +1739,42 @@ function makeDaisySampleObject (lowerSampleObject, upperSampleObject) {
   let daisySampleObject = {};
 
   if (lowerSampleObject.hasOwnProperty('channelData')) {
-    daisySampleObject['channelData'] = lowerSampleObject.channelData.concat(upperSampleObject.channelData);
+    daisySampleObject.channelData = lowerSampleObject.channelData.concat(upperSampleObject.channelData);
   }
 
   if (lowerSampleObject.hasOwnProperty('channelDataCounts')) {
-    daisySampleObject['channelDataCounts'] = lowerSampleObject.channelDataCounts.concat(upperSampleObject.channelDataCounts);
+    daisySampleObject.channelDataCounts = lowerSampleObject.channelDataCounts.concat(upperSampleObject.channelDataCounts);
   }
 
-  daisySampleObject['sampleNumber'] = Math.floor(upperSampleObject.sampleNumber / 2);
+  daisySampleObject.sampleNumber = Math.floor(upperSampleObject.sampleNumber / 2);
 
-  daisySampleObject['auxData'] = {
+  daisySampleObject.auxData = {
     'lower': lowerSampleObject.auxData,
     'upper': upperSampleObject.auxData
   };
 
-  daisySampleObject['timestamp'] = (lowerSampleObject.timestamp + upperSampleObject.timestamp) / 2;
+  daisySampleObject.timestamp = (lowerSampleObject.timestamp + upperSampleObject.timestamp) / 2;
 
   daisySampleObject['_timestamps'] = {
     'lower': lowerSampleObject.timestamp,
     'upper': upperSampleObject.timestamp
   };
 
-  if (lowerSampleObject.accelData) {
-    daisySampleObject['accelData'] = lowerSampleObject.accelData;
-  } else if (upperSampleObject.accelData) {
-    daisySampleObject['accelData'] = upperSampleObject.accelData;
+  if (lowerSampleObject.hasOwnProperty('accelData')) {
+    if (lowerSampleObject.accelData[0] > 0 || lowerSampleObject.accelData[1] > 0 || lowerSampleObject.accelData[2] > 0) {
+      daisySampleObject.accelData = lowerSampleObject.accelData;
+    } else {
+      daisySampleObject.accelData = upperSampleObject.accelData;
+    }
+  } else if (lowerSampleObject.hasOwnProperty('accelDataCounts')) {
+    if (lowerSampleObject.accelDataCounts[0] > 0 || lowerSampleObject.accelDataCounts[1] > 0 || lowerSampleObject.accelDataCounts[2] > 0) {
+      daisySampleObject.accelDataCounts = lowerSampleObject.accelDataCounts;
+    } else {
+      daisySampleObject.accelDataCounts = upperSampleObject.accelDataCounts;
+    }
   }
 
-  daisySampleObject['valid'] = true;
+  daisySampleObject.valid = true;
 
   return daisySampleObject;
 }
