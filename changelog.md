@@ -1,3 +1,9 @@
+# 0.2.2
+
+### Bug Fixes
+
+* Fix wrap around bug in extractRawBLEDataPackets
+
 # 0.2.1
 
 ### Bug Fixes
