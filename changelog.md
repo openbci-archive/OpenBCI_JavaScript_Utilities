@@ -1,10 +1,16 @@
-# 0.2.2
+# v0.2.3
+
+### New Features
+
+* Add function for parsing an impedance object `.parsePacketImpedance()`
+
+# v0.2.2
 
 ### Bug Fixes
 
 * Fix wrap around bug in extractRawBLEDataPackets
 
-# 0.2.1
+# v0.2.1
 
 ### Bug Fixes
 
@@ -14,33 +20,33 @@
 
 * Add features for `openbci-ganglion`
 
-# 0.2.0
+# v0.2.0
 
 ### New Feature
 
 * With scale option false, `.parsePacketStandardAccel()` `.parsePacketTimeSyncedAccel()` will now return array called will now return `accelDataCounts` property with un-scaled data.
 
-# 0.1.5
+# v0.1.5
 
 ### Bug Fixes
 
 * Was missing errors in constants used by ganglion and other ble projects.
 * Fixed getChannelData functions to support 2 channel cytons
 
-# 0.1.4
+# v0.1.4
 
 ### Bug Fixes
 
 * E-patch on new function added 0.1.3
 
 
-# 0.1.3
+# v0.1.3
 
 ### New Features
 
 * A bunch of functions to support synchronization of channel settings with cyton. Will be used by both the Wifi and the Cyton node modules.
 
-# 0.1.2
+# v0.1.2
 
 ### Bug Fixes
 
@@ -48,13 +54,13 @@
 * Sample output was inconsistent
 * Fixed `timeStamp` to `timestamp` this was pr #147 (thanks @alexdevmotion)
 
-# 0.1.1
+# v0.1.1
 
 ### Bug Fixes
 
 * Send counts did not work for daisy.
 
-# 0.1.0
+# v0.1.0
 
 ### New Functions
 
@@ -64,26 +70,26 @@
 
 * Removed function called `findV2Firmware()` because it's useless with v3.0.0 firmware
 
-# 0.0.10
+# v0.0.10
 
 ### New Function
 
 * Add `boardTypeForNumberOfChannels()` to Constants
 
-# 0.0.9
+# v0.0.9
 
 ### New Features
 
 * Add impedance calculation functions from cyton
 * The simulator from OpenBCI_NodeJS has been ripped out and place into this library! Woo.
 
-# 0.0.8
+# v0.0.8
 
 ### New Features
 
 * Sample object now has property `valid` of type `boolean`, `false` when error parseing packet, `true` otherwise. On `false` there will be another property called `error` of type `string` which contains an error message.
 
-# 0.0.7
+# v0.0.7
 
 ### Continuous Integration
 
@@ -98,7 +104,7 @@
 * In openBCIUtilities.js add function `transformRawDataPacketToSample` to parse a single raw data packet
 * In openBCIConstants.js add function `rawDataToSampleObjectDefault(numChannels)` which should be used by drivers to create the object that is passed through each call to `transformRawDataPacketsToSample` 
 
-# 0.0.6
+# v0.0.6
 
 ### Bug Fixes
 
@@ -114,19 +120,19 @@
 
 * `getChannelDataArray` now takes object as only arg.
 
-# 0.0.5
+# v0.0.5
 
 ### Bug Fixes
 
 * When not scaling outputs `channelDataCounts` instead of `channelData`
 
-# 0.0.4
+# v0.0.4
 
 ### Bug Fixes
 
 * Fix bug where samples were not properly being extracted
 
-# 0.0.2
+# v0.0.2
 
 ### Breaking Changes
 
@@ -138,6 +144,6 @@
 
 * Added a function in the sample module that parses a raw buffer of OpenBCI data, extracts raw data packets and returns the buffer with just the raw data packets removed. Allowing the user to process other data that is not a raw data.
 
-# 0.0.1
+# v0.0.1
 
 Initial release

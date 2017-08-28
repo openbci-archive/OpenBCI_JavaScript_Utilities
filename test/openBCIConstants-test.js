@@ -626,6 +626,9 @@ describe('OpenBCIConstants', function () {
     it('Time Synced with Raw Aux', function () {
       assert.equal(6, k.OBCIStreamPacketRawAuxTimeSynced);
     });
+    it('Time Synced with Raw Aux', function () {
+      assert.equal(7, k.OBCIStreamPacketImpedance);
+    });
   });
   describe('Time synced with accel packet', function () {
     it('X axis', function () {
