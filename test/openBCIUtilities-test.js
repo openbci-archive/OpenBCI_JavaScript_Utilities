@@ -1028,6 +1028,51 @@ describe('openBCIUtilities', function () {
       });
     });
   });
+  describe('#parsePacketImpedace', function () {
+    it('should extract the impedance value for channel 1', function () {
+      const expectedChannelNumber = 1;
+      const expectedImpedance = 641;
+      const rawDataPacket = openBCIUtilities.samplePacketImpedance(expectedChannelNumber);
+      let impedanceObject = openBCIUtilities.parsePacketImpedance({
+        rawDataPacket
+      });
+      expect(impedanceObject.channelNumber).to.equal(expectedChannelNumber);
+      expect(impedanceObject.impedanceValue).to.equal(expectedImpedance);
+    });
+    it('should extract the impedance value for channel 4', function () {
+      const expectedChannelNumber = 4;
+      const expectedImpedance = 64180;
+      const rawDataPacket = openBCIUtilities.samplePacketImpedance(expectedChannelNumber);
+      rawDataPacket[5] = 56;
+      rawDataPacket[6] = 48;
+      let impedanceObject = openBCIUtilities.parsePacketImpedance({
+        rawDataPacket
+      });
+      expect(impedanceObject.channelNumber).to.equal(expectedChannelNumber);
+      expect(impedanceObject.impedanceValue).to.equal(expectedImpedance);
+    });
+    it('should extract the impedance value for channel reference', function () {
+      const expectedChannelNumber = 5;
+      const expectedImpedance = 641;
+      const rawDataPacket = openBCIUtilities.samplePacketImpedance(expectedChannelNumber);
+      let impedanceObject = openBCIUtilities.parsePacketImpedance({
+        rawDataPacket
+      });
+      expect(impedanceObject.channelNumber).to.equal(0);
+      expect(impedanceObject.impedanceValue).to.equal(expectedImpedance);
+    });
+    describe('#errorConditions', function () {
+      it('send non data buffer', function () {
+        expect(openBCIUtilities.parsePacketImpedance.bind(openBCIUtilities, {
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('wrong number of bytes', function () {
+        expect(openBCIUtilities.parsePacketImpedance.bind(openBCIUtilities, {
+          rawDataPacket: new Buffer(5)
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+    });
+  });
   describe('#getDataArrayAccel', function () {
     it('compute scaled accel values', function () {
       const accelData = openBCIUtilities.getDataArrayAccel(sampleBuf.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
@@ -2837,7 +2882,7 @@ describe('#transformRawDataPacketsToSamples', function () {
  * Test the function that routes raw packets for processing
  */
 describe('#transformRawDataPacketToSample', function () {
-  var funcSpyTimeSyncedAccel, funcSpyTimeSyncedRawAux, funcSpyStandardRawAux, funcSpyStandardAccel;
+  var funcSpyTimeSyncedAccel, funcSpyTimeSyncedRawAux, funcSpyStandardRawAux, funcSpyStandardAccel, funcSpyImpedance;
 
   before(function () {
     // Put watchers on all functions
@@ -2845,12 +2890,14 @@ describe('#transformRawDataPacketToSample', function () {
     funcSpyStandardRawAux = sinon.spy(openBCIUtilities, 'parsePacketStandardRawAux');
     funcSpyTimeSyncedAccel = sinon.spy(openBCIUtilities, 'parsePacketTimeSyncedAccel');
     funcSpyTimeSyncedRawAux = sinon.spy(openBCIUtilities, 'parsePacketTimeSyncedRawAux');
+    funcSpyImpedance = sinon.spy(openBCIUtilities, 'parsePacketImpedance');
   });
   beforeEach(function () {
     funcSpyStandardAccel.reset();
     funcSpyStandardRawAux.reset();
     funcSpyTimeSyncedAccel.reset();
     funcSpyTimeSyncedRawAux.reset();
+    funcSpyImpedance.reset();
   });
   after(function () {
     // ourBoard = null
@@ -2895,6 +2942,7 @@ describe('#transformRawDataPacketToSample', function () {
     expect(funcSpyStandardRawAux).to.not.have.been.called();
     expect(funcSpyTimeSyncedAccel).to.not.have.been.called();
     expect(funcSpyTimeSyncedRawAux).to.not.have.been.called();
+    expect(funcSpyImpedance).to.not.have.been.called();
   });
   it('should throw err when no channel settings', function () {
     var buffer = new Buffer(5).fill(0);
@@ -2965,6 +3013,18 @@ describe('#transformRawDataPacketToSample', function () {
     // Ensure that we extracted only one buffer
     expect(funcSpyTimeSyncedRawAux).to.have.been.calledOnce();
   });
+  it('should process an impedance packet', function () {
+    var buffer = openBCIUtilities.samplePacketImpedance(1);
+
+    // Call the function under test
+    openBCIUtilities.transformRawDataPacketToSample({
+      channelSettings: defaultChannelSettingsArray,
+      rawDataPacket: buffer
+    });
+
+    // Ensure that we extracted only one buffer
+    expect(funcSpyImpedance).to.have.been.calledOnce();
+  });
   it('should not identify any packet', function () {
     var buffer = openBCIUtilities.samplePacket(0);
 
@@ -2982,5 +3042,6 @@ describe('#transformRawDataPacketToSample', function () {
     expect(funcSpyStandardRawAux).to.not.have.been.called();
     expect(funcSpyTimeSyncedAccel).to.not.have.been.called();
     expect(funcSpyTimeSyncedRawAux).to.not.have.been.called();
+    expect(funcSpyImpedance).to.not.have.been.called();
   });
 });

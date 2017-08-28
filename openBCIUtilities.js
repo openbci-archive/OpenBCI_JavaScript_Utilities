@@ -28,6 +28,12 @@ let utilitiesModule = {
    * @property {Number} sampleNumber The sample number
    * @property {Array} channelData The extracted channel data
    * @property {Buffer} rawDataPacket The raw data packet
+   * @property {Boolean} valid If the sample is valid
+   */
+  /**
+   * @typedef {Object} Impedance
+   * @property {Number} channelNumber The channel number
+   * @property {Number} impedanceValue The impedance in ohms
    */
   /**
    * @typedef {Object} RawDataToSample
@@ -151,6 +157,7 @@ let utilitiesModule = {
   parsePacketStandardRawAux,
   parsePacketTimeSyncedAccel,
   parsePacketTimeSyncedRawAux,
+  parsePacketImpedance,
   /**
   * @description Mainly used by the simulator to convert a randomly generated sample into a std OpenBCI V3 Packet
   * @param sample - A sample object
@@ -568,6 +575,9 @@ let utilitiesModule = {
   },
   samplePacketRawAuxTimeSynced: sampleNumber => {
     return new Buffer([0xA0, sampleNumberNormalize(sampleNumber), 0, 0, 1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0, 5, 0, 0, 6, 0, 0, 7, 0, 0, 8, 0x00, 0x01, 0, 0, 0, 1, makeTailByteFromPacketType(k.OBCIStreamPacketRawAuxTimeSynced)]);
+  },
+  samplePacketImpedance: channelNumber => {
+    return new Buffer([0xA0, channelNumber, 54, 52, 49, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, makeTailByteFromPacketType(k.OBCIStreamPacketImpedance)]);
   },
   samplePacketUserDefined: () => {
     return new Buffer([0xA0, 0x00, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, makeTailByteFromPacketType(k.OBCIStreamPacketUserDefinedType)]);
@@ -990,7 +1000,7 @@ function transformRawDataPacketsToSample (o) {
     samples.push(sample);
     if (sample.hasOwnProperty('sampleNumber')) {
       o['lastSampleNumber'] = sample.sampleNumber;
-    } else {
+    } else if (!sample.hasOwnProperty('impedanceValue')){
       o['lastSampleNumber'] = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
     }
   }
@@ -1021,6 +1031,9 @@ function transformRawDataPacketToSample (o) {
       case k.OBCIStreamPacketRawAuxTimeSyncSet:
       case k.OBCIStreamPacketRawAuxTimeSynced:
         sample = utilitiesModule.parsePacketTimeSyncedRawAux(o);
+        break;
+      case k.OBCIStreamPacketImpedance:
+        sample = utilitiesModule.parsePacketImpedance(o);
         break;
       default:
         // Don't do anything if the packet is not defined
@@ -1288,6 +1301,31 @@ function parsePacketTimeSyncedRawAux (o) {
   sampleObject.valid = true;
 
   return sampleObject;
+}
+
+/**
+ * @description Raw aux
+ * @param o {Object} - The input object
+ * @param o.rawDataPacket {Buffer} - The 33byte raw time synced accel packet
+ * @returns {Impedance} - An impedance object.
+ */
+function parsePacketImpedance (o) {
+  // Ths packet has 'A0','00'....,'AA','AA','FF','FF','FF','FF','C4'
+  //  where the 'AA's form an accel 16bit num and 'FF's form a 32 bit time in ms
+  // Check to make sure data is not null.
+  if (k.isUndefined(o) || k.isUndefined(o.rawDataPacket) || k.isNull(o.rawDataPacket)) throw new Error(k.OBCIErrorUndefinedOrNullInput);
+  // Check to make sure the buffer is the right size.
+  if (o.rawDataPacket.byteLength !== k.OBCIPacketSize) throw new Error(k.OBCIErrorInvalidByteLength);
+
+  let impedanceObject = {};
+
+  impedanceObject.channelNumber = o.rawDataPacket[1];
+  if (impedanceObject.channelNumber === 5) {
+    impedanceObject.channelNumber = 0;
+  }
+  impedanceObject.impedanceValue = Number(o.rawDataPacket.toString().match(/\d+/)[0]);
+
+  return impedanceObject;
 }
 
 /**

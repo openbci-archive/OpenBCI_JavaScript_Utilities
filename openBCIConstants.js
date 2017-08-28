@@ -357,6 +357,7 @@ const obciStreamPacketAccelTimeSyncSet = 3; // 0011
 const obciStreamPacketAccelTimeSynced = 4; // 0100
 const obciStreamPacketRawAuxTimeSyncSet = 5; // 0101
 const obciStreamPacketRawAuxTimeSynced = 6; // 0110
+const obciStreamPacketImpedance = 7; // 0111
 
 /** Time from board */
 const obciStreamPacketTimeByteSize = 4;
@@ -1068,6 +1069,7 @@ const constantsModule = {
   OBCIStreamPacketAccelTimeSynced: obciStreamPacketAccelTimeSynced,
   OBCIStreamPacketRawAuxTimeSyncSet: obciStreamPacketRawAuxTimeSyncSet,
   OBCIStreamPacketRawAuxTimeSynced: obciStreamPacketRawAuxTimeSynced,
+  OBCIStreamPacketImpedance: obciStreamPacketImpedance,
   /** fun funcs */
   isNumber,
   isBoolean,
