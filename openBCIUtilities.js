@@ -1000,7 +1000,7 @@ function transformRawDataPacketsToSample (o) {
     samples.push(sample);
     if (sample.hasOwnProperty('sampleNumber')) {
       o['lastSampleNumber'] = sample.sampleNumber;
-    } else if (!sample.hasOwnProperty('impedanceValue')){
+    } else if (!sample.hasOwnProperty('impedanceValue')) {
       o['lastSampleNumber'] = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
     }
   }
