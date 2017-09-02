@@ -1,3 +1,9 @@
+# v0.2.4
+
+### New Features
+
+* Add new constants for emitter
+
 # v0.2.3
 
 ### New Features

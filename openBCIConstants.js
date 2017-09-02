@@ -428,6 +428,7 @@ const obciEmitterRawDataPacket = 'rawDataPacket';
 const obciEmitterReady = 'ready';
 const obciEmitterRFduino = 'rfduino';
 const obciEmitterSample = 'sample';
+const obciEmitterScanStopped = 'scanStopped';
 const obciEmitterSynced = 'synced';
 const obciEmitterWifiShield = 'wifiShield';
 
@@ -1192,6 +1193,7 @@ const constantsModule = {
   OBCIEmitterReady: obciEmitterReady,
   OBCIEmitterRFduino: obciEmitterRFduino,
   OBCIEmitterSample: obciEmitterSample,
+  OBCIEmitterScanStopped: obciEmitterScanStopped,
   OBCIEmitterSynced: obciEmitterSynced,
   OBCIEmitterWifiShield: obciEmitterWifiShield,
   /** Emitters */
