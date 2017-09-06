@@ -1874,6 +1874,12 @@ describe('OpenBCIConstants', function () {
     it('Event Emitter Sample', function () {
       assert.equal('sample', k.OBCIEmitterSample);
     });
+    it('Event Emitter Scan Stopped', function () {
+      assert.equal('scanStopped', k.OBCIEmitterScanStopped);
+    });
+    it('Event Emitter Synced', function () {
+      assert.equal('synced', k.OBCIEmitterSynced);
+    });
   });
   describe('Errors', function () {
     it('errorInvalidByteLength', function () {

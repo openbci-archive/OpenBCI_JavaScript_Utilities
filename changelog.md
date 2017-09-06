@@ -1,3 +1,13 @@
+# v0.2.4
+
+### New Features
+
+* Add new constants for emitter
+
+### Bug Fixes
+
+* Fix bug where ganglion sample channel data when scale was false produced array of 8 values instead of 4
+
 # v0.2.3
 
 ### New Features
