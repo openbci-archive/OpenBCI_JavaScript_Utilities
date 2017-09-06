@@ -1135,6 +1135,7 @@ describe('openBCIUtilities', function () {
     it('without scale all the channels should have the same number value as their (index + 1)', function () {
       packet = openBCIUtilities.samplePacketRawAuxTimeSynced(0);
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: packet,
         timeOffset: 0,
         scale: false
@@ -1375,6 +1376,7 @@ describe('openBCIUtilities', function () {
     });
     it('should get raw aux buffer', function () {
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: packetBuffer,
         timeOffset: 0,
         scale: false
@@ -1384,6 +1386,7 @@ describe('openBCIUtilities', function () {
     });
     it('should get board time', function () {
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: packetBuffer,
         timeOffset: 0,
         scale: false
@@ -1394,6 +1397,7 @@ describe('openBCIUtilities', function () {
     it('should get time stamp with offset', function () {
       let timeOffset = 80;
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: packetBuffer,
         timeOffset: timeOffset,
         scale: false
@@ -1755,6 +1759,46 @@ describe('openBCIUtilities', function () {
       expect(openBCIUtilities.isOdd(2)).to.be.false();
     });
   });
+  describe('#getChannelDataArrayNoScale', function () {
+    let sampleBuf;
+    beforeEach(() => {
+      sampleBuf = openBCIUtilities.samplePacket(0);
+    });
+    it('should return length of channel settings when less then 8', function () {
+      let numChannels = 2;
+      let channelSettings = k.channelSettingsArrayInit(numChannels);
+      let valArray = openBCIUtilities.getChannelDataArrayNoScale({
+        channelSettings: channelSettings,
+        rawDataPacket: sampleBuf
+      });
+      expect(valArray).to.have.length(numChannels);
+    });
+    it('should return length of channel settings of 8 when cyton', function () {
+      let numChannels = k.OBCINumberOfChannelsCyton;
+      let channelSettings = k.channelSettingsArrayInit(numChannels);
+      let valArray = openBCIUtilities.getChannelDataArrayNoScale({
+        channelSettings,
+        rawDataPacket: sampleBuf
+      });
+      expect(valArray).to.have.length(k.OBCINumberOfChannelsDefault);
+    });
+    it('should return length of channel settings of 8 when daisy', function () {
+      let numChannels = k.OBCINumberOfChannelsDaisy;
+      let channelSettings = k.channelSettingsArrayInit(numChannels);
+      let valArray = openBCIUtilities.getChannelDataArrayNoScale({
+        channelSettings,
+        rawDataPacket: sampleBuf
+      });
+      expect(valArray).to.have.length(k.OBCINumberOfChannelsDefault);
+    });
+    it('should reject when channelSettingsArray is not in fact an array', function () {
+      expect(openBCIUtilities.getChannelDataArrayNoScale.bind(openBCIUtilities, {
+        rawDataPacket: sampleBuf,
+        channelSettings: {},
+        protocol: k.OBCIProtocolWifi
+      })).to.throw('Error [getChannelDataArrayNoScale]: Channel Settings must be an array!');
+    });
+  });
   describe('#getChannelDataArray', function () {
     let sampleBuf, badChanArray;
     beforeEach(() => {
@@ -1878,20 +1922,6 @@ describe('openBCIUtilities', function () {
       });
     });
     describe('Wifi', function () {
-      it('should multiply each channel by the ganglion scale value when num chan is 4', function () {
-        let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsGanglion); // Not in daisy mode
-        let scaleFactor = 1.2 / 51.0 / (Math.pow(2, 23) - 1);
-        // Call the function under test
-        let valueArray = openBCIUtilities.getChannelDataArray({
-          rawDataPacket: sampleBuf,
-          channelSettings: chanArr,
-          protocol: k.OBCIProtocolWifi
-        });
-        for (let j = 0; j < k.OBCINumberOfChannelsGanglion; j++) {
-          // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`);
-          expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
-        }
-      });
       it('should multiply each channel by the cyton scale value when num chan is 8', function () {
         let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDefault); // Not in daisy mode
         let scaleFactor = 4.5 / 24 / (Math.pow(2, 23) - 1);

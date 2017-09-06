@@ -1118,7 +1118,7 @@ function parsePacketStandardAccel (o) {
   else sampleObject.accelDataCounts = getDataArrayAccelNoScale(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
 
   if (o.scale) sampleObject.channelData = getChannelDataArray(o);
-  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
+  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o);
 
   if (k.getVersionNumber(process.version) >= 6) {
     // From introduced in node version 6.x.x
@@ -1165,7 +1165,7 @@ function parsePacketStandardRawAux (o) {
   // Store the channel data
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
   if (o.scale) sampleObject.channelData = getChannelDataArray(o);
-  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
+  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o);
 
   // Slice the buffer for the aux data
   if (k.getVersionNumber(process.version) >= 6) {
@@ -1237,7 +1237,7 @@ function parsePacketTimeSyncedAccel (o) {
 
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
   if (o.scale) sampleObject.channelData = getChannelDataArray(o);
-  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
+  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o);
 
   // Grab the accelData only if `getFromTimePacketAccel` returns true.
   if (getFromTimePacketAccel(o)) {
@@ -1296,7 +1296,7 @@ function parsePacketTimeSyncedRawAux (o) {
   // Grab the channel data.
   if (k.isUndefined(o.scale) || k.isNull(o.scale)) o.scale = true;
   if (o.scale) sampleObject.channelData = getChannelDataArray(o);
-  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o.rawDataPacket);
+  else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o);
 
   sampleObject.valid = true;
 
@@ -1637,19 +1637,28 @@ function getChannelDataArray (o) {
 }
 
 /**
- * @description Takes a buffer filled with 24 bit signed integers from an OpenBCI device with gain settings in
- *                  channelSettingsArray[index].gain and converts based on settings of ADS1299... spits out an
- *                  array of floats in VOLTS
- * @param dataBuf {Buffer} - Buffer with 33 bit signed integers, number of elements is same as channelSettingsArray.length * 3
+ * @description Takes a buffer filled with 24 bit signed integers from an OpenBCI device converts to array of counts
+ * @param o {Object} - The input object
+ * @param o.rawDataPacket {Buffer} - The 33byte raw time synced accel packet
+ * @param o.channelSettings {Array} - An array of channel settings that is an Array that has shape similar to the one
+ *                  calling k.channelSettingsArrayInit(). The most important rule here is that it is
+ *                  Array of objects that have key-value pair {gain:NUMBER}
  * @returns {Array} - Array filled with floats for each channel's voltage in VOLTS
  * @author AJ Keller (@aj-ptw)
  */
-function getChannelDataArrayNoScale (dataBuf) {
+function getChannelDataArrayNoScale (o) {
+  if (!Array.isArray(o.channelSettings)) {
+    throw new Error('Error [getChannelDataArrayNoScale]: Channel Settings must be an array!');
+  }
   let channelData = [];
-  // Channel data arrays are always 8 long
-  for (let i = 0; i < k.OBCINumberOfChannelsDefault; i++) {
+  let numChannels = o.channelSettings.length;
+  if (numChannels > k.OBCINumberOfChannelsDefault) {
+    numChannels = k.OBCINumberOfChannelsDefault;
+  }
+  // Channel data arrays cannot be more than 8
+  for (let i = 0; i < numChannels; i++) {
     // Convert the three byte signed integer and convert it
-    channelData.push(utilitiesModule.interpret24bitAsInt32(dataBuf.slice((i * 3) + k.OBCIPacketPositionChannelDataStart, (i * 3) + k.OBCIPacketPositionChannelDataStart + 3)));
+    channelData.push(utilitiesModule.interpret24bitAsInt32(o.rawDataPacket.slice((i * 3) + k.OBCIPacketPositionChannelDataStart, (i * 3) + k.OBCIPacketPositionChannelDataStart + 3)));
   }
   return channelData;
 }
