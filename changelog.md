@@ -1,3 +1,10 @@
+# v0.2.5
+
+### Bug Fixes
+
+* Had incorrect ganglion accel multiplication factor of 32mg per count but was really 16mg per count
+* `newSample` and `newSampleNoScale` in utility file did not have `valid` is `true` property.
+
 # v0.2.4
 
 ### New Features
