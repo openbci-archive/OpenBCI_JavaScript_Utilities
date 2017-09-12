@@ -438,7 +438,7 @@ const obciGanglionAccelAxisY = 2;
 const obciGanglionAccelAxisZ = 3;
 
 /** Accel scale factor */
-const obciGanglionAccelScaleFactor = 0.032; // mG per count
+const obciGanglionAccelScaleFactor = 0.016; // mG per count
 
 /** Ganglion */
 const obciGanglionBleSearchTime = 20000; // ms

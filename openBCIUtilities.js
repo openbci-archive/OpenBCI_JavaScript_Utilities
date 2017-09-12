@@ -1700,7 +1700,8 @@ function newSample (sampleNumber) {
     auxData: null,
     stopByte: k.OBCIByteStop,
     boardTime: 0,
-    timestamp: 0
+    timestamp: 0,
+    valid: true
   };
 }
 
@@ -1720,7 +1721,8 @@ function newSampleNoScale (sampleNumber) {
     auxData: null,
     stopByte: k.OBCIByteStop,
     boardTime: 0,
-    timestamp: 0
+    timestamp: 0,
+    valid: true
   };
 }
 
