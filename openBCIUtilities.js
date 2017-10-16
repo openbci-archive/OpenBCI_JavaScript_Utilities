@@ -1803,6 +1803,8 @@ function makeDaisySampleObject (lowerSampleObject, upperSampleObject) {
     'upper': upperSampleObject.auxData
   };
 
+  daisySampleObject.stopByte = lowerSampleObject.stopByte;
+
   daisySampleObject.timestamp = (lowerSampleObject.timestamp + upperSampleObject.timestamp) / 2;
 
   daisySampleObject['_timestamps'] = {
@@ -1867,6 +1869,8 @@ function makeDaisySampleObjectWifi (lowerSampleObject, upperSampleObject) {
   if (lowerSampleObject.hasOwnProperty('timestamp')) {
     daisySampleObject['timestamp'] = lowerSampleObject.timestamp;
   }
+
+  daisySampleObject.stopByte = lowerSampleObject.stopByte;
 
   daisySampleObject['_timestamps'] = {
     'lower': lowerSampleObject.timestamp,
