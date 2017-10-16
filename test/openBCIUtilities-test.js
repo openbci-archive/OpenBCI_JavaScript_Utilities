@@ -1628,6 +1628,10 @@ describe('openBCIUtilities', function () {
         expect(daisySampleObjectNoScale.auxData['upper'][i]).to.equal(i + 3);
       }
     });
+    it('should take the lower stopByte', function () {
+      expect(daisySampleObject.stopByte).to.equal(lowerSampleObject.stopByte);
+      expect(daisySampleObjectNoScale.stopByte).to.equal(lowerSampleObjectNoScale.stopByte);
+    });
     it('should average the two timestamps together', function () {
       let expectedAverage = (upperSampleObject.timestamp + lowerSampleObject.timestamp) / 2;
       expect(daisySampleObject.timestamp).to.equal(expectedAverage);
@@ -1733,7 +1737,11 @@ describe('openBCIUtilities', function () {
     });
     it('should take the lower timestamp', function () {
       expect(daisySampleObject.timestamp).to.equal(lowerSampleObject.timestamp);
-      expect(daisySampleObjectNoScale.timestamp).to.equal(lowerSampleObject.timestamp);
+      expect(daisySampleObjectNoScale.timestamp).to.equal(lowerSampleObjectNoScale.timestamp);
+    });
+    it('should take the lower stopByte', function () {
+      expect(daisySampleObject.stopByte).to.equal(lowerSampleObject.stopByte);
+      expect(daisySampleObjectNoScale.stopByte).to.equal(lowerSampleObjectNoScale.stopByte);
     });
     it('should place the old timestamps in an object', function () {
       expect(daisySampleObject._timestamps.lower).to.equal(lowerSampleObject.timestamp);

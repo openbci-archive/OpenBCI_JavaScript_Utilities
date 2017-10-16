@@ -1,3 +1,9 @@
+# v0.2.7
+
+### Bug Fixes
+
+* No `stopByte` property for daisy samples. Added tests.
+
 # v0.2.6
 
 ### Bug Fixes
