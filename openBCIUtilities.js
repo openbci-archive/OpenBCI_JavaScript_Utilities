@@ -46,6 +46,7 @@ let utilitiesModule = {
    * @property {Number} lastSampleNumber (optional) - The last sample number
    * @property {Boolean} scale (optional) Default `true`. A gain of 24 for Cyton will be used and 51 for ganglion by default.
    */
+
   /**
    * @description Used to extract samples out of a buffer of unknown length
    * @param dataBuffer {Buffer} - A buffer to parse for samples
@@ -1815,7 +1816,9 @@ function makeDaisySampleObject (lowerSampleObject, upperSampleObject) {
     } else {
       daisySampleObject.accelData = upperSampleObject.accelData;
     }
-  } else if (lowerSampleObject.hasOwnProperty('accelDataCounts')) {
+  }
+
+  if (lowerSampleObject.hasOwnProperty('accelDataCounts')) {
     if (lowerSampleObject.accelDataCounts[0] > 0 || lowerSampleObject.accelDataCounts[1] > 0 || lowerSampleObject.accelDataCounts[2] > 0) {
       daisySampleObject.accelDataCounts = lowerSampleObject.accelDataCounts;
     } else {
@@ -1870,10 +1873,20 @@ function makeDaisySampleObjectWifi (lowerSampleObject, upperSampleObject) {
     'upper': upperSampleObject.timestamp
   };
 
-  if (lowerSampleObject.accelData) {
-    daisySampleObject['accelData'] = lowerSampleObject.accelData;
-  } else if (upperSampleObject.accelData) {
-    daisySampleObject['accelData'] = upperSampleObject.accelData;
+  if (lowerSampleObject.hasOwnProperty('accelData')) {
+    if (lowerSampleObject.accelData[0] > 0 || lowerSampleObject.accelData[1] > 0 || lowerSampleObject.accelData[2] > 0) {
+      daisySampleObject.accelData = lowerSampleObject.accelData;
+    } else {
+      daisySampleObject.accelData = upperSampleObject.accelData;
+    }
+  }
+
+  if (lowerSampleObject.hasOwnProperty('accelDataCounts')) {
+    if (lowerSampleObject.accelDataCounts[0] > 0 || lowerSampleObject.accelDataCounts[1] > 0 || lowerSampleObject.accelDataCounts[2] > 0) {
+      daisySampleObject.accelDataCounts = lowerSampleObject.accelDataCounts;
+    } else {
+      daisySampleObject.accelDataCounts = upperSampleObject.accelDataCounts;
+    }
   }
 
   daisySampleObject['valid'] = true;

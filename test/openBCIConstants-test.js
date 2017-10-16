@@ -1958,7 +1958,7 @@ describe('OpenBCIConstants', function () {
       assert.equal('Ganglion', k.OBCIGanglionPrefix);
     });
     it('Ganglion ble search time', function () {
-      assert.equal(0.032, k.OBCIGanglionAccelScaleFactor);
+      assert.equal(0.016, k.OBCIGanglionAccelScaleFactor);
     });
     it('Ganglion ble search time', function () {
       assert.equal(20000, k.OBCIGanglionBleSearchTime);

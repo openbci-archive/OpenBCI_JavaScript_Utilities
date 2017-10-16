@@ -1,3 +1,9 @@
+# v0.2.6
+
+### Bug Fixes
+
+* Accel data with counts did not work for cyton with daisy over wifi.
+
 # v0.2.5
 
 ### Bug Fixes
