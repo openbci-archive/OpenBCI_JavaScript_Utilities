@@ -1674,10 +1674,11 @@ describe('openBCIUtilities', function () {
       lowerSampleObject.channelData = [1, 2, 3, 4, 5, 6, 7, 8];
       lowerSampleObject.auxData = [0, 1, 2];
       lowerSampleObject.timestamp = 4;
-      lowerSampleObject.accelData = [0.5, -0.5, 1];
+      lowerSampleObject.accelData = [0, 0, 0];
       // Make the upper sample (channels 9-16)
       upperSampleObject = openBCIUtilities.newSample(2);
       upperSampleObject.channelData = [9, 10, 11, 12, 13, 14, 15, 16];
+      lowerSampleObject.accelData = [0, 1, 2];
       upperSampleObject.auxData = [3, 4, 5];
       upperSampleObject.timestamp = 8;
 
@@ -1686,11 +1687,12 @@ describe('openBCIUtilities', function () {
       lowerSampleObjectNoScale = openBCIUtilities.newSample(1);
       lowerSampleObjectNoScale.channelDataCounts = [1, 2, 3, 4, 5, 6, 7, 8];
       lowerSampleObjectNoScale.auxData = [0, 1, 2];
+      lowerSampleObjectNoScale.accelDataCounts = [0, 0, 0];
       lowerSampleObjectNoScale.timestamp = 4;
-      lowerSampleObjectNoScale.accelData = [0.5, -0.5, 1];
       // Make the upper sample (channels 9-16)
       upperSampleObjectNoScale = openBCIUtilities.newSample(2);
       upperSampleObjectNoScale.channelDataCounts = [9, 10, 11, 12, 13, 14, 15, 16];
+      lowerSampleObjectNoScale.accelDataCounts = [0, 1, 2];
       upperSampleObjectNoScale.auxData = [3, 4, 5];
       upperSampleObjectNoScale.timestamp = 8;
 
@@ -1741,6 +1743,28 @@ describe('openBCIUtilities', function () {
     });
     it('should store an accelerometer value if present', function () {
       expect(daisySampleObject).to.have.property('accelData');
+      expect(daisySampleObject.accelData).to.deep.equal([0, 1, 2]);
+      expect(daisySampleObjectNoScale).to.have.property('accelDataCounts');
+      expect(daisySampleObjectNoScale.accelDataCounts).to.deep.equal([0, 1, 2]);
+    });
+    it('should work for all accel cases to extract the non-zero values', function () {
+      let lowerSample = openBCIUtilities.newSample(1);
+      lowerSample.accelData = [0, 1, 2];
+      let upperSample = openBCIUtilities.newSample(2);
+      upperSample.accelData = [0, 0, 0];
+
+      let lowerSampleNoScale = openBCIUtilities.newSampleNoScale(1);
+      lowerSampleNoScale.accelDataCounts = [0, 1, 2];
+      let upperSampleNoScale = openBCIUtilities.newSampleNoScale(2);
+      upperSampleNoScale.accelDataCounts = [0, 0, 0];
+
+      // Call the function under test
+      let daisySample = openBCIUtilities.makeDaisySampleObjectWifi(lowerSample, upperSample);
+      let daisySampleNoScale = openBCIUtilities.makeDaisySampleObjectWifi(lowerSampleNoScale, upperSampleNoScale);
+      expect(daisySample).to.have.property('accelData');
+      expect(daisySample.accelData).to.deep.equal([0, 1, 2]);
+      expect(daisySampleNoScale).to.have.property('accelDataCounts');
+      expect(daisySampleNoScale.accelDataCounts).to.deep.equal([0, 1, 2]);
     });
   });
   describe('#isEven', function () {
@@ -2700,6 +2724,30 @@ describe('#extractRawDataPackets', function () {
     expectedRawDataPackets[0].copy(buffer, 0);
     expectedRawDataPackets[1].copy(buffer, k.OBCIPacketSize);
     expectedRawDataPackets[2].copy(buffer, k.OBCIPacketSize * 2);
+    // Call the function under test
+    const output = openBCIUtilities.extractRawDataPackets(buffer);
+    // The buffer should not have anything in it any more
+    expect(output.buffer).to.be.null();
+    for (let i = 0; i < expectedNumberOfBuffers; i++) {
+      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i])).to.be.true(`Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`);
+    }
+  });
+  it('should be able to extract multiple packets from a single buffer when daisy', () => {
+    // We are going to extract multiple buffers
+    let expectedNumberOfBuffers = 4;
+    // declare the big buffer
+    let buffer = new Buffer(k.OBCIPacketSize * expectedNumberOfBuffers);
+    // Fill that new big buffer with buffers
+    const expectedRawDataPackets = [
+      openBCIUtilities.samplePacketReal(0),
+      openBCIUtilities.samplePacketReal(0),
+      openBCIUtilities.samplePacketReal(1),
+      openBCIUtilities.samplePacketReal(1)
+    ];
+    expectedRawDataPackets[0].copy(buffer, 0);
+    expectedRawDataPackets[1].copy(buffer, k.OBCIPacketSize);
+    expectedRawDataPackets[2].copy(buffer, k.OBCIPacketSize * 2);
+    expectedRawDataPackets[2].copy(buffer, k.OBCIPacketSize * 3);
     // Call the function under test
     const output = openBCIUtilities.extractRawDataPackets(buffer);
     // The buffer should not have anything in it any more
