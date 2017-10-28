@@ -5,7 +5,7 @@
 // jshint expr: true
 /* global describe, it, after, afterEach, before, beforeEach */
 const bluebirdChecks = require('./bluebirdChecks');
-const openBCIUtilities = require('../openBCIUtilities');
+const openBCIUtilities = require('../src/openBCIUtilities');
 const sinon = require('sinon');
 const chai = require('chai');
 const expect = chai.expect;
@@ -23,7 +23,7 @@ const bufferEqual = require('buffer-equal');
 
 const _ = require('lodash');
 
-let k = require('../openBCIConstants');
+let k = require('../src/openBCIConstants');
 
 const defaultChannelSettingsArray = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDefault);
 
@@ -52,7 +52,7 @@ describe('openBCIUtilities', function () {
         rawDataPacket,
         sampleNumber
       });
-      expect(bufferEqual(rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw), data), `expected ${data.toString('hex')} but got ${rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw).toString('hex')}`).to.be.true();
+      expect(rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw).toString()).to.equal(data.toString());
       expect(rawDataPacket[k.OBCIPacketPositionSampleNumber]).to.equal(sampleNumber);
       expect(rawDataPacket[k.OBCIPacketPositionStartByte]).to.equal(k.OBCIByteStart);
       expect(rawDataPacket[k.OBCIPacketPositionStopByte]).to.equal(k.OBCIStreamPacketStandardRawAux);

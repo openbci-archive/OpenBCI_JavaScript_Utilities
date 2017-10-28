@@ -4,6 +4,7 @@
 
 * Removed simulator file back into cyton repo
 * Removed `safe-buffer` in place of `buffer`
+* Removed support for node version 5 and below
 
 # v0.2.7
 

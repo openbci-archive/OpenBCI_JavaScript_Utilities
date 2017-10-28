@@ -2,12 +2,17 @@
   "name": "openbci-utilities",
   "version": "0.3.0",
   "description": "The official utility package of Node.js SDK for the OpenBCI Biosensor Boards.",
-  "main": "index.js",
+  "main": "dist/openbci.utils.js",
+  "module": "src/index.js",
   "scripts": {
+    "build": "webpack",
+    "start": "webpack-dev-server",
+    "prepublish": "npm run build",
     "test": "npm run test-lint && npm run test-cov",
     "test-lint": "semistandard | snazzy",
     "test-cov": "istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec && codecov"
   },
+  "files": ["dist"],
   "keywords": [
     "openbci",
     "openbci-node",
@@ -32,6 +37,8 @@
     "test": "test"
   },
   "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
     "bluebird": "3.4.6",
     "chai": "^4.0.0",
     "chai-as-promised": "^7.1.1",
@@ -44,7 +51,9 @@
     "semistandard": "^11.0.0",
     "sinon": "^2.3.7",
     "sinon-chai": "^2.8.0",
-    "snazzy": "^7.0.0"
+    "snazzy": "^7.0.0",
+    "webpack": "^3.8.1",
+    "webpack-dev-server": "^2.9.3"
   },
   "repository": {
     "type": "git",
