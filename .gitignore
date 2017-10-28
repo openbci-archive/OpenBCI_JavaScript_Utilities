@@ -52,3 +52,5 @@ jspm_packages
 .idea
 .idea/*.xml
 .DS_Store
+
+dist

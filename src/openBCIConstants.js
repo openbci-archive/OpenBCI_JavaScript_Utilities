@@ -4,8 +4,8 @@
 *     OpenBCI Board
 */
 'use strict';
-const _ = require('lodash');
-const Buffer = require('buffer/').Buffer;
+import _ from 'lodash';
+import { Buffer } from 'buffer/';
 
 /** Turning channels off */
 const obciChannelOff1 = '1';
@@ -1276,7 +1276,6 @@ const constantsModule = {
   OBCIRegisterQuerySizeCytonFirmwareV3: obciRegisterQuerySizeCytonFirmwareV3,
   OBCIRegisterQuerySizeCytonDaisyFirmwareV3: obciRegisterQuerySizeCytonDaisyFirmwareV3
 };
-module.exports = constantsModule;
 
 /**
 * @description To add a usability abstraction layer above channel setting commands. Due to the
@@ -1894,3 +1893,5 @@ function isPeripheralGanglion (peripheral) {
   }
   return false;
 }
+
+export default constantsModule;
