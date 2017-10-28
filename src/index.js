@@ -1,9 +1,9 @@
-import Constants from './openBCIConstants';
-import * as Debug from './openBCIDebug';
-import Utilities from './openBCIUtilities';
+import constants from './constants';
+import * as debug from './debug';
+import utilities from './utilities';
 
 export default {
-    Constants,
-    Debug,
-    Utilities
+    constants,
+    debug,
+    utilities
 };

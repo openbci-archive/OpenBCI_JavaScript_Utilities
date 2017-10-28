@@ -1,7 +1,7 @@
 'use strict';
 
 import gaussian from 'gaussian';
-import k from './openBCIConstants';
+import k from './constants';
 import StreamSearch from 'streamsearch';
 import { Buffer } from 'buffer/';
 import _ from 'lodash';

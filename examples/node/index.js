@@ -1,8 +1,13 @@
 
 const OpenBCIUtilities = require('../..');
-const { Constansts, Debug, Utilities } = require('../..');
+const { constansts, debug, utilities } = require('../..');
+
+const { extractRawDataPackets } = require('../../dist/utilities');
+const OpenBCICnstants = require('../../dist/constants');
+const debug2 = require('../../dist/debug');
 
 console.log('OpenBCIUtilities', OpenBCIUtilities);
-console.log('Constansts', Constansts);
-console.log('Debug', Debug);
-console.log('Utilities', Utilities);
+console.log('constansts, debug, utilities', constansts, debug, utilities);
+console.log('extractRawDataPackets', extractRawDataPackets);
+console.log('OpenBCICnstants', OpenBCICnstants);
+console.log('debug2', debug2);
