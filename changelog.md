@@ -3,6 +3,7 @@
 ### Breaking Changes
 
 * Removed simulator file back into cyton repo
+* Removed `safe-buffer` in place of `buffer`
 
 # v0.2.7
 

@@ -5,7 +5,7 @@
 */
 'use strict';
 const _ = require('lodash');
-const Buffer = require('safe-buffer').Buffer;
+const Buffer = require('buffer/').Buffer;
 
 /** Turning channels off */
 const obciChannelOff1 = '1';

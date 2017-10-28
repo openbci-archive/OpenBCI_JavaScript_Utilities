@@ -18,8 +18,9 @@ const sinonChai = require('sinon-chai');
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 chai.use(dirtyChai);
+const Buffer = require('buffer/').Buffer;
 const bufferEqual = require('buffer-equal');
-const Buffer = require('safe-buffer').Buffer;
+
 const _ = require('lodash');
 
 let k = require('../openBCIConstants');

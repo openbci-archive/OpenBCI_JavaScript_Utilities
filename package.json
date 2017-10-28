@@ -1,6 +1,6 @@
 {
   "name": "openbci-utilities",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "description": "The official utility package of Node.js SDK for the OpenBCI Biosensor Boards.",
   "main": "index.js",
   "scripts": {
@@ -19,13 +19,13 @@
   "author": "AJ Keller <aj@pushtheworld.us> (www.openbci.com)",
   "license": "MIT",
   "dependencies": {
+    "buffer": "^5.0.8",
     "buffer-equal": "^1.0.0",
     "clone": "^2.0.0",
     "gaussian": "^1.0.0",
     "lodash": "^4.16.6",
     "mathjs": "^3.3.0",
     "performance-now": "^2.1.0",
-    "safe-buffer": "^5.1.1",
     "streamsearch": "^0.1.2"
   },
   "directories": {

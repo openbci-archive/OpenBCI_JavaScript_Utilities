@@ -2,7 +2,7 @@
 const gaussian = require('gaussian');
 const k = require('./openBCIConstants');
 const StreamSearch = require('streamsearch');
-const Buffer = require('safe-buffer').Buffer;
+const Buffer = require('buffer/').Buffer;
 const _ = require('lodash');
 
 /** Constants for interpreting the EEG data */
