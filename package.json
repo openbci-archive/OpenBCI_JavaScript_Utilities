@@ -55,7 +55,7 @@
   },
   "homepage": "https://github.com/openbci/openbci_nodejs_utilities#readme",
   "engines": {
-    "node": ">=4"
+    "node": ">=6"
   },
   "semistandard": {
     "globals": [

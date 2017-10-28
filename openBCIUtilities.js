@@ -85,12 +85,7 @@ let utilitiesModule = {
           // this.timeOfPacketArrival = this.time();
           // Grab the raw packet, make a copy of it.
           let rawPacket;
-          if (k.getVersionNumber(process.version) >= 6) {
-            // From introduced in node version 6.x.x
-            rawPacket = Buffer.from(dataBuffer.slice(parsePosition, parsePosition + k.OBCIPacketSize));
-          } else {
-            rawPacket = new Buffer(dataBuffer.slice(parsePosition, parsePosition + k.OBCIPacketSize));
-          }
+          rawPacket = Buffer.from(dataBuffer.slice(parsePosition, parsePosition + k.OBCIPacketSize));
 
           // Emit that buffer
           // this.emit('rawDataPacket', rawPacket);
@@ -107,11 +102,7 @@ let utilitiesModule = {
           if (tempBuf.length === 0) {
             dataBuffer = null;
           } else {
-            if (k.getVersionNumber(process.version) >= 6) {
-              dataBuffer = Buffer.from(tempBuf);
-            } else {
-              dataBuffer = new Buffer(tempBuf);
-            }
+            dataBuffer = Buffer.from(tempBuf);
           }
           // Move the parse position up one packet
           parsePosition = -1;
@@ -1121,12 +1112,8 @@ function parsePacketStandardAccel (o) {
   if (o.scale) sampleObject.channelData = getChannelDataArray(o);
   else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o);
 
-  if (k.getVersionNumber(process.version) >= 6) {
-    // From introduced in node version 6.x.x
-    sampleObject.auxData = Buffer.from(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
-  } else {
-    sampleObject.auxData = new Buffer(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
-  }
+  sampleObject.auxData = Buffer.from(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+
   // Get the sample number
   sampleObject.sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
   // Get the start byte
@@ -1169,12 +1156,8 @@ function parsePacketStandardRawAux (o) {
   else sampleObject.channelDataCounts = getChannelDataArrayNoScale(o);
 
   // Slice the buffer for the aux data
-  if (k.getVersionNumber(process.version) >= 6) {
-    // From introduced in node version 6.x.x
-    sampleObject.auxData = Buffer.from(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
-  } else {
-    sampleObject.auxData = new Buffer(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
-  }
+  sampleObject.auxData = Buffer.from(o.rawDataPacket.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+
   // Get the sample number
   sampleObject.sampleNumber = o.rawDataPacket[k.OBCIPacketPositionSampleNumber];
   // Get the start byte
@@ -1528,11 +1511,7 @@ function getFromTimePacketRawAux (dataBuf) {
   if (dataBuf.byteLength !== k.OBCIPacketSize) {
     throw new Error(k.OBCIErrorInvalidByteLength);
   }
-  if (k.getVersionNumber(process.version) >= 6) {
-    return Buffer.from(dataBuf.slice(k.OBCIPacketPositionTimeSyncAuxStart, k.OBCIPacketPositionTimeSyncAuxStop));
-  } else {
-    return new Buffer(dataBuf.slice(k.OBCIPacketPositionTimeSyncAuxStart, k.OBCIPacketPositionTimeSyncAuxStop));
-  }
+  return Buffer.from(dataBuf.slice(k.OBCIPacketPositionTimeSyncAuxStart, k.OBCIPacketPositionTimeSyncAuxStop));
 }
 
 /**
@@ -2024,12 +2003,7 @@ function stripToEOTBuffer (dataBuffer) {
   }
 
   if (indexOfEOT < dataBuffer.byteLength) {
-    if (k.getVersionNumber(process.version) >= 6) {
-      // From introduced in node version 6.x.x
-      return Buffer.from(dataBuffer.slice(indexOfEOT));
-    } else {
-      return new Buffer(dataBuffer.slice(indexOfEOT));
-    }
+    return Buffer.from(dataBuffer.slice(indexOfEOT));
   } else {
     return null;
   }
