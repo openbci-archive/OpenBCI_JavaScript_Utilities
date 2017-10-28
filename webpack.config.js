@@ -5,7 +5,12 @@ const librarySnakeCase = 'openbci-utilities';
 const libraryExport = 'default';
 
 const config = {
-  entry: './src/index.js',
+  entry: {
+    [librarySnakeCase]: './src/index.js',
+    utilities: './src/utilities.js',
+    constants: './src/constants.js',
+    debug: './src/debug.js'
+  },
   module: {
     rules: [
       {
@@ -24,11 +29,11 @@ const config = {
   }
 };
 
-const exportLibraryTarget = libraryTarget =>
+const exportLibraryTarget = (libraryTarget, name) =>
   Object.assign({}, config, {
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: `${librarySnakeCase}.${libraryTarget}.js`,
+      filename: `${name}.js`,
       library,
       libraryTarget,
       libraryExport
@@ -36,6 +41,6 @@ const exportLibraryTarget = libraryTarget =>
   });
 
 module.exports = [
-  exportLibraryTarget('umd'),
-  exportLibraryTarget('var'),
+  exportLibraryTarget('umd', '[name]'),
+  exportLibraryTarget('var', '[name].var')
 ];

@@ -7,7 +7,7 @@ import { Buffer } from 'buffer/';
  * @param data - bytes to output, a buffer or string
  * @private
  */
-export function debugBytes (prefix, data) {
+export default function debugBytes (prefix, data) {
   if (typeof data === 'string') data = new Buffer(data);
 
   console.log('Debug bytes:');
