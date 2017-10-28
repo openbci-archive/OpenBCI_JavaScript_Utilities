@@ -1,3 +1,9 @@
+# v0.3.0
+
+### Breaking Changes
+
+* Removed simulator file back into cyton repo
+
 # v0.2.7
 
 ### Bug Fixes
