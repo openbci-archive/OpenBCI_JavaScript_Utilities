@@ -2,7 +2,7 @@
   "name": "openbci-utilities",
   "version": "0.3.0",
   "description": "The official utility package of Node.js SDK for the OpenBCI Biosensor Boards.",
-  "main": "dist/openbci.utils.js",
+  "main": "dist/openbciutilities.umd.js",
   "module": "src/index.js",
   "scripts": {
     "build": "webpack",
