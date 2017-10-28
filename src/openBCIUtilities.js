@@ -1,9 +1,10 @@
 'use strict';
-const gaussian = require('gaussian');
-const k = require('./openBCIConstants');
-const StreamSearch = require('streamsearch');
-const Buffer = require('buffer/').Buffer;
-const _ = require('lodash');
+
+import gaussian from 'gaussian';
+import k from './openBCIConstants';
+import StreamSearch from 'streamsearch';
+import { Buffer } from 'buffer/';
+import _ from 'lodash';
 
 /** Constants for interpreting the EEG data */
 // Reference voltage for ADC in ADS1299.
@@ -945,8 +946,6 @@ function decompressDeltas19Bit (buffer) {
 
   return receivedDeltas;
 }
-
-module.exports = utilitiesModule;
 
 function newImpedanceObject (channelNumber) {
   return {
@@ -2146,3 +2145,5 @@ function makeTailByteFromPacketType (type) {
 function isStopByte (byte) {
   return (byte & 0xF0) === k.OBCIByteStop;
 }
+
+export default utilitiesModule;

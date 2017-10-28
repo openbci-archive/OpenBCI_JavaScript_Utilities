@@ -1,6 +1,7 @@
 const path = require('path');
 
 const library = 'OpenBCIUtilities';
+const librarySnakeCase = 'openbci-utilities';
 const libraryExport = 'default';
 
 const config = {
@@ -27,7 +28,7 @@ const exportLibraryTarget = libraryTarget =>
   Object.assign({}, config, {
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: `${library.toLowerCase()}.${libraryTarget}.js`,
+      filename: `${librarySnakeCase}.${libraryTarget}.js`,
       library,
       libraryTarget,
       libraryExport

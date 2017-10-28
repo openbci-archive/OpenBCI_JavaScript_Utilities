@@ -1,3 +1,9 @@
-module.exports.Constants = require('./openBCIConstants');
-module.exports.Debug = require('./openBCIDebug');
-module.exports.Utilities = require('./openBCIUtilities');
+import Constants from './openBCIConstants';
+import * as Debug from './openBCIDebug';
+import Utilities from './openBCIUtilities';
+
+export default {
+    Constants,
+    Debug,
+    Utilities
+};

@@ -1,8 +1,5 @@
-const Buffer = require('buffer/').Buffer;
 
-module.exports = {
-  debugBytes
-};
+import { Buffer } from 'buffer/';
 
 /**
  * @description Output passed bytes on the console as a hexdump, if enabled
@@ -10,7 +7,7 @@ module.exports = {
  * @param data - bytes to output, a buffer or string
  * @private
  */
-function debugBytes (prefix, data) {
+export function debugBytes (prefix, data) {
   if (typeof data === 'string') data = new Buffer(data);
 
   console.log('Debug bytes:');
