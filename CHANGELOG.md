@@ -101,7 +101,7 @@
 
 ### New Functions
 
-* Add function `getFirmware(dataBuffer)` to utilities 
+* Add function `getFirmware(dataBuffer)` to utilities
 
 ### Breaking Changes
 
@@ -139,7 +139,7 @@
 ### New Features
 
 * In openBCIUtilities.js add function `transformRawDataPacketToSample` to parse a single raw data packet
-* In openBCIConstants.js add function `rawDataToSampleObjectDefault(numChannels)` which should be used by drivers to create the object that is passed through each call to `transformRawDataPacketsToSample` 
+* In openBCIConstants.js add function `rawDataToSampleObjectDefault(numChannels)` which should be used by drivers to create the object that is passed through each call to `transformRawDataPacketsToSample`
 
 # v0.0.6
 

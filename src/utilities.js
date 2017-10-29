@@ -40,12 +40,15 @@ let utilitiesModule = {
    * @typedef {Object} RawDataToSample
    * @property {Array} rawDataPackets - An array of rawDataPackets
    * @property {Buffer} rawDataPacket - A single raw data packet
+   * @property {Buffer} multiPacketBuffer - This buffer is used to build up multiple messages over ble and emit them at once
    * @property {Array} channelSettings - The channel settings array
    * @property {Number} timeOffset (optional) for non time stamp use cases i.e. 0xC0 or 0xC1 (default and raw aux)
    * @property {Array} accelArray (optional) for non time stamp use cases
    * @property {Boolean} verbose (optional) for verbose output
    * @property {Number} lastSampleNumber (optional) - The last sample number
    * @property {Boolean} scale (optional) Default `true`. A gain of 24 for Cyton will be used and 51 for ganglion by default.
+   * @property {Array} decompressedSamples - An array to hold delta compression items
+   * @property {Boolean} sendCounts - True if you want raw A/D counts or scaled counts in samples
    */
 
   /**
@@ -722,6 +725,219 @@ let utilitiesModule = {
       ]);
   }
 };
+
+/**
+ * @description Used transform raw data packets into fully qualified packets
+ * @param o {RawDataToSample} - Used to hold data and configuration settings
+ * @return {Array} samples An array of {Sample}
+ * @author AJ Keller (@aj-ptw)
+ */
+function parseGanglion (o) {
+  const byteId = parseInt(o.rawDataPacket[0]);
+  if (byteId <= k.OBCIGanglionByteId19Bit.max) {
+    return processRouteSampleData(o);
+  } else {
+    switch (byteId) {
+      case k.OBCIGanglionByteIdMultiPacket:
+        return processMultiBytePacket(o);
+      case k.OBCIGanglionByteIdMultiPacketStop:
+        return processMultiBytePacketStop(o);
+      case k.OBCIGanglionByteIdImpedanceChannel1:
+      case k.OBCIGanglionByteIdImpedanceChannel2:
+      case k.OBCIGanglionByteIdImpedanceChannel3:
+      case k.OBCIGanglionByteIdImpedanceChannel4:
+      case k.OBCIGanglionByteIdImpedanceChannelReference:
+        return processImpedanceData(o);
+      default:
+        return null;
+    }
+  }
+}
+
+/**
+ * Process an compressed packet of data.
+ * @param o {RawDataToSample} - Used to hold data and configuration settings
+ * @private
+ */
+function processCompressedData (o) {
+  // Save the packet counter
+  o.lastSampleNumber = parseInt(o.rawDataPacket[0]);
+
+  const samples = [];
+  // Decompress the buffer into array
+  if (o.lastSampleNumber <= k.OBCIGanglionByteId18Bit.max) {
+    decompressSamples(o, decompressDeltas18Bit(o.rawDataPacket.slice(k.OBCIGanglionPacket18Bit.dataStart, k.OBCIGanglionPacket18Bit.dataStop)));
+    samples.push(buildSample(o.lastSampleNumber * 2 - 1, o.decompressedSamples[1], o.sendCounts));
+    samples.push(buildSample(o.lastSampleNumber * 2, o.decompressedSamples[2], o.sendCounts));
+
+    switch (o.lastSampleNumber % 10) {
+      case k.OBCIGanglionAccelAxisX:
+        o.accelArray[0] = o.sendCounts ? o.rawDataPacket.readInt8(k.OBCIGanglionPacket18Bit.auxByte - 1) : o.rawDataPacket.readInt8(k.OBCIGanglionPacket18Bit.auxByte - 1) * k.OBCIGanglionAccelScaleFactor;
+        break;
+      case k.OBCIGanglionAccelAxisY:
+        o.accelArray[1] = o.sendCounts ? o.rawDataPacket.readInt8(k.OBCIGanglionPacket18Bit.auxByte - 1) : o.rawDataPacket.readInt8(k.OBCIGanglionPacket18Bit.auxByte - 1) * k.OBCIGanglionAccelScaleFactor;
+        break;
+      case k.OBCIGanglionAccelAxisZ:
+        o.accelArray[2] = o.sendCounts ? o.rawDataPacket.readInt8(k.OBCIGanglionPacket18Bit.auxByte - 1) : o.rawDataPacket.readInt8(k.OBCIGanglionPacket18Bit.auxByte - 1) * k.OBCIGanglionAccelScaleFactor;
+        if (o.sendCounts) {
+          samples[0].accelData = o.accelArray;
+        } else {
+          samples[0].accelDataCounts = o.accelArray;
+        }
+        break;
+      default:
+        break;
+    }
+  } else {
+    decompressSamples(o, decompressDeltas19Bit(o.rawDataPacket.slice(k.OBCIGanglionPacket19Bit.dataStart, k.OBCIGanglionPacket19Bit.dataStop)));
+
+    samples.push(buildSample((o.lastSampleNumber - 100) * 2 - 1, o.decompressedSamples[1], o.sendCounts));
+    samples.push(buildSample((o.lastSampleNumber - 100) * 2, o.decompressedSamples[2], o.sendCounts));
+  }
+
+  // Rotate the 0 position for next time
+  for (let i = 0; i < k.OBCINumberOfChannelsGanglion; i++) {
+    o.decompressedSamples[0][i] = o.decompressedSamples[2][i];
+  }
+
+  return samples;
+}
+
+/**
+ * Process and emit an impedance value
+ * @param o {RawDataToSample} - Used to hold data and configuration settings
+ * @private
+ */
+function processImpedanceData(o) {
+  const byteId = parseInt(o.rawDataPacket[0]);
+  let channelNumber;
+  switch (byteId) {
+    case k.OBCIGanglionByteIdImpedanceChannel1:
+      channelNumber = 1;
+      break;
+    case k.OBCIGanglionByteIdImpedanceChannel2:
+      channelNumber = 2;
+      break;
+    case k.OBCIGanglionByteIdImpedanceChannel3:
+      channelNumber = 3;
+      break;
+    case k.OBCIGanglionByteIdImpedanceChannel4:
+      channelNumber = 4;
+      break;
+    case k.OBCIGanglionByteIdImpedanceChannelReference:
+      channelNumber = 0;
+      break;
+  }
+
+  let output = {
+    channelNumber: channelNumber,
+    impedanceValue: 0
+  };
+
+  let end = o.rawDataPacket.length;
+
+  while (_.isNaN(Number(o.rawDataPacket.slice(1, end))) && end !== 0) {
+    end--;
+  }
+
+  if (end !== 0) {
+    output.impedanceValue = Number(o.rawDataPacket.slice(1, end));
+  }
+
+  return output;
+}
+
+/**
+ * Used to stack multi packet buffers into the multi packet buffer. This is finally emitted when a stop packet byte id
+ *  is received.
+ * @param o {RawDataToSample} - Used to hold data and configuration settings
+ * @private
+ */
+function processMultiBytePacket (o) {
+  if (o.multiPacketBuffer) {
+    o.multiPacketBuffer = Buffer.concat([o.multiPacketBuffer, o.rawDataPacket.slice(k.OBCIGanglionPacket19Bit.dataStart, k.OBCIGanglionPacket19Bit.dataStop)]);
+  } else {
+    o.multiPacketBuffer = o.rawDataPacket.slice(k.OBCIGanglionPacket19Bit.dataStart, k.OBCIGanglionPacket19Bit.dataStop);
+  }
+}
+
+/**
+ * Adds the `data` buffer to the multi packet buffer and emits the buffer as 'message'
+ * @param o {RawDataToSample} - Used to hold data and configuration settings
+ * @private
+ */
+function processMultiBytePacketStop (o) {
+  processMultiBytePacket(o);
+  const str = o.multiPacketBuffer;
+  o.multiPacketBuffer = null;
+  return str;
+}
+
+/**
+ * Utilize `receivedDeltas` to get actual count values.
+ * @param receivedDeltas {Array} - An array of deltas
+ *  of shape 2x4 (2 samples per packet and 4 channels per sample.)
+ * @private
+ */
+function decompressSamples (o, receivedDeltas) {
+  // add the delta to the previous value
+  for (let i = 1; i < 3; i++) {
+    for (let j = 0; j < 4; j++) {
+      o.decompressedSamples[i][j] = o.decompressedSamples[i - 1][j] - receivedDeltas[i - 1][j];
+    }
+  }
+}
+
+/**
+ * Builds a sample object from an array and sample number.
+ * @param o {RawDataToSample} - Used to hold data and configuration settings
+ * @return {Array}
+ * @private
+ */
+function buildSample (sampleNumber, rawData, sendCounts) {
+  let sample;
+  if (sendCounts) {
+    sample = newSampleNoScale(sampleNumber);
+    sample.channelDataCounts = rawData;
+  } else {
+    sample = newSample(sampleNumber);
+    for (let j = 0; j < k.OBCINumberOfChannelsGanglion; j++) {
+      sample.channelData.push(rawData[j] * k.OBCIGanglionScaleFactorPerCountVolts);
+    }
+  }
+  sample.timestamp = Date.now();
+  return sample;
+}
+
+
+/**
+ * Used to route samples for Ganglion
+ * @param o {RawDataToSample} - Used to hold data and configuration settings
+ * @returns {*}
+ */
+function processRouteSampleData (o) {
+  if (parseInt(o.rawDataPacket[0]) === k.OBCIGanglionByteIdUncompressed) {
+    return processUncompressedData(o);
+  } else {
+    return processCompressedData(o);
+  }
+}
+
+/**
+ * Process an uncompressed packet of data.
+ * @param o {RawDataToSample} - Used to hold data and configuration settings
+ * @private
+ */
+function processUncompressedData (o) {
+  // Resets the packet counter back to zero
+  o.lastSampleNumber = k.OBCIGanglionByteIdUncompressed;  // used to find dropped packets
+
+  for (let i = 0; i < 4; i++) {
+    o.decompressedSamples[0][i] = utilitiesModule.interpret24bitAsInt32(o.rawDataPacket.slice(1 + (i * 3), 1 + (i * 3) + 3));  // seed the decompressor
+  }
+
+  return [buildSample(0, o.decompressedSamples[0], o.sendCounts)];
+}
 
 /**
  * Converts a special ganglion 18 bit compressed number
