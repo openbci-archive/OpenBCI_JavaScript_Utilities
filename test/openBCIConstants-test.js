@@ -1999,6 +1999,7 @@ describe('OpenBCIConstants', function () {
       assert.equal('Z', k.OBCIGanglionImpedanceStop);
     });
   });
+  describe('')
   describe('Byte Id', function () {
     it('Uncompressed', function () {
       assert.equal(0, k.OBCIGanglionByteIdUncompressed);

@@ -1719,13 +1719,23 @@ function rawDataToSampleObjectDefault (numChannels) {
   return {
     accelArray: [0, 0, 0],
     channelSettings: constantsModule.channelSettingsArrayInit(numChannels),
+    decompressedSamples: decompressedSamplesInit(numChannels),
     lastSampleNumber: 0,
     rawDataPacket: Buffer.alloc(33),
     rawDataPackets: [],
     scale: true,
+    sendCounts: false,
     timeOffset: 0,
     verbose: false
   };
+}
+
+function decompressedSamplesInit (numChannels) {
+  let output = [];
+  for (let i = 0; i < 3; i++) {
+    output.push(new Array(numChannels));
+  }
+  return output;
 }
 
 /**
