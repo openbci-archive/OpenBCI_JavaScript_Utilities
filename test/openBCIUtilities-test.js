@@ -3,8 +3,9 @@
 */
 'use strict';
 // jshint expr: true
+/* global describe, it, after, afterEach, before, beforeEach */
 const bluebirdChecks = require('./bluebirdChecks');
-const openBCIUtilities = require('../openBCIUtilities');
+const openBCIUtilities = require('../dist/utilities');
 const sinon = require('sinon');
 const chai = require('chai');
 const expect = chai.expect;
@@ -17,10 +18,11 @@ const sinonChai = require('sinon-chai');
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 chai.use(dirtyChai);
-const bufferEqual = require('buffer-equal');
-const Buffer = require('safe-buffer').Buffer;
+const Buffer = require('buffer/').Buffer;
 
-let k = require('../openBCIConstants');
+const _ = require('lodash');
+
+let k = require('../dist/constants');
 
 const defaultChannelSettingsArray = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDefault);
 
@@ -35,8 +37,157 @@ describe('openBCIUtilities', function () {
     accelArray = [0, 0, 0];
   });
   afterEach(() => bluebirdChecks.noPendingPromises());
-  describe('#transformRawDataPacketsToSample', function () {
-    // TODO: Add tests
+  describe('#convertGanglionArrayToBuffer', function () {
+    it('should fill the packet with values from data', function () {
+      const numChannels = k.numberOfChannelsForBoardType(k.OBCIBoardGanglion);
+      let arr = [0, 1, 2, 3];
+      let rawDataPacket = k.rawDataToSampleObjectDefault(numChannels).rawDataPacket;
+      rawDataPacket.fill(0); // fill with zeros
+      let data = Buffer.alloc(k.OBCIPacketSizeBLERaw);
+      openBCIUtilities.convertGanglionArrayToBuffer(arr, data);
+      const sampleNumber = 23;
+      openBCIUtilities.ganglionFillRawDataPacket({
+        data,
+        rawDataPacket,
+        sampleNumber
+      });
+      expect(rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw).toString()).to.equal(data.toString());
+      expect(rawDataPacket[k.OBCIPacketPositionSampleNumber]).to.equal(sampleNumber);
+      expect(rawDataPacket[k.OBCIPacketPositionStartByte]).to.equal(k.OBCIByteStart);
+      expect(rawDataPacket[k.OBCIPacketPositionStopByte]).to.equal(k.OBCIStreamPacketStandardRawAux);
+    });
+    describe('#errorConditions', function () {
+      it('send undefined data buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send null data buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: null,
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send undefined rawDataPacket buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send null rawDataPacket buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: null,
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('no sample number', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize)
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('wrong number of bytes rawDataPacket', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: Buffer.alloc(5),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+      it('wrong number of bytes data', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(5),
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+      it('undefined', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities)).to.throw(k.OBCIErrorUndefinedOrNullInput);
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities), {
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize)
+        }).to.throw(k.OBCIErrorUndefinedOrNullInput);
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities), {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw)
+        }).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+    });
+  });
+  describe('#ganglionFillRawDataPacket', function () {
+    it('should fill the packet with values from data', function () {
+      const numChannels = k.numberOfChannelsForBoardType(k.OBCIBoardGanglion);
+      let rawDataPacket = k.rawDataToSampleObjectDefault(numChannels).rawDataPacket;
+      rawDataPacket.fill(0); // fill with zeros
+      let data = openBCIUtilities.sampleBLERaw();
+      const sampleNumber = 23;
+      openBCIUtilities.ganglionFillRawDataPacket({
+        data,
+        rawDataPacket,
+        sampleNumber
+      });
+      expect(rawDataPacket.slice(2, 2 + k.OBCIPacketSizeBLERaw).toString()).to.equal(data.toString());
+      expect(rawDataPacket[k.OBCIPacketPositionSampleNumber]).to.equal(sampleNumber);
+      expect(rawDataPacket[k.OBCIPacketPositionStartByte]).to.equal(k.OBCIByteStart);
+      expect(rawDataPacket[k.OBCIPacketPositionStopByte]).to.equal(k.OBCIStreamPacketStandardRawAux);
+    });
+    describe('#errorConditions', function () {
+      it('send undefined data buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send null data buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: null,
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send undefined rawDataPacket buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('send null rawDataPacket buffer', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: null,
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('no sample number', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize)
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('wrong number of bytes rawDataPacket', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw),
+          rawDataPacket: Buffer.alloc(5),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+      it('wrong number of bytes data', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities, {
+          data: Buffer.alloc(5),
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize),
+          sampleNumber: 0
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+      it('undefined', function () {
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities)).to.throw(k.OBCIErrorUndefinedOrNullInput);
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities), {
+          rawDataPacket: Buffer.alloc(k.OBCIPacketSize)
+        }).to.throw(k.OBCIErrorUndefinedOrNullInput);
+        expect(openBCIUtilities.ganglionFillRawDataPacket.bind(openBCIUtilities), {
+          data: Buffer.alloc(k.OBCIPacketSizeBLERaw)
+        }).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+    });
   });
   describe('#parsePacketStandardAccel', function () {
     it('should return the packet', function () {
@@ -104,6 +255,15 @@ describe('openBCIUtilities', function () {
       sample.accelData.forEach((accelValue, index) => {
         expect(accelValue).to.equal(openBCIUtilities.scaleFactorAux * index);
       });
+    });
+    it('all the auxs should have the same number value as their index', function () {
+      let sample = openBCIUtilities.parsePacketStandardAccel({
+        channelSettings: defaultChannelSettingsArray,
+        rawDataPacket: sampleBuf,
+        scale: false
+      });
+
+      expect(sample.accelDataCounts).to.deep.equal([0, 1, 2]);
     });
     it('check to see if negative numbers work on channel data', function () {
       let temp = openBCIUtilities.samplePacket();
@@ -328,6 +488,314 @@ describe('openBCIUtilities', function () {
       });
     });
   });
+  describe('#getBooleanFromRegisterQuery', function () {
+    it('should return true if 1', function () {
+      const retVal = openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 1, 0, 0, 0, 0, 0', /MISC1/, 21);
+      expect(retVal).to.be.true();
+    });
+    it('should return false it 0', function () {
+      expect(openBCIUtilities.getBooleanFromRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0', /MISC1/, 21)).to.be.false();
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getBooleanFromRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!", 'MISC', 20)).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getBooleanFromRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0', 'MISC', 20)).to.throw(k.OBCIErrorInvalidData);
+      });
+    });
+  });
+  describe('#getSRB1FromADSRegisterQuery', function () {
+    it('should return true if 1', function () {
+      const retVal = openBCIUtilities.getSRB1FromADSRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 1, 0, 0, 0, 0, 0');
+      expect(retVal).to.be.true();
+    });
+    it('should return false it 0', function () {
+      expect(openBCIUtilities.getSRB1FromADSRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.be.false();
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!")).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorInvalidData);
+      });
+    });
+  });
+  describe('#getNumFromThreeCSVADSRegisterQuery', function () {
+    it('should return 1', function () {
+      const str = '0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 0, 0, 1, 1, 0, 0, 0\nCH2SET, 06, 68,';
+      const retVal = openBCIUtilities.getNumFromThreeCSVADSRegisterQuery(str, k.OBCIRegisterQueryNameCHnSET[0], 19);
+      expect(retVal).to.be.equal(1);
+    });
+    it('should return 6', function () {
+      const str = '0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH2SET, 06, 68,';
+      const retVal = openBCIUtilities.getNumFromThreeCSVADSRegisterQuery(str, k.OBCIRegisterQueryNameCHnSET[0], 19);
+      expect(retVal).to.be.equal(6);
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getNumFromThreeCSVADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!", 'MISC', 20)).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getNumFromThreeCSVADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0', 'MISC', 21)).to.throw(k.OBCIErrorInvalidData);
+      });
+    });
+  });
+  describe('#setChSetFromADSRegisterQuery', function () {
+    it('should return correct values for raw config', function () {
+      const str = '0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH2SET, 06, 68,';
+      const expectedChannelNumber = 0;
+      const channelSettings = k.channelSettingsObjectDefault(expectedChannelNumber);
+      channelSettings.powerDown = true;
+      channelSettings.gain = 50;
+      channelSettings.srb2 = false;
+      channelSettings.inputType = k.OBCIStringADCMvdd;
+      openBCIUtilities.setChSetFromADSRegisterQuery(str, channelSettings);
+      expect(channelSettings.powerDown).to.be.false();
+      expect(channelSettings.gain).to.equal(24);
+      expect(channelSettings.srb2).to.be.true();
+      expect(channelSettings.inputType).to.equal('normal');
+    });
+    it('should return correct values for raw config and account for daisy offset', function () {
+      const str = '0, 0, 0, 0, 1, 0\nCH3SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH4SET, 06, 68,';
+      const expectedChannelNumber = 10;
+      const channelSettings = k.channelSettingsObjectDefault(expectedChannelNumber);
+      channelSettings.powerDown = true;
+      channelSettings.gain = 50;
+      channelSettings.srb2 = false;
+      channelSettings.inputType = k.OBCIStringADCMvdd;
+      openBCIUtilities.setChSetFromADSRegisterQuery(str, channelSettings);
+      expect(channelSettings.powerDown).to.be.false();
+      expect(channelSettings.gain).to.equal(24);
+      expect(channelSettings.srb2).to.be.true();
+      expect(channelSettings.inputType).to.equal('normal');
+    });
+    it('should return false it 0', function () {
+      expect(openBCIUtilities.getSRB1FromADSRegisterQuery('GPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.be.false();
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!")).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getSRB1FromADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorInvalidData);
+      });
+    });
+  });
+  describe('#getBiasSetFromADSRegisterQuery', function () {
+    it('should work for 8 channels', function () {
+      const input = ', 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 0, 1, 0, 1, 0, 1, 0\nBIAS_SENSN, 0E, ';
+      for (let i = 0; i < k.OBCINumberOfChannelsCyton; i++) {
+        if (i % 2 === 0) {
+          expect(openBCIUtilities.getBiasSetFromADSRegisterQuery(input, i)).to.be.true();
+        } else {
+          expect(openBCIUtilities.getBiasSetFromADSRegisterQuery(input, i)).to.be.false();
+        }
+      }
+    });
+    it('should return true if 1', function () {
+      const input = ', 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\nBIAS_SENSN, 0E, ';
+      for (let i = 0; i < k.OBCINumberOfChannelsCyton; i++) {
+        expect(openBCIUtilities.getBiasSetFromADSRegisterQuery(input, i)).to.be.true();
+      }
+    });
+    describe('#errorConditions', function () {
+      it('should throw an error when none found', function () {
+        expect(openBCIUtilities.getBiasSetFromADSRegisterQuery.bind(openBCIUtilities, "let's taco bout it!!")).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+      it('should throw an error other wise', function () {
+        expect(openBCIUtilities.getBiasSetFromADSRegisterQuery.bind(openBCIUtilities, 'GPIO, 14, F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0')).to.throw(k.OBCIErrorMissingRegisterSetting);
+      });
+    });
+  });
+  describe('#syncChannelSettingsWithRawData', function () {
+    it('should set the channel settings from the data buffer for cyton for firmware version 1', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV1);
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton));
+    });
+    it('should set the channel settings from the data buffer for cyton for firmware version 2', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV1);
+      const majorFirmwareVersion = 2;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton));
+    });
+    it('should set the channel settings from the data buffer for cyton for firmware version 3', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+      const majorFirmwareVersion = 3;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton));
+    });
+    it('should set the channel settings from the data buffer for cyton for firmware version 10', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+      const majorFirmwareVersion = 10;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton));
+    });
+    it('should set the channel settings from the data buffer for daisy for firmware version 1', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV1);
+      const majorFirmwareVersion = 1;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy));
+    });
+    it('should set the channel settings from the data buffer for daisy for firmware version 9', function () {
+      let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
+      _.forEach(channelSettings, (channelSetting) => {
+        channelSetting.powerDown = true;
+        channelSetting.gain = 59;
+        channelSetting.inputType = k.OBCIStringADCBiasDrn;
+        channelSetting.bias = false;
+        channelSetting.srb2 = false;
+        channelSetting.srb1 = true;
+      });
+      let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+      const majorFirmwareVersion = 9;
+      openBCIUtilities.syncChannelSettingsWithRawData({
+        channelSettings,
+        data,
+        majorFirmwareVersion
+      });
+      expect(channelSettings).to.deep.equal(k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy));
+    });
+    describe('#errorConditions', function () {
+      it('channelSettings not array', function () {
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          channelSettings: 0,
+          majorFirmwareVersion: 1
+        })).to.throw(`${k.OBCIErrorInvalidType} channelSettings`);
+      });
+      it('throw error when raw data is for cyton, but channel settings is for daisy with firmware version 1', function () {
+        let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV1);
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          channelSettings,
+          majorFirmwareVersion: 1
+        })).to.throw('raw data mismatch - expected daisy register info but none found');
+      });
+      it('throw error when raw data is for daisy, but channel settings is for cyton with firmware version 1', function () {
+        let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV1);
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          channelSettings,
+          majorFirmwareVersion: 1
+        })).to.throw('raw data mismatch - expected only cyton register info but also found daisy');
+      });
+      it('throw error when raw data is for cyton, but channel settings is for daisy with firmware version 3', function () {
+        let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDaisy);
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          channelSettings,
+          majorFirmwareVersion: 3
+        })).to.throw('raw data mismatch - expected daisy register info but none found');
+      });
+      it('throw error when raw data is for daisy, but channel settings is for cyton with firmware version 3', function () {
+        let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          channelSettings,
+          majorFirmwareVersion: 3
+        })).to.throw('raw data mismatch - expected only cyton register info but also found daisy');
+      });
+      it('data is undefined', function () {
+        let channelSettings = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCyton);
+        const majorFirmwareVersion = 3;
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          channelSettings,
+          majorFirmwareVersion
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('channelSettings is undefined', function () {
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryCytonDaisy + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+        const majorFirmwareVersion = 3;
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          data,
+          majorFirmwareVersion
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('invalid channel settings', function () {
+        let channelSettings = [];
+        for (let i = 0; i < k.OBCINumberOfChannelsCyton; i++) {
+          channelSettings.push({taco: 'gordo'});
+        }
+        let data = Buffer.from(k.OBCIRegisterQueryCyton + k.OBCIRegisterQueryAccelerometerFirmwareV3);
+        expect(openBCIUtilities.syncChannelSettingsWithRawData.bind(openBCIUtilities, {
+          channelSettings,
+          data
+        })).to.throw(k.OBCIErrorMissingRequiredProperty);
+      });
+    });
+  });
   describe('#getFromTimePacketTime', function () {
     it('should extract the proper time value from packet', function () {
       let sampleWithTime = openBCIUtilities.samplePacketAccelTimeSynced(0);
@@ -341,35 +809,58 @@ describe('openBCIUtilities', function () {
     });
   });
   describe('#getFromTimePacketAccel', function () {
-    let packet;
-
+    let rawDataPacket;
     it('should emit and array if z axis i.e. sampleNumber % 10 === 9', function () {
       // Make a packet with a sample number that represents z axis
-      packet = openBCIUtilities.samplePacketAccelTimeSynced(9);
-      let isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
+      rawDataPacket = openBCIUtilities.samplePacketAccelTimeSynced(9);
+      let isZAxis = openBCIUtilities.getFromTimePacketAccel({
+        rawDataPacket,
+        accelArray,
+        scale: false
+      });
       expect(isZAxis).to.be.true();
     });
     it(`false if sample number is not sampleNumber % 10 === ${k.OBCIAccelAxisZ}`, function () {
       // Make a packet that is anything but the z axis
-      packet = openBCIUtilities.samplePacketAccelTimeSynced(k.OBCIAccelAxisX);
-      let isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
+      rawDataPacket = openBCIUtilities.samplePacketAccelTimeSynced(k.OBCIAccelAxisX);
+      let isZAxis = openBCIUtilities.getFromTimePacketAccel({
+        rawDataPacket,
+        accelArray,
+        scale: true
+      });
       expect(isZAxis).to.be.false();
 
-      packet = openBCIUtilities.samplePacketAccelTimeSynced(k.OBCIAccelAxisY);
-      isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
+      rawDataPacket = openBCIUtilities.samplePacketAccelTimeSynced(k.OBCIAccelAxisY);
+      isZAxis = openBCIUtilities.getFromTimePacketAccel({
+        rawDataPacket,
+        accelArray,
+        scale: true
+      });
       expect(isZAxis).to.be.false();
 
-      packet = openBCIUtilities.samplePacketAccelTimeSynced(34);
-      isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
+      rawDataPacket = openBCIUtilities.samplePacketAccelTimeSynced(34);
+      isZAxis = openBCIUtilities.getFromTimePacketAccel({
+        rawDataPacket,
+        accelArray,
+        scale: true
+      });
       expect(isZAxis).to.be.false();
 
-      packet = openBCIUtilities.samplePacketAccelTimeSynced(100);
-      isZAxis = openBCIUtilities.getFromTimePacketAccel(packet, accelArray);
+      rawDataPacket = openBCIUtilities.samplePacketAccelTimeSynced(100);
+      isZAxis = openBCIUtilities.getFromTimePacketAccel({
+        rawDataPacket,
+        accelArray,
+        scale: true
+      });
       expect(isZAxis).to.be.false();
     });
     describe('#errorConditions', function () {
       it('wrong number of bytes', function () {
-        expect(openBCIUtilities.getFromTimePacketAccel.bind(openBCIUtilities, new Buffer(5))).to.throw(k.OBCIErrorInvalidByteLength);
+        expect(openBCIUtilities.getFromTimePacketAccel.bind(openBCIUtilities, {
+          rawDataPacket: new Buffer(5),
+          accelArray,
+          scale: false
+        })).to.throw(k.OBCIErrorInvalidByteLength);
       });
     });
   });
@@ -409,6 +900,15 @@ describe('openBCIUtilities', function () {
         accelArray
       });
       expect(sample).to.have.property('accelData');
+
+      sample = openBCIUtilities.parsePacketTimeSyncedAccel({
+        rawDataPacket: packet3,
+        channelSettings: defaultChannelSettingsArray,
+        timeOffset: 0,
+        accelArray,
+        scale: false
+      });
+      expect(sample).to.have.property('accelDataCounts');
     });
     it("should convert raw numbers into g's with scale factor", function () {
       // Generate three packets, packets only get one axis value per packet
@@ -528,6 +1028,67 @@ describe('openBCIUtilities', function () {
       });
     });
   });
+  describe('#parsePacketImpedace', function () {
+    it('should extract the impedance value for channel 1', function () {
+      const expectedChannelNumber = 1;
+      const expectedImpedance = 641;
+      const rawDataPacket = openBCIUtilities.samplePacketImpedance(expectedChannelNumber);
+      let impedanceObject = openBCIUtilities.parsePacketImpedance({
+        rawDataPacket
+      });
+      expect(impedanceObject.channelNumber).to.equal(expectedChannelNumber);
+      expect(impedanceObject.impedanceValue).to.equal(expectedImpedance);
+    });
+    it('should extract the impedance value for channel 4', function () {
+      const expectedChannelNumber = 4;
+      const expectedImpedance = 64180;
+      const rawDataPacket = openBCIUtilities.samplePacketImpedance(expectedChannelNumber);
+      rawDataPacket[5] = 56;
+      rawDataPacket[6] = 48;
+      let impedanceObject = openBCIUtilities.parsePacketImpedance({
+        rawDataPacket
+      });
+      expect(impedanceObject.channelNumber).to.equal(expectedChannelNumber);
+      expect(impedanceObject.impedanceValue).to.equal(expectedImpedance);
+    });
+    it('should extract the impedance value for channel reference', function () {
+      const expectedChannelNumber = 5;
+      const expectedImpedance = 641;
+      const rawDataPacket = openBCIUtilities.samplePacketImpedance(expectedChannelNumber);
+      let impedanceObject = openBCIUtilities.parsePacketImpedance({
+        rawDataPacket
+      });
+      expect(impedanceObject.channelNumber).to.equal(0);
+      expect(impedanceObject.impedanceValue).to.equal(expectedImpedance);
+    });
+    describe('#errorConditions', function () {
+      it('send non data buffer', function () {
+        expect(openBCIUtilities.parsePacketImpedance.bind(openBCIUtilities, {
+        })).to.throw(k.OBCIErrorUndefinedOrNullInput);
+      });
+      it('wrong number of bytes', function () {
+        expect(openBCIUtilities.parsePacketImpedance.bind(openBCIUtilities, {
+          rawDataPacket: new Buffer(5)
+        })).to.throw(k.OBCIErrorInvalidByteLength);
+      });
+    });
+  });
+  describe('#getDataArrayAccel', function () {
+    it('compute scaled accel values', function () {
+      const accelData = openBCIUtilities.getDataArrayAccel(sampleBuf.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+      accelData.forEach((accelValue, index) => {
+        expect(accelValue).to.equal(openBCIUtilities.scaleFactorAux * index);
+      });
+    });
+  });
+  describe('#getDataArrayAccelNoScale', function () {
+    it('compute scaled accel values', function () {
+      const accelDataCounts = openBCIUtilities.getDataArrayAccelNoScale(sampleBuf.slice(k.OBCIPacketPositionStartAux, k.OBCIPacketPositionStopAux + 1));
+      accelDataCounts.forEach((accelValue, index) => {
+        expect(accelValue).to.equal(index);
+      });
+    });
+  });
   describe('#getFromTimePacketRawAux', function () {
     let packet;
     it('should put the two aux bytes into a buffer', function () {
@@ -574,6 +1135,7 @@ describe('openBCIUtilities', function () {
     it('without scale all the channels should have the same number value as their (index + 1)', function () {
       packet = openBCIUtilities.samplePacketRawAuxTimeSynced(0);
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: packet,
         timeOffset: 0,
         scale: false
@@ -712,7 +1274,7 @@ describe('openBCIUtilities', function () {
         channelSettings: defaultChannelSettingsArray
       });
       expect(sample.auxData).to.exist();
-      expect(bufferEqual(rawBuffer, sample.auxData)).to.be.true();
+      expect(rawBuffer.toString()).to.equal(sample.auxData.toString());
     });
   });
   describe('#convertSampleToPacketAccelTimeSynced', function () {
@@ -814,15 +1376,17 @@ describe('openBCIUtilities', function () {
     });
     it('should get raw aux buffer', function () {
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: packetBuffer,
         timeOffset: 0,
         scale: false
       });
       expect(sample.auxData).to.exist();
-      expect(bufferEqual(rawAux, sample.auxData)).to.be.true();
+      expect(rawAux.toString()).to.equal(sample.auxData.toString());
     });
     it('should get board time', function () {
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: packetBuffer,
         timeOffset: 0,
         scale: false
@@ -833,6 +1397,7 @@ describe('openBCIUtilities', function () {
     it('should get time stamp with offset', function () {
       let timeOffset = 80;
       let sample = openBCIUtilities.parsePacketTimeSyncedRawAux({
+        channelSettings: defaultChannelSettingsArray,
         rawDataPacket: packetBuffer,
         timeOffset: timeOffset,
         scale: false
@@ -1005,24 +1570,26 @@ describe('openBCIUtilities', function () {
       lowerSampleObject = openBCIUtilities.newSample(1);
       lowerSampleObject.channelData = [1, 2, 3, 4, 5, 6, 7, 8];
       lowerSampleObject.auxData = [0, 1, 2];
+      lowerSampleObject.accelData = [0, 0, 0];
       lowerSampleObject.timestamp = 4;
-      lowerSampleObject.accelData = [0.5, -0.5, 1];
       // Make the upper sample (channels 9-16)
       upperSampleObject = openBCIUtilities.newSample(2);
       upperSampleObject.channelData = [9, 10, 11, 12, 13, 14, 15, 16];
       upperSampleObject.auxData = [3, 4, 5];
+      upperSampleObject.accelData = [0, 1, 2];
       upperSampleObject.timestamp = 8;
 
       daisySampleObject = openBCIUtilities.makeDaisySampleObject(lowerSampleObject, upperSampleObject);
 
-      lowerSampleObjectNoScale = openBCIUtilities.newSample(1);
+      lowerSampleObjectNoScale = openBCIUtilities.newSampleNoScale(1);
       lowerSampleObjectNoScale.channelDataCounts = [1, 2, 3, 4, 5, 6, 7, 8];
+      lowerSampleObjectNoScale.accelDataCounts = [0, 0, 0];
       lowerSampleObjectNoScale.auxData = [0, 1, 2];
       lowerSampleObjectNoScale.timestamp = 4;
-      lowerSampleObjectNoScale.accelData = [0.5, -0.5, 1];
       // Make the upper sample (channels 9-16)
-      upperSampleObjectNoScale = openBCIUtilities.newSample(2);
+      upperSampleObjectNoScale = openBCIUtilities.newSampleNoScale(2);
       upperSampleObjectNoScale.channelDataCounts = [9, 10, 11, 12, 13, 14, 15, 16];
+      upperSampleObjectNoScale.accelDataCounts = [0, 1, 2];
       upperSampleObjectNoScale.auxData = [3, 4, 5];
       upperSampleObjectNoScale.timestamp = 8;
 
@@ -1061,6 +1628,10 @@ describe('openBCIUtilities', function () {
         expect(daisySampleObjectNoScale.auxData['upper'][i]).to.equal(i + 3);
       }
     });
+    it('should take the lower stopByte', function () {
+      expect(daisySampleObject.stopByte).to.equal(lowerSampleObject.stopByte);
+      expect(daisySampleObjectNoScale.stopByte).to.equal(lowerSampleObjectNoScale.stopByte);
+    });
     it('should average the two timestamps together', function () {
       let expectedAverage = (upperSampleObject.timestamp + lowerSampleObject.timestamp) / 2;
       expect(daisySampleObject.timestamp).to.equal(expectedAverage);
@@ -1074,10 +1645,30 @@ describe('openBCIUtilities', function () {
     });
     it('should store an accelerometer value if present', function () {
       expect(daisySampleObject).to.have.property('accelData');
-      expect(daisySampleObjectNoScale).to.have.property('accelData');
+      expect(daisySampleObject.accelData).to.deep.equal([0, 1, 2]);
+      expect(daisySampleObjectNoScale).to.have.property('accelDataCounts');
+      expect(daisySampleObjectNoScale.accelDataCounts).to.deep.equal([0, 1, 2]);
+    });
+    it('should work for all accel cases to extract the non-zero values', function () {
+      let lowerSample = openBCIUtilities.newSample(1);
+      lowerSample.accelData = [0, 1, 2];
+      let upperSample = openBCIUtilities.newSample(2);
+      upperSample.accelData = [0, 0, 0];
+
+      let lowerSampleNoScale = openBCIUtilities.newSampleNoScale(1);
+      lowerSampleNoScale.accelDataCounts = [0, 1, 2];
+      let upperSampleNoScale = openBCIUtilities.newSampleNoScale(2);
+      upperSampleNoScale.accelDataCounts = [0, 0, 0];
+
+      // Call the function under test
+      let daisySample = openBCIUtilities.makeDaisySampleObject(lowerSample, upperSample);
+      let daisySampleNoScale = openBCIUtilities.makeDaisySampleObject(lowerSampleNoScale, upperSampleNoScale);
+      expect(daisySample).to.have.property('accelData');
+      expect(daisySample.accelData).to.deep.equal([0, 1, 2]);
+      expect(daisySampleNoScale).to.have.property('accelDataCounts');
+      expect(daisySampleNoScale.accelDataCounts).to.deep.equal([0, 1, 2]);
     });
   });
-
   describe('#makeDaisySampleObjectWifi', function () {
     let lowerSampleObject, upperSampleObject, daisySampleObject;
     let lowerSampleObjectNoScale, upperSampleObjectNoScale, daisySampleObjectNoScale;
@@ -1087,10 +1678,11 @@ describe('openBCIUtilities', function () {
       lowerSampleObject.channelData = [1, 2, 3, 4, 5, 6, 7, 8];
       lowerSampleObject.auxData = [0, 1, 2];
       lowerSampleObject.timestamp = 4;
-      lowerSampleObject.accelData = [0.5, -0.5, 1];
+      lowerSampleObject.accelData = [0, 0, 0];
       // Make the upper sample (channels 9-16)
       upperSampleObject = openBCIUtilities.newSample(2);
       upperSampleObject.channelData = [9, 10, 11, 12, 13, 14, 15, 16];
+      lowerSampleObject.accelData = [0, 1, 2];
       upperSampleObject.auxData = [3, 4, 5];
       upperSampleObject.timestamp = 8;
 
@@ -1099,11 +1691,12 @@ describe('openBCIUtilities', function () {
       lowerSampleObjectNoScale = openBCIUtilities.newSample(1);
       lowerSampleObjectNoScale.channelDataCounts = [1, 2, 3, 4, 5, 6, 7, 8];
       lowerSampleObjectNoScale.auxData = [0, 1, 2];
+      lowerSampleObjectNoScale.accelDataCounts = [0, 0, 0];
       lowerSampleObjectNoScale.timestamp = 4;
-      lowerSampleObjectNoScale.accelData = [0.5, -0.5, 1];
       // Make the upper sample (channels 9-16)
       upperSampleObjectNoScale = openBCIUtilities.newSample(2);
       upperSampleObjectNoScale.channelDataCounts = [9, 10, 11, 12, 13, 14, 15, 16];
+      lowerSampleObjectNoScale.accelDataCounts = [0, 1, 2];
       upperSampleObjectNoScale.auxData = [3, 4, 5];
       upperSampleObjectNoScale.timestamp = 8;
 
@@ -1144,7 +1737,11 @@ describe('openBCIUtilities', function () {
     });
     it('should take the lower timestamp', function () {
       expect(daisySampleObject.timestamp).to.equal(lowerSampleObject.timestamp);
-      expect(daisySampleObjectNoScale.timestamp).to.equal(lowerSampleObject.timestamp);
+      expect(daisySampleObjectNoScale.timestamp).to.equal(lowerSampleObjectNoScale.timestamp);
+    });
+    it('should take the lower stopByte', function () {
+      expect(daisySampleObject.stopByte).to.equal(lowerSampleObject.stopByte);
+      expect(daisySampleObjectNoScale.stopByte).to.equal(lowerSampleObjectNoScale.stopByte);
     });
     it('should place the old timestamps in an object', function () {
       expect(daisySampleObject._timestamps.lower).to.equal(lowerSampleObject.timestamp);
@@ -1154,6 +1751,28 @@ describe('openBCIUtilities', function () {
     });
     it('should store an accelerometer value if present', function () {
       expect(daisySampleObject).to.have.property('accelData');
+      expect(daisySampleObject.accelData).to.deep.equal([0, 1, 2]);
+      expect(daisySampleObjectNoScale).to.have.property('accelDataCounts');
+      expect(daisySampleObjectNoScale.accelDataCounts).to.deep.equal([0, 1, 2]);
+    });
+    it('should work for all accel cases to extract the non-zero values', function () {
+      let lowerSample = openBCIUtilities.newSample(1);
+      lowerSample.accelData = [0, 1, 2];
+      let upperSample = openBCIUtilities.newSample(2);
+      upperSample.accelData = [0, 0, 0];
+
+      let lowerSampleNoScale = openBCIUtilities.newSampleNoScale(1);
+      lowerSampleNoScale.accelDataCounts = [0, 1, 2];
+      let upperSampleNoScale = openBCIUtilities.newSampleNoScale(2);
+      upperSampleNoScale.accelDataCounts = [0, 0, 0];
+
+      // Call the function under test
+      let daisySample = openBCIUtilities.makeDaisySampleObjectWifi(lowerSample, upperSample);
+      let daisySampleNoScale = openBCIUtilities.makeDaisySampleObjectWifi(lowerSampleNoScale, upperSampleNoScale);
+      expect(daisySample).to.have.property('accelData');
+      expect(daisySample.accelData).to.deep.equal([0, 1, 2]);
+      expect(daisySampleNoScale).to.have.property('accelDataCounts');
+      expect(daisySampleNoScale.accelDataCounts).to.deep.equal([0, 1, 2]);
     });
   });
   describe('#isEven', function () {
@@ -1170,6 +1789,46 @@ describe('openBCIUtilities', function () {
     });
     it('should return false for even number', function () {
       expect(openBCIUtilities.isOdd(2)).to.be.false();
+    });
+  });
+  describe('#getChannelDataArrayNoScale', function () {
+    let sampleBuf;
+    beforeEach(() => {
+      sampleBuf = openBCIUtilities.samplePacket(0);
+    });
+    it('should return length of channel settings when less then 8', function () {
+      let numChannels = 2;
+      let channelSettings = k.channelSettingsArrayInit(numChannels);
+      let valArray = openBCIUtilities.getChannelDataArrayNoScale({
+        channelSettings: channelSettings,
+        rawDataPacket: sampleBuf
+      });
+      expect(valArray).to.have.length(numChannels);
+    });
+    it('should return length of channel settings of 8 when cyton', function () {
+      let numChannels = k.OBCINumberOfChannelsCyton;
+      let channelSettings = k.channelSettingsArrayInit(numChannels);
+      let valArray = openBCIUtilities.getChannelDataArrayNoScale({
+        channelSettings,
+        rawDataPacket: sampleBuf
+      });
+      expect(valArray).to.have.length(k.OBCINumberOfChannelsDefault);
+    });
+    it('should return length of channel settings of 8 when daisy', function () {
+      let numChannels = k.OBCINumberOfChannelsDaisy;
+      let channelSettings = k.channelSettingsArrayInit(numChannels);
+      let valArray = openBCIUtilities.getChannelDataArrayNoScale({
+        channelSettings,
+        rawDataPacket: sampleBuf
+      });
+      expect(valArray).to.have.length(k.OBCINumberOfChannelsDefault);
+    });
+    it('should reject when channelSettingsArray is not in fact an array', function () {
+      expect(openBCIUtilities.getChannelDataArrayNoScale.bind(openBCIUtilities, {
+        rawDataPacket: sampleBuf,
+        channelSettings: {},
+        protocol: k.OBCIProtocolWifi
+      })).to.throw('Error [getChannelDataArrayNoScale]: Channel Settings must be an array!');
     });
   });
   describe('#getChannelDataArray', function () {
@@ -1295,20 +1954,6 @@ describe('openBCIUtilities', function () {
       });
     });
     describe('Wifi', function () {
-      it('should multiply each channel by the ganglion scale value when num chan is 4', function () {
-        let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsGanglion); // Not in daisy mode
-        let scaleFactor = 1.2 / 51.0 / (Math.pow(2, 23) - 1);
-        // Call the function under test
-        let valueArray = openBCIUtilities.getChannelDataArray({
-          rawDataPacket: sampleBuf,
-          channelSettings: chanArr,
-          protocol: k.OBCIProtocolWifi
-        });
-        for (let j = 0; j < k.OBCINumberOfChannelsGanglion; j++) {
-          // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`);
-          expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
-        }
-      });
       it('should multiply each channel by the cyton scale value when num chan is 8', function () {
         let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsDefault); // Not in daisy mode
         let scaleFactor = 4.5 / 24 / (Math.pow(2, 23) - 1);
@@ -1371,6 +2016,22 @@ describe('openBCIUtilities', function () {
         });
         for (let j = 0; j < k.OBCINumberOfChannelsDefault; j++) {
           // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`)
+          expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
+        }
+      });
+    });
+    describe('BLE', function () {
+      it('should multiply each channel by the proper scale value', function () {
+        let chanArr = k.channelSettingsArrayInit(k.OBCINumberOfChannelsCytonBLE); // Not in daisy mode
+        let scaleFactor = 4.5 / 24 / (Math.pow(2, 23) - 1);
+        // Call the function under test
+        let valueArray = openBCIUtilities.getChannelDataArray({
+          rawDataPacket: sampleBuf,
+          channelSettings: chanArr,
+          protocol: k.OBCIProtocolBLE
+        });
+        for (let j = 0; j < k.OBCINumberOfChannelsCytonBLE; j++) {
+          // console.log(`channel data ${j + 1}: ${valueArray[j]} : actual ${scaleFactor * (j + 1)}`);
           expect(valueArray[j]).to.be.closeTo(scaleFactor * (j + 1), 0.0001);
         }
       });
@@ -1516,7 +2177,6 @@ $$$`);
       expect(openBCIUtilities.isSuccessInBuffer(buf)).to.equal(true);
     });
   });
-
   describe('#isStopByte', function () {
     it('should return true for a normal stop byte', () => {
       expect(openBCIUtilities.isStopByte(0xC0)).to.be.true();
@@ -1531,7 +2191,6 @@ $$$`);
       expect(openBCIUtilities.isStopByte(0x00)).to.be.false();
     });
   });
-
   describe('#isTimeSyncSetConfirmationInBuffer', function () {
     // Attn: 0x2C is ASCII for ','
     let comma = 0x2C;
@@ -1798,6 +2457,35 @@ $$$`);
       expect(impedanceArray.length).to.equal(numberOfChannels);
     });
   });
+  describe('#extractRawBLEDataPackets', function () {
+    it('should do nothing when empty buffer inserted', () => {
+      let buffer = null;
+
+      // Test the function
+      let rawDataPackets = openBCIUtilities.extractRawBLEDataPackets(buffer);
+
+      expect(rawDataPackets).to.deep.equal([]);
+    });
+    it('should return an unaltered buffer if there is less than a packets worth of data in it', () => {
+      let expectedString = 'AJ';
+      let buffer = new Buffer(expectedString);
+
+      // Test the function
+      let rawDataPackets = openBCIUtilities.extractRawBLEDataPackets(buffer);
+
+      // Convert the buffer to a string and ensure that it equals the expected string
+      expect(rawDataPackets).to.deep.equal([]);
+    });
+    it('should identify three packets packet', () => {
+      let buffer = openBCIUtilities.samplePacketCytonBLE(0);
+
+      // Call the function under test
+      let rawDataPackets = openBCIUtilities.extractRawBLEDataPackets(buffer);
+
+      // The buffer should not have anything in it any more
+      expect(rawDataPackets.length).to.equal(3);
+    });
+  });
 });
 
 describe('openBCIGanglionUtils', function () {
@@ -2003,7 +2691,7 @@ describe('#extractRawDataPackets', function () {
     let output = openBCIUtilities.extractRawDataPackets(buffer);
 
     // Convert the buffer to a string and ensure that it equals the expected string
-    expect(bufferEqual(buffer, output.buffer)).to.be.true();
+    expect(buffer.toString()).to.equal(output.buffer.toString());
     expect(output.rawDataPackets).to.deep.equal([]);
   });
   it('should identify a packet', () => {
@@ -2014,7 +2702,7 @@ describe('#extractRawDataPackets', function () {
 
     // The buffer should not have anything in it any more
     expect(output.buffer).to.be.null();
-    expect(bufferEqual(buffer, output.rawDataPackets[0])).to.be.true();
+    expect(buffer.toString('hex')).to.equal(output.rawDataPackets[0].toString('hex'));
   });
   it('should extract a buffer and preserve the remaining data in the buffer', () => {
     let expectedString = 'AJ';
@@ -2027,8 +2715,8 @@ describe('#extractRawDataPackets', function () {
     extraBuffer.copy(buffer, k.OBCIPacketSize);
     // Call the function under test
     const output = openBCIUtilities.extractRawDataPackets(buffer);
-    expect(bufferEqual(expectedRawDataPacket, output.rawDataPackets[0])).to.be.true();
-    expect(bufferEqual(output.buffer, extraBuffer)).to.be.true(); // Should return the extra parts of the buffer
+    expect(expectedRawDataPacket.toString('hex')).to.equal(output.rawDataPackets[0].toString('hex'));
+    expect(output.buffer.toString('hex')).to.equal(extraBuffer.toString('hex')); // Should return the extra parts of the buffer
   });
   it('should be able to extract multiple packets from a single buffer', () => {
     // We are going to extract multiple buffers
@@ -2049,7 +2737,31 @@ describe('#extractRawDataPackets', function () {
     // The buffer should not have anything in it any more
     expect(output.buffer).to.be.null();
     for (let i = 0; i < expectedNumberOfBuffers; i++) {
-      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i])).to.be.true(`Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`);
+      expect(expectedRawDataPackets[i].toString('hex')).to.equal(output.rawDataPackets[i].toString('hex'));
+    }
+  });
+  it('should be able to extract multiple packets from a single buffer when daisy', () => {
+    // We are going to extract multiple buffers
+    let expectedNumberOfBuffers = 4;
+    // declare the big buffer
+    let buffer = new Buffer(k.OBCIPacketSize * expectedNumberOfBuffers);
+    // Fill that new big buffer with buffers
+    const expectedRawDataPackets = [
+      openBCIUtilities.samplePacketReal(0),
+      openBCIUtilities.samplePacketReal(0),
+      openBCIUtilities.samplePacketReal(1),
+      openBCIUtilities.samplePacketReal(1)
+    ];
+    expectedRawDataPackets[0].copy(buffer, 0);
+    expectedRawDataPackets[1].copy(buffer, k.OBCIPacketSize);
+    expectedRawDataPackets[2].copy(buffer, k.OBCIPacketSize * 2);
+    expectedRawDataPackets[2].copy(buffer, k.OBCIPacketSize * 3);
+    // Call the function under test
+    const output = openBCIUtilities.extractRawDataPackets(buffer);
+    // The buffer should not have anything in it any more
+    expect(output.buffer).to.be.null();
+    for (let i = 0; i < expectedNumberOfBuffers; i++) {
+      expect(expectedRawDataPackets[i].toString('hex')).to.equal(output.rawDataPackets[i].toString('hex'));
     }
   });
 
@@ -2071,9 +2783,9 @@ describe('#extractRawDataPackets', function () {
     // Call the function under test
     const output = openBCIUtilities.extractRawDataPackets(buffer);
     for (let i = 0; i < expectedNumberOfBuffers; i++) {
-      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i])).to.be.true(`Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`);
+      expect(expectedRawDataPackets[i].toString('hex')).to.equal(output.rawDataPackets[i].toString('hex'));
     }
-    expect(bufferEqual(output.buffer, extraBuffer)).to.be.true(); // Should return the extra parts of the buffer
+    expect(output.buffer.toString('hex')).to.equal(extraBuffer.toString('hex'));
   });
 
   it('should be able to get multiple packets with junk in the middle', () => {
@@ -2094,9 +2806,9 @@ describe('#extractRawDataPackets', function () {
 
     const output = openBCIUtilities.extractRawDataPackets(buffer);
     for (let i = 0; i < expectedNumberOfBuffers; i++) {
-      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true();
+      expect(expectedRawDataPackets[i].toString('hex')).to.equal(output.rawDataPackets[i].toString('hex'));
     }
-    expect(bufferEqual(output.buffer, extraBuffer)).to.be.true(); // Should return the extra parts of the buffer
+    expect(output.buffer.toString('hex')).to.equal(extraBuffer.toString('hex'));
   });
 
   it('should be able to get multiple packets with junk in the middle and end', () => {
@@ -2119,10 +2831,10 @@ describe('#extractRawDataPackets', function () {
 
     const output = openBCIUtilities.extractRawDataPackets(buffer);
     for (let i = 0; i < expectedNumberOfBuffers; i++) {
-      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true();
+      expect(expectedRawDataPackets[i].toString('hex')).to.equal(output.rawDataPackets[i].toString('hex'));
     }
     // The buffer should have everything in it
-    expect(bufferEqual(Buffer.concat([extraBuffer, extraBuffer]), output.buffer)).to.be.true();
+    expect(Buffer.concat([extraBuffer, extraBuffer]).toString('hex')).to.equal(output.buffer.toString('hex'));
   });
 
   it('should be able to get multiple packets with junk in the front, middle and end', () => {
@@ -2146,10 +2858,10 @@ describe('#extractRawDataPackets', function () {
 
     const output = openBCIUtilities.extractRawDataPackets(buffer);
     for (let i = 0; i < expectedNumberOfBuffers; i++) {
-      expect(bufferEqual(expectedRawDataPackets[i], output.rawDataPackets[i]), `Expected 0x${expectedRawDataPackets[i].toString('HEX')} to equal 0x${output.rawDataPackets[i].toString('HEX')}`).to.be.true();
+      expect(expectedRawDataPackets[i].toString('hex')).to.equal(output.rawDataPackets[i].toString('hex'));
     }
     // The buffer should have everything in it
-    expect(bufferEqual(Buffer.concat([extraBuffer, extraBuffer, extraBuffer]), output.buffer)).to.be.true();
+    expect(Buffer.concat([extraBuffer, extraBuffer, extraBuffer]).toString('hex')).to.equal(output.buffer.toString('hex'));
   });
 });
 
@@ -2256,7 +2968,7 @@ describe('#transformRawDataPacketsToSamples', function () {
  * Test the function that routes raw packets for processing
  */
 describe('#transformRawDataPacketToSample', function () {
-  var funcSpyTimeSyncedAccel, funcSpyTimeSyncedRawAux, funcSpyStandardRawAux, funcSpyStandardAccel;
+  var funcSpyTimeSyncedAccel, funcSpyTimeSyncedRawAux, funcSpyStandardRawAux, funcSpyStandardAccel, funcSpyImpedance;
 
   before(function () {
     // Put watchers on all functions
@@ -2264,12 +2976,14 @@ describe('#transformRawDataPacketToSample', function () {
     funcSpyStandardRawAux = sinon.spy(openBCIUtilities, 'parsePacketStandardRawAux');
     funcSpyTimeSyncedAccel = sinon.spy(openBCIUtilities, 'parsePacketTimeSyncedAccel');
     funcSpyTimeSyncedRawAux = sinon.spy(openBCIUtilities, 'parsePacketTimeSyncedRawAux');
+    funcSpyImpedance = sinon.spy(openBCIUtilities, 'parsePacketImpedance');
   });
   beforeEach(function () {
     funcSpyStandardAccel.reset();
     funcSpyStandardRawAux.reset();
     funcSpyTimeSyncedAccel.reset();
     funcSpyTimeSyncedRawAux.reset();
+    funcSpyImpedance.reset();
   });
   after(function () {
     // ourBoard = null
@@ -2314,6 +3028,7 @@ describe('#transformRawDataPacketToSample', function () {
     expect(funcSpyStandardRawAux).to.not.have.been.called();
     expect(funcSpyTimeSyncedAccel).to.not.have.been.called();
     expect(funcSpyTimeSyncedRawAux).to.not.have.been.called();
+    expect(funcSpyImpedance).to.not.have.been.called();
   });
   it('should throw err when no channel settings', function () {
     var buffer = new Buffer(5).fill(0);
@@ -2325,7 +3040,7 @@ describe('#transformRawDataPacketToSample', function () {
 
     expect(sample.valid).to.be.false();
     expect(sample.error.message).to.equal(k.OBCIErrorInvalidByteLength);
-    expect(bufferEqual(buffer, sample.rawDataPacket)).to.be.true();
+    expect(buffer.toString('hex')).to.equal(sample.rawDataPacket.toString('hex'));
   });
   it('should process a time sync set packet with accel', function () {
     var buffer = openBCIUtilities.samplePacketAccelTimeSyncSet();
@@ -2384,6 +3099,18 @@ describe('#transformRawDataPacketToSample', function () {
     // Ensure that we extracted only one buffer
     expect(funcSpyTimeSyncedRawAux).to.have.been.calledOnce();
   });
+  it('should process an impedance packet', function () {
+    var buffer = openBCIUtilities.samplePacketImpedance(1);
+
+    // Call the function under test
+    openBCIUtilities.transformRawDataPacketToSample({
+      channelSettings: defaultChannelSettingsArray,
+      rawDataPacket: buffer
+    });
+
+    // Ensure that we extracted only one buffer
+    expect(funcSpyImpedance).to.have.been.calledOnce();
+  });
   it('should not identify any packet', function () {
     var buffer = openBCIUtilities.samplePacket(0);
 
@@ -2401,5 +3128,6 @@ describe('#transformRawDataPacketToSample', function () {
     expect(funcSpyStandardRawAux).to.not.have.been.called();
     expect(funcSpyTimeSyncedAccel).to.not.have.been.called();
     expect(funcSpyTimeSyncedRawAux).to.not.have.been.called();
+    expect(funcSpyImpedance).to.not.have.been.called();
   });
 });

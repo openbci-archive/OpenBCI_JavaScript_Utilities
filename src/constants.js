@@ -4,8 +4,8 @@
 *     OpenBCI Board
 */
 'use strict';
-const _ = require('lodash');
-const Buffer = require('safe-buffer').Buffer;
+import _ from 'lodash';
+import { Buffer } from 'buffer/';
 
 /** Turning channels off */
 const obciChannelOff1 = '1';
@@ -231,12 +231,14 @@ const obciRadioCmdSystemStatus = 0x07;
 
 /** Possible number of channels */
 const obciNumberOfChannelsCyton = 8;
+const obciNumberOfChannelsCytonBLE = 2;
 const obciNumberOfChannelsDaisy = 16;
 const obciNumberOfChannelsDefault = obciNumberOfChannelsCyton;
 const obciNumberOfChannelsGanglion = 4;
 
 /** Possible OpenBCI board types */
 const obciBoardCyton = 'cyton';
+const obciBoardCytonBLE = 'cytonBLE';
 const obciBoardDaisy = 'daisy';
 const obciBoardDefault = 'default';
 const obciBoardGanglion = 'ganglion';
@@ -276,6 +278,8 @@ const obciSampleNumberMax = 255;
 
 /** Packet Size */
 const obciPacketSize = 33;
+const obciPacketSizeBLECyton = 20;
+const obciPacketSizeBLERaw = 12;
 
 /** OpenBCI V3 Standard Packet Positions */
 /**
@@ -301,6 +305,13 @@ const obciByteStop = 0xC0;
 const errorInvalidByteLength = 'Invalid Packet Byte Length';
 const errorInvalidByteStart = 'Invalid Start Byte';
 const errorInvalidByteStop = 'Invalid Stop Byte';
+const errorInvalidData = 'Invalid data - try again';
+const errorInvalidType = 'Invalid type - check comments for input type';
+const errorMissingRegisterSetting = 'Missing register setting';
+const errorMissingRequiredProperty = 'Missing property in JSON';
+const errorNobleAlreadyScanning = 'Scan already under way';
+const errorNobleNotAlreadyScanning = 'No scan started';
+const errorNobleNotInPoweredOnState = 'Please turn blue tooth on.';
 const errorTimeSyncIsNull = "'this.sync.curSyncObj' must not be null";
 const errorTimeSyncNoComma = 'Missed the time sync sent confirmation. Try sync again';
 const errorUndefinedOrNullInput = 'Undefined or Null Input';
@@ -346,6 +357,7 @@ const obciStreamPacketAccelTimeSyncSet = 3; // 0011
 const obciStreamPacketAccelTimeSynced = 4; // 0100
 const obciStreamPacketRawAuxTimeSyncSet = 5; // 0101
 const obciStreamPacketRawAuxTimeSynced = 6; // 0110
+const obciStreamPacketImpedance = 7; // 0111
 
 /** Time from board */
 const obciStreamPacketTimeByteSize = 4;
@@ -414,7 +426,9 @@ const obciEmitterMessage = 'message';
 const obciEmitterQuery = 'query';
 const obciEmitterRawDataPacket = 'rawDataPacket';
 const obciEmitterReady = 'ready';
+const obciEmitterRFduino = 'rfduino';
 const obciEmitterSample = 'sample';
+const obciEmitterScanStopped = 'scanStopped';
 const obciEmitterSynced = 'synced';
 const obciEmitterWifiShield = 'wifiShield';
 
@@ -424,7 +438,7 @@ const obciGanglionAccelAxisY = 2;
 const obciGanglionAccelAxisZ = 3;
 
 /** Accel scale factor */
-const obciGanglionAccelScaleFactor = 0.032; // mG per count
+const obciGanglionAccelScaleFactor = 0.016; // mG per count
 
 /** Ganglion */
 const obciGanglionBleSearchTime = 20000; // ms
@@ -472,6 +486,15 @@ const simbleeUuidReceive = '2d30c082f39f4ce6923f3484ea480596';
 const simbleeUuidSend = '2d30c083f39f4ce6923f3484ea480596';
 const simbleeUuidDisconnect = '2d30c084f39f4ce6923f3484ea480596';
 
+/** RFduino BLE UUID */
+const rfduinoUuidService = '2220';
+const rfduinoUuidReceive = '2221';
+const rfduinoUuidSend = '2222';
+const rfduinoUuidSendTwo = '2223';
+
+/** Cyton BLE */
+const obciCytonBLESamplesPerPacket = 3;
+
 /** Noble */
 const obciNobleEmitterPeripheralConnect = 'connect';
 const obciNobleEmitterPeripheralDisconnect = 'disconnect';
@@ -489,6 +512,19 @@ const obciNobleStatePoweredOn = 'poweredOn';
 const obciProtocolBLE = 'ble';
 const obciProtocolSerial = 'serial';
 const obciProtocolWifi = 'wifi';
+
+/** Register Query on Cyton */
+const obciRegisterQueryAccelerometerFirmwareV1 = '\nLIS3DH Registers\n0x07.0\n0x08.0\n0x09.0\n0x0A.0\n0x0B.0\n0x0C.0\n0x0D.0\n0x0E.0\n0x0F.33\n\n0x1F.0\n0x20.8\n0x21.0\n0x22.0\n0x23.18\n0x24.0\n0x25.0\n0x26.0\n0x27.0\n0x28.0\n0x29.0\n0x2A.0\n0x2B.0\n0x2C.0\n0x2D.0\n0x2E.0\n0x2F.20\n0x30.0\n0x31.0\n0x32.0\n0x33.0\n\n0x38.0\n0x39.0\n0x3A.0\n0x3B.0\n0x3C.0\n0x3D.0\n';
+const obciRegisterQueryAccelerometerFirmwareV3 = '\nLIS3DH Registers\n0x07 00\n0x08 00\n0x09 00\n0x0A 00\n0x0B 00\n0x0C 00\n0x0D 00\n0x0E 00\n0x0F 33\n\n0x1F 00\n0x20 08\n0x21 00\n0x22 00\n0x23 18\n0x24 00\n0x25 00\n0x26 00\n0x27 00\n0x28 00\n0x29 00\n0x2A 00\n0x2B 00\n0x2C 00\n0x2D 00\n0x2E 00\n0x2F 20\n0x30 00\n0x31 00\n0x32 00\n0x33 00\n\n0x38 00\n0x39 00\n0x3A 00\n0x3B 00\n0x3C 00\n0x3D 00\n';
+const obciRegisterQueryCyton = '\nBoard ADS Registers\nADS_ID, 00, 3E, 0, 0, 1, 1, 1, 1, 1, 0\nCONFIG1, 01, 96, 1, 0, 0, 1, 0, 1, 1, 0\nCONFIG2, 02, C0, 1, 1, 0, 0, 0, 0, 0, 0\nCONFIG3, 03, EC, 1, 1, 1, 0, 1, 1, 0, 0\nLOFF, 04, 02, 0, 0, 0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH2SET, 06, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH3SET, 07, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH4SET, 08, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH5SET, 09, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH6SET, 0A, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH7SET, 0B, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH8SET, 0C, 68, 0, 1, 1, 0, 1, 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\nBIAS_SENSN, 0E, FF, 1, 1, 1, 1, 1, 1, 1, 1\nLOFF_SENSP, 0F, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_SENSN, 10, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_FLIP, 11, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_STATP, 12, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_STATN, 13, 00, 0, 0, 0, 0, 0, 0, 0, 0\nGPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0\nMISC2, 16, 00, 0, 0, 0, 0, 0, 0, 0, 0\nCONFIG4, 17, 00, 0, 0, 0, 0, 0, 0, 0, 0\n';
+const obciRegisterQueryCytonDaisy = '\nDaisy ADS Registers\nADS_ID, 00, 3E, 0, 0, 1, 1, 1, 1, 1, 0\nCONFIG1, 01, 96, 1, 0, 0, 1, 0, 1, 1, 0\nCONFIG2, 02, C0, 1, 1, 0, 0, 0, 0, 0, 0\nCONFIG3, 03, EC, 1, 1, 1, 0, 1, 1, 0, 0\nLOFF, 04, 02, 0, 0, 0, 0, 0, 0, 1, 0\nCH1SET, 05, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH2SET, 06, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH3SET, 07, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH4SET, 08, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH5SET, 09, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH6SET, 0A, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH7SET, 0B, 68, 0, 1, 1, 0, 1, 0, 0, 0\nCH8SET, 0C, 68, 0, 1, 1, 0, 1, 0, 0, 0\nBIAS_SENSP, 0D, FF, 1, 1, 1, 1, 1, 1, 1, 1\nBIAS_SENSN, 0E, FF, 1, 1, 1, 1, 1, 1, 1, 1\nLOFF_SENSP, 0F, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_SENSN, 10, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_FLIP, 11, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_STATP, 12, 00, 0, 0, 0, 0, 0, 0, 0, 0\nLOFF_STATN, 13, 00, 0, 0, 0, 0, 0, 0, 0, 0\nGPIO, 14, 0F, 0, 0, 0, 0, 1, 1, 1, 1\nMISC1, 15, 00, 0, 0, 0, 0, 0, 0, 0, 0\nMISC2, 16, 00, 0, 0, 0, 0, 0, 0, 0, 0\nCONFIG4, 17, 00, 0, 0, 0, 0, 0, 0, 0, 0\n';
+const obciRegisterQueryNameMISC1 = 'MISC1';
+const obciRegisterQueryNameBIASSENSP = 'BIAS_SENSP';
+const obciRegisterQueryNameCHnSET = ['CH1SET', 'CH2SET', 'CH3SET', 'CH4SET', 'CH5SET', 'CH6SET', 'CH7SET', 'CH8SET'];
+const obciRegisterQuerySizeCytonFirmwareV1 = obciRegisterQueryCyton.length + obciRegisterQueryAccelerometerFirmwareV1.length;
+const obciRegisterQuerySizeCytonDaisyFirmwareV1 = obciRegisterQueryCyton.length + obciRegisterQueryCytonDaisy.length + obciRegisterQueryAccelerometerFirmwareV1.length;
+const obciRegisterQuerySizeCytonFirmwareV3 = obciRegisterQueryCyton.length + obciRegisterQueryAccelerometerFirmwareV3.length;
+const obciRegisterQuerySizeCytonDaisyFirmwareV3 = obciRegisterQueryCyton.length + obciRegisterQueryCytonDaisy.length + obciRegisterQueryAccelerometerFirmwareV3.length;
 
 const constantsModule = {
   /** Turning channels off */
@@ -717,6 +753,7 @@ const constantsModule = {
   OBCIChannelCmdGain12: obciChannelCmdGain12,
   OBCIChannelCmdGain24: obciChannelCmdGain24,
   commandForGain,
+  gainForCommand,
   OBCIChannelCmdLatch: obciChannelCmdLatch,
   OBCIChannelCmdPowerOff: obciChannelCmdPowerOff,
   OBCIChannelCmdPowerOn: obciChannelCmdPowerOn,
@@ -727,6 +764,10 @@ const constantsModule = {
   OBCIChannelCmdSRB2Diconnect: obciChannelCmdSRB2Diconnect,
   /** Channel Settings Object */
   channelSettingsObjectDefault,
+  /**
+   * @param numberOfChannels {Number}
+   * @returns {Array}
+   */
   channelSettingsArrayInit: (numberOfChannels) => {
     var newChannelSettingsArray = [];
     for (var i = 0; i < numberOfChannels; i++) {
@@ -750,6 +791,7 @@ const constantsModule = {
   * @author AJ Keller (@pushtheworldllc)
   */
   commandForADCString,
+  inputTypeForCommand,
   /** Default Channel Settings */
   OBCIChannelDefaultAllSet: obciChannelDefaultAllSet,
   OBCIChannelDefaultAllGet: obciChannelDefaultAllGet,
@@ -885,11 +927,13 @@ const constantsModule = {
   OBCITrigger: obciTrigger,
   /** Possible number of channels */
   OBCINumberOfChannelsCyton: obciNumberOfChannelsCyton,
+  OBCINumberOfChannelsCytonBLE: obciNumberOfChannelsCytonBLE,
   OBCINumberOfChannelsDaisy: obciNumberOfChannelsDaisy,
   OBCINumberOfChannelsDefault: obciNumberOfChannelsDefault,
   OBCINumberOfChannelsGanglion: obciNumberOfChannelsGanglion,
   /** Possible OpenBCI board types */
   OBCIBoardCyton: obciBoardCyton,
+  OBCIBoardCytonBLE: obciBoardCytonBLE,
   OBCIBoardDaisy: obciBoardDaisy,
   OBCIBoardDefault: obciBoardDefault,
   OBCIBoardGanglion: obciBoardGanglion,
@@ -902,6 +946,8 @@ const constantsModule = {
         return obciNumberOfChannelsGanglion;
       case obciBoardNone:
         return 0;
+      case obciBoardCytonBLE:
+        return obciNumberOfChannelsCytonBLE;
       case obciBoardCyton:
       default:
         return obciNumberOfChannelsDefault;
@@ -915,6 +961,8 @@ const constantsModule = {
         return obciBoardGanglion;
       case 0:
         return obciBoardNone;
+      case obciNumberOfChannelsCytonBLE:
+        return obciBoardCytonBLE;
       case obciNumberOfChannelsDefault:
       default:
         return obciBoardCyton;
@@ -941,6 +989,8 @@ const constantsModule = {
   OBCISampleNumberMax: obciSampleNumberMax,
   /** Packet Size */
   OBCIPacketSize: obciPacketSize,
+  OBCIPacketSizeBLECyton: obciPacketSizeBLECyton,
+  OBCIPacketSizeBLERaw: obciPacketSizeBLERaw,
   /** Notable Bytes */
   OBCIByteStart: obciByteStart,
   OBCIByteStop: obciByteStop,
@@ -948,6 +998,13 @@ const constantsModule = {
   OBCIErrorInvalidByteLength: errorInvalidByteLength,
   OBCIErrorInvalidByteStart: errorInvalidByteStart,
   OBCIErrorInvalidByteStop: errorInvalidByteStop,
+  OBCIErrorInvalidData: errorInvalidData,
+  OBCIErrorInvalidType: errorInvalidType,
+  OBCIErrorMissingRegisterSetting: errorMissingRegisterSetting,
+  OBCIErrorMissingRequiredProperty: errorMissingRequiredProperty,
+  OBCIErrorNobleAlreadyScanning: errorNobleAlreadyScanning,
+  OBCIErrorNobleNotAlreadyScanning: errorNobleNotAlreadyScanning,
+  OBCIErrorNobleNotInPoweredOnState: errorNobleNotInPoweredOnState,
   OBCIErrorTimeSyncIsNull: errorTimeSyncIsNull,
   OBCIErrorTimeSyncNoComma: errorTimeSyncNoComma,
   OBCIErrorUndefinedOrNullInput: errorUndefinedOrNullInput,
@@ -1013,6 +1070,7 @@ const constantsModule = {
   OBCIStreamPacketAccelTimeSynced: obciStreamPacketAccelTimeSynced,
   OBCIStreamPacketRawAuxTimeSyncSet: obciStreamPacketRawAuxTimeSyncSet,
   OBCIStreamPacketRawAuxTimeSynced: obciStreamPacketRawAuxTimeSynced,
+  OBCIStreamPacketImpedance: obciStreamPacketImpedance,
   /** fun funcs */
   isNumber,
   isBoolean,
@@ -1133,7 +1191,9 @@ const constantsModule = {
   OBCIEmitterQuery: obciEmitterQuery,
   OBCIEmitterRawDataPacket: obciEmitterRawDataPacket,
   OBCIEmitterReady: obciEmitterReady,
+  OBCIEmitterRFduino: obciEmitterRFduino,
   OBCIEmitterSample: obciEmitterSample,
+  OBCIEmitterScanStopped: obciEmitterScanStopped,
   OBCIEmitterSynced: obciEmitterSynced,
   OBCIEmitterWifiShield: obciEmitterWifiShield,
   /** Emitters */
@@ -1170,6 +1230,13 @@ const constantsModule = {
   SimbleeUuidReceive: simbleeUuidReceive,
   SimbleeUuidSend: simbleeUuidSend,
   SimbleeUuidDisconnect: simbleeUuidDisconnect,
+  /** RFduino BLE UUID */
+  RFduinoUuidService: rfduinoUuidService,
+  RFduinoUuidReceive: rfduinoUuidReceive,
+  RFduinoUuidSend: rfduinoUuidSend,
+  RFduinoUuidSendTwo: rfduinoUuidSendTwo,
+  /** Cyton BLE */
+  OBCICytonBLESamplesPerPacket: obciCytonBLESamplesPerPacket,
   /** Accel scale factor */
   OBCIGanglionAccelScaleFactor: obciGanglionAccelScaleFactor,
   /** Noble */
@@ -1195,9 +1262,20 @@ const constantsModule = {
   /** Protocols */
   OBCIProtocolBLE: obciProtocolBLE,
   OBCIProtocolSerial: obciProtocolSerial,
-  OBCIProtocolWifi: obciProtocolWifi
+  OBCIProtocolWifi: obciProtocolWifi,
+  /** Register Query for Cyton */
+  OBCIRegisterQueryAccelerometerFirmwareV1: obciRegisterQueryAccelerometerFirmwareV1,
+  OBCIRegisterQueryAccelerometerFirmwareV3: obciRegisterQueryAccelerometerFirmwareV3,
+  OBCIRegisterQueryCyton: obciRegisterQueryCyton,
+  OBCIRegisterQueryCytonDaisy: obciRegisterQueryCytonDaisy,
+  OBCIRegisterQueryNameMISC1: obciRegisterQueryNameMISC1,
+  OBCIRegisterQueryNameBIASSENSP: obciRegisterQueryNameBIASSENSP,
+  OBCIRegisterQueryNameCHnSET: obciRegisterQueryNameCHnSET,
+  OBCIRegisterQuerySizeCytonFirmwareV1: obciRegisterQuerySizeCytonFirmwareV1,
+  OBCIRegisterQuerySizeCytonDaisyFirmwareV1: obciRegisterQuerySizeCytonDaisyFirmwareV1,
+  OBCIRegisterQuerySizeCytonFirmwareV3: obciRegisterQuerySizeCytonFirmwareV3,
+  OBCIRegisterQuerySizeCytonDaisyFirmwareV3: obciRegisterQuerySizeCytonDaisyFirmwareV3
 };
-module.exports = constantsModule;
 
 /**
 * @description To add a usability abstraction layer above channel setting commands. Due to the
@@ -1443,6 +1521,34 @@ function commandForADCString (adcString) {
   });
 }
 
+/**
+ * Returns the input type for the given command
+ * @param cmd {Number} The command
+ * @returns {String}
+ */
+function inputTypeForCommand (cmd) {
+  switch (String(cmd)) {
+    case obciChannelCmdADCNormal:
+      return obciStringADCNormal;
+    case obciChannelCmdADCShorted:
+      return obciStringADCShorted;
+    case obciChannelCmdADCBiasMethod:
+      return obciStringADCBiasMethod;
+    case obciChannelCmdADCMVDD:
+      return obciStringADCMvdd;
+    case obciChannelCmdADCTemp:
+      return obciStringADCTemp;
+    case obciChannelCmdADCTestSig:
+      return obciStringADCTestSig;
+    case obciChannelCmdADCBiasDRP:
+      return obciStringADCBiasDrp;
+    case obciChannelCmdADCBiasDRN:
+      return obciStringADCBiasDrn;
+    default:
+      throw new Error('Invalid input type, must be less than 8');
+  }
+}
+
 function commandForGain (gainSetting) {
   return new Promise(function (resolve, reject) {
     switch (gainSetting) {
@@ -1468,10 +1574,36 @@ function commandForGain (gainSetting) {
         resolve(obciChannelCmdGain24);
         break;
       default:
-        reject(Error('Invalid gain setting of ' + gainSetting + ' tisk tisk, gain must be (1,2,4,6,8,12,24)'));
+        reject(Error('Invalid gain setting of ' + gainSetting + ' gain must be (1,2,4,6,8,12,24)'));
         break;
     }
   });
+}
+
+/**
+ * Get the gain
+ * @param cmd {Number}
+ * @returns {Number}
+ */
+function gainForCommand (cmd) {
+  switch (String(cmd)) {
+    case obciChannelCmdGain1:
+      return 1;
+    case obciChannelCmdGain2:
+      return 2;
+    case obciChannelCmdGain4:
+      return 4;
+    case obciChannelCmdGain6:
+      return 6;
+    case obciChannelCmdGain8:
+      return 8;
+    case obciChannelCmdGain12:
+      return 12;
+    case obciChannelCmdGain24:
+      return 24;
+    default:
+      throw new Error(`Invalid gain setting of ${cmd} gain must be (0,1,2,3,4,5,6)`);
+  }
 }
 
 function commandChannelForCmd (channelNumber) {
@@ -1531,6 +1663,40 @@ function commandChannelForCmd (channelNumber) {
     }
   });
 }
+
+/**
+ * @typedef {Object} ChannelSettingsObject - See page 50 of the ads1299.pdf
+ * @property {Number} channelNumber - The channel number of this object
+ * @property {Boolean} powerDown - Power-down: - This boolean determines the channel power mode for the
+ *                      corresponding channel. `false` for normal operation, channel is on, and `true` for channel
+ *                      power-down, channel is off. (Default is `false`)
+ * @property {Number} gain - PGA gain: This number determines the PGA gain setting. Can be either 1, 2, 4, 6, 8, 12, 24
+ *                      (Default is 24)
+ * @property {String} inputType - Channel input: This string is used to determine the channel input selection.
+ *                      Can be:
+ *                        'normal' - Normal electrode input (Default)
+ *                        'shorted' - Input shorted (for offset or noise measurements)
+ *                        'biasMethod' - Used in conjunction with BIAS_MEAS bit for BIAS measurements.
+ *                        'mvdd' - MVDD for supply measurement
+ *                        'temp' - Temperature sensor
+ *                        'testsig' - Test signal
+ *                        'biasDrp' - BIAS_DRP (positive electrode is the driver)
+ *                        'biasDrn' - BIAS_DRN (negative electrode is the driver)
+ * @property {Boolean} bias - BIAS: Is the channel included in the bias? If `true` or yes, this channel has both P
+ *                      and N channels connected to the bias. (Default is `true`)
+ * @property {Boolean} srb2 - SRB2 connection: This boolean determines the SRB2 connection for the corresponding
+ *                      channel. `false` for open, not connected to channel, and `true` for closed, connected to the
+ *                      channel. (Default is `true`)
+ * @property {Boolean} srb1 - Stimulus, reference, and bias 1: This boolean connects the SRB2 to all 4, 6, or 8
+ *                      channels inverting inputs. `false` when switches open, disconnected, and `true` when switches
+ *                      closed, or connected. (Default is `false`)
+ */
+
+/**
+ * Get an object of default board settings.
+ * @param channelNumber
+ * @returns {ChannelSettingsObject}
+ */
 function channelSettingsObjectDefault (channelNumber) {
   return {
     channelNumber: channelNumber,
@@ -1553,13 +1719,23 @@ function rawDataToSampleObjectDefault (numChannels) {
   return {
     accelArray: [0, 0, 0],
     channelSettings: constantsModule.channelSettingsArrayInit(numChannels),
+    decompressedSamples: decompressedSamplesInit(numChannels),
     lastSampleNumber: 0,
     rawDataPacket: Buffer.alloc(33),
     rawDataPackets: [],
     scale: true,
+    sendCounts: false,
     timeOffset: 0,
     verbose: false
   };
+}
+
+function decompressedSamplesInit (numChannels) {
+  let output = [];
+  for (let i = 0; i < 3; i++) {
+    output.push(new Array(numChannels));
+  }
+  return output;
 }
 
 /**
@@ -1727,3 +1903,5 @@ function isPeripheralGanglion (peripheral) {
   }
   return false;
 }
+
+export default constantsModule;

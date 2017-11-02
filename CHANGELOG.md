@@ -1,4 +1,89 @@
-# 0.1.2
+# v0.3.0
+
+### Breaking Changes
+
+* Removed simulator file back into cyton repo
+* Removed `safe-buffer` in place of `buffer`
+* Removed support for node version 5 and below
+
+# v0.2.7
+
+### Bug Fixes
+
+* No `stopByte` property for daisy samples. Added tests.
+
+# v0.2.6
+
+### Bug Fixes
+
+* Accel data with counts did not work for cyton with daisy over wifi.
+
+# v0.2.5
+
+### Bug Fixes
+
+* Had incorrect ganglion accel multiplication factor of 32mg per count but was really 16mg per count
+* `newSample` and `newSampleNoScale` in utility file did not have `valid` is `true` property.
+
+# v0.2.4
+
+### New Features
+
+* Add new constants for emitter
+
+### Bug Fixes
+
+* Fix bug where ganglion sample channel data when scale was false produced array of 8 values instead of 4
+
+# v0.2.3
+
+### New Features
+
+* Add function for parsing an impedance object `.parsePacketImpedance()`
+
+# v0.2.2
+
+### Bug Fixes
+
+* Fix wrap around bug in extractRawBLEDataPackets
+
+# v0.2.1
+
+### Bug Fixes
+
+* Accel data with counts did not work for cyton with daisy. Also fixed up some test errors with the effected functions.
+
+### New Features
+
+* Add features for `openbci-ganglion`
+
+# v0.2.0
+
+### New Feature
+
+* With scale option false, `.parsePacketStandardAccel()` `.parsePacketTimeSyncedAccel()` will now return array called will now return `accelDataCounts` property with un-scaled data.
+
+# v0.1.5
+
+### Bug Fixes
+
+* Was missing errors in constants used by ganglion and other ble projects.
+* Fixed getChannelData functions to support 2 channel cytons
+
+# v0.1.4
+
+### Bug Fixes
+
+* E-patch on new function added 0.1.3
+
+
+# v0.1.3
+
+### New Features
+
+* A bunch of functions to support synchronization of channel settings with cyton. Will be used by both the Wifi and the Cyton node modules.
+
+# v0.1.2
 
 ### Bug Fixes
 
@@ -6,42 +91,42 @@
 * Sample output was inconsistent
 * Fixed `timeStamp` to `timestamp` this was pr #147 (thanks @alexdevmotion)
 
-# 0.1.1
+# v0.1.1
 
 ### Bug Fixes
 
 * Send counts did not work for daisy.
 
-# 0.1.0
+# v0.1.0
 
 ### New Functions
 
-* Add function `getFirmware(dataBuffer)` to utilities 
+* Add function `getFirmware(dataBuffer)` to utilities
 
 ### Breaking Changes
 
 * Removed function called `findV2Firmware()` because it's useless with v3.0.0 firmware
 
-# 0.0.10
+# v0.0.10
 
 ### New Function
 
 * Add `boardTypeForNumberOfChannels()` to Constants
 
-# 0.0.9
+# v0.0.9
 
 ### New Features
 
 * Add impedance calculation functions from cyton
 * The simulator from OpenBCI_NodeJS has been ripped out and place into this library! Woo.
 
-# 0.0.8
+# v0.0.8
 
 ### New Features
 
 * Sample object now has property `valid` of type `boolean`, `false` when error parseing packet, `true` otherwise. On `false` there will be another property called `error` of type `string` which contains an error message.
 
-# 0.0.7
+# v0.0.7
 
 ### Continuous Integration
 
@@ -54,9 +139,9 @@
 ### New Features
 
 * In openBCIUtilities.js add function `transformRawDataPacketToSample` to parse a single raw data packet
-* In openBCIConstants.js add function `rawDataToSampleObjectDefault(numChannels)` which should be used by drivers to create the object that is passed through each call to `transformRawDataPacketsToSample` 
+* In openBCIConstants.js add function `rawDataToSampleObjectDefault(numChannels)` which should be used by drivers to create the object that is passed through each call to `transformRawDataPacketsToSample`
 
-# 0.0.6
+# v0.0.6
 
 ### Bug Fixes
 
@@ -72,19 +157,19 @@
 
 * `getChannelDataArray` now takes object as only arg.
 
-# 0.0.5
+# v0.0.5
 
 ### Bug Fixes
 
 * When not scaling outputs `channelDataCounts` instead of `channelData`
 
-# 0.0.4
+# v0.0.4
 
 ### Bug Fixes
 
 * Fix bug where samples were not properly being extracted
 
-# 0.0.2
+# v0.0.2
 
 ### Breaking Changes
 
@@ -96,6 +181,6 @@
 
 * Added a function in the sample module that parses a raw buffer of OpenBCI data, extracts raw data packets and returns the buffer with just the raw data packets removed. Allowing the user to process other data that is not a raw data.
 
-# 0.0.1
+# v0.0.1
 
 Initial release
