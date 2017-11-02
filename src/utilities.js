@@ -723,7 +723,8 @@ let utilitiesModule = {
         0b00000110, // 18
         0b00000111  // 19
       ]);
-  }
+  },
+  parseGanglion
 };
 
 /**
