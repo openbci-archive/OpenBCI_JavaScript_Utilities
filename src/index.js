@@ -3,7 +3,7 @@ import * as debug from './debug';
 import utilities from './utilities';
 
 export default {
-    constants,
-    debug,
-    utilities
+  constants,
+  debug,
+  utilities
 };

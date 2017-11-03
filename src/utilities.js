@@ -809,7 +809,7 @@ function processCompressedData (o) {
  * @param o {RawDataToSample} - Used to hold data and configuration settings
  * @private
  */
-function processImpedanceData(o) {
+function processImpedanceData (o) {
   const byteId = parseInt(o.rawDataPacket[0]);
   let channelNumber;
   switch (byteId) {
@@ -909,7 +909,6 @@ function buildSample (sampleNumber, rawData, sendCounts) {
   sample.timestamp = Date.now();
   return sample;
 }
-
 
 /**
  * Used to route samples for Ganglion

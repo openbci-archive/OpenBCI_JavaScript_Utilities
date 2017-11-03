@@ -80,6 +80,10 @@
       "it",
       "expect",
       "should"
+    ],
+    "ignore": [
+      "examples/browser",
+      "examples/node"
     ]
   }
 }

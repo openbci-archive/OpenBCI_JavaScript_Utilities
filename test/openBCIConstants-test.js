@@ -5,7 +5,7 @@
 /* global describe, it, afterEach */
 let bluebirdChecks = require('./bluebirdChecks');
 let assert = require('assert');
-let k = require('../src/openBCIConstants');
+let k = require('../dist/constants');
 let chai = require('chai');
 let expect = chai.expect;
 let should = chai.should(); // eslint-disable-line no-unused-vars
@@ -1999,7 +1999,6 @@ describe('OpenBCIConstants', function () {
       assert.equal('Z', k.OBCIGanglionImpedanceStop);
     });
   });
-  describe('')
   describe('Byte Id', function () {
     it('Uncompressed', function () {
       assert.equal(0, k.OBCIGanglionByteIdUncompressed);
