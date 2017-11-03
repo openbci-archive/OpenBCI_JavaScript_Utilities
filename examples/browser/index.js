@@ -1,2 +1,1 @@
-
-console.log(OpenBCIUtilities);
+console.log(OpenBCIUtilities); // eslint-disable-line
