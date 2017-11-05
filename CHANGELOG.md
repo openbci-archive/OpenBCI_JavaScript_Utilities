@@ -1,10 +1,15 @@
 # v0.3.0
 
+You can now use this module in the browser!! Huge should out to @alexcastillo for help with making with refactoring the project!
+
 ### Breaking Changes
 
 * Removed simulator file back into cyton repo
 * Removed `safe-buffer` in place of `buffer`
 * Removed support for node version 5 and below
+* `Utilities` changed to to `utilities`
+* `Constants` is now `constants`
+* Inidividual functions can now be importated from the utilities module.
 
 # v0.2.7
 
