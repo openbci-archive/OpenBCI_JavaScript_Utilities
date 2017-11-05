@@ -122,7 +122,7 @@ let utilitiesModule = {
   },
   extractRawBLEDataPackets: (dataBuffer) => {
     let rawDataPackets = [];
-    if (!_.isBuffer(dataBuffer)) return rawDataPackets;
+    if (_.isNull(dataBuffer)) return rawDataPackets;
     // Verify the packet is of length 20
     if (dataBuffer.byteLength !== k.OBCIPacketSizeBLECyton) return rawDataPackets;
     let sampleNumbers = [0, 0, 0];
@@ -132,10 +132,9 @@ let utilitiesModule = {
     sampleNumbers[2] = sampleNumbers[1] + 1;
     if (sampleNumbers[2] > 255) sampleNumbers[2] -= 256;
     for (let i = 0; i < k.OBCICytonBLESamplesPerPacket; i++) {
-      let rawDataPacket = Buffer.alloc(k.OBCIPacketSize);
+      let rawDataPacket = utilitiesModule.samplePacketZero(sampleNumbers[i]);
       rawDataPacket[0] = k.OBCIByteStart;
       rawDataPacket[k.OBCIPacketPositionStopByte] = dataBuffer[0];
-      rawDataPacket[k.OBCIPacketPositionSampleNumber] = sampleNumbers[i];
       dataBuffer.copy(rawDataPacket, k.OBCIPacketPositionChannelDataStart, k.OBCIPacketPositionChannelDataStart + (i * 6), k.OBCIPacketPositionChannelDataStart + 6 + (i * 6));
       rawDataPackets.push(rawDataPacket);
     }
@@ -553,6 +552,9 @@ let utilitiesModule = {
   },
   samplePacket: sampleNumber => {
     return new Buffer([0xA0, sampleNumberNormalize(sampleNumber), 0, 0, 1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0, 5, 0, 0, 6, 0, 0, 7, 0, 0, 8, 0, 0, 0, 1, 0, 2, makeTailByteFromPacketType(k.OBCIStreamPacketStandardAccel)]);
+  },
+  samplePacketZero: sampleNumber => {
+    return new Buffer([0xA0, sampleNumberNormalize(sampleNumber), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, makeTailByteFromPacketType(k.OBCIStreamPacketStandardAccel)]);
   },
   samplePacketReal: sampleNumber => {
     return new Buffer([0xA0, sampleNumberNormalize(sampleNumber), 0x8F, 0xF2, 0x40, 0x8F, 0xDF, 0xF4, 0x90, 0x2B, 0xB6, 0x8F, 0xBF, 0xBF, 0x7F, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0x94, 0x25, 0x34, 0x20, 0xB6, 0x7D, 0, 0xE0, 0, 0xE0, 0x0F, 0x70, makeTailByteFromPacketType(k.OBCIStreamPacketStandardAccel)]);
