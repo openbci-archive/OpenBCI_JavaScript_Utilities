@@ -4,7 +4,6 @@ import gaussian from 'gaussian';
 import k from './constants';
 import StreamSearch from 'streamsearch';
 import { Buffer } from 'buffer/';
-import _ from 'lodash';
 
 /** Constants for interpreting the EEG data */
 // Reference voltage for ADC in ADS1299.
@@ -122,7 +121,7 @@ let utilitiesModule = {
   },
   extractRawBLEDataPackets: (dataBuffer) => {
     let rawDataPackets = [];
-    if (!_.isBuffer(dataBuffer)) return rawDataPackets;
+    if (!Buffer.isBuffer(dataBuffer)) return rawDataPackets;
     // Verify the packet is of length 20
     if (dataBuffer.byteLength !== k.OBCIPacketSizeBLECyton) return rawDataPackets;
     let sampleNumbers = [0, 0, 0];
@@ -837,7 +836,7 @@ function processImpedanceData (o) {
 
   let end = o.rawDataPacket.length;
 
-  while (_.isNaN(Number(o.rawDataPacket.slice(1, end))) && end !== 0) {
+  while (Number.isNaN(Number(o.rawDataPacket.slice(1, end))) && end !== 0) {
     end--;
   }
 
@@ -1538,7 +1537,7 @@ function getBooleanFromRegisterQuery (str, regEx, offset) {
   let regExArr = str.match(regEx);
   if (regExArr) {
     const num = parseInt(str.charAt(regExArr.index + offset));
-    if (!_.isNaN(num)) {
+    if (!Number.isNaN(num)) {
       return Boolean(num);
     } else {
       throw new Error(k.OBCIErrorInvalidData);
@@ -1579,7 +1578,7 @@ function getNumFromThreeCSVADSRegisterQuery (str, regEx, offset) {
     const bit2 = parseInt(str.charAt(regExArr.index + offset));
     const bit1 = parseInt(str.charAt(regExArr.index + offset + 3));
     const bit0 = parseInt(str.charAt(regExArr.index + offset + 6));
-    if (!_.isNaN(bit2) && !_.isNaN(bit1) && !_.isNaN(bit0)) {
+    if (!Number.isNaN(bit2) && !Number.isNaN(bit1) && !Number.isNaN(bit0)) {
       return bit2 << 2 | bit1 << 1 | bit0;
     } else {
       throw new Error(k.OBCIErrorInvalidData);
@@ -1597,7 +1596,7 @@ function getNumFromThreeCSVADSRegisterQuery (str, regEx, offset) {
  */
 function setChSetFromADSRegisterQuery (str, channelSettings) {
   let key = k.OBCIRegisterQueryNameCHnSET[channelSettings.channelNumber];
-  if (_.isUndefined(key)) key = k.OBCIRegisterQueryNameCHnSET[channelSettings.channelNumber - k.OBCINumberOfChannelsCyton];
+  if (key === undefined) key = k.OBCIRegisterQueryNameCHnSET[channelSettings.channelNumber - k.OBCINumberOfChannelsCyton];
   channelSettings.powerDown = getBooleanFromRegisterQuery(str, key, 16);
   channelSettings.gain = k.gainForCommand(getNumFromThreeCSVADSRegisterQuery(str, key, 19));
   channelSettings.inputType = k.inputTypeForCommand(getNumFromThreeCSVADSRegisterQuery(str, key, 31));
@@ -1619,13 +1618,13 @@ function syncChannelSettingsWithRawData (o) {
 
   if (o.channelSettings.length === k.OBCINumberOfChannelsCyton) {
     if (o.data.toString().match(/Daisy ADS/)) throw new Error('raw data mismatch - expected only cyton register info but also found daisy');
-    if (_.isNull(o.data.toString().match(/Board ADS/))) throw new Error(k.OBCIErrorInvalidData);
+    if (o.data.toString().match(/Board ADS/) == null) throw new Error(k.OBCIErrorInvalidData);
   } else {
-    if (_.isNull(o.data.toString().match(/Daisy ADS/))) throw new Error('raw data mismatch - expected daisy register info but none found');
-    if (_.isNull(o.data.toString().match(/Board ADS/))) throw new Error('no Board ADS info found');
+    if (o.data.toString().match(/Daisy ADS/) == null) throw new Error('raw data mismatch - expected daisy register info but none found');
+    if (o.data.toString().match(/Board ADS/) == null) throw new Error('no Board ADS info found');
   }
 
-  _.forEach((o.channelSettings), (cs) => {
+  o.channelSettings.forEach(cs => {
     if (!cs.hasOwnProperty('channelNumber') || !cs.hasOwnProperty('powerDown') || !cs.hasOwnProperty('gain') || !cs.hasOwnProperty('inputType') || !cs.hasOwnProperty('bias') || !cs.hasOwnProperty('srb2') || !cs.hasOwnProperty('srb1')) {
       throw new Error(k.OBCIErrorMissingRequiredProperty);
     }
@@ -1646,12 +1645,12 @@ function syncChannelSettingsWithRawData (o) {
       usingSRB1Daisy = true;
     }
   }
-  _.forEach(o.channelSettings,
+  o.channelSettings.forEach(
     /**
      * Set each channel
      * @param cs {ChannelSettingsObject}
      */
-    (cs) => {
+    cs => {
       if (cs.channelNumber < k.OBCINumberOfChannelsCyton) {
         setChSetFromADSRegisterQuery(adsCyton, cs);
         cs.bias = getBiasSetFromADSRegisterQuery(adsCyton, cs.channelNumber);
