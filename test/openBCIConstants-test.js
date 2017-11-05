@@ -5,7 +5,7 @@
 /* global describe, it, afterEach */
 let bluebirdChecks = require('./bluebirdChecks');
 let assert = require('assert');
-let k = require('../openBCIConstants');
+let k = require('../dist/constants');
 let chai = require('chai');
 let expect = chai.expect;
 let should = chai.should(); // eslint-disable-line no-unused-vars

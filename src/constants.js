@@ -4,8 +4,8 @@
 *     OpenBCI Board
 */
 'use strict';
-const _ = require('lodash');
-const Buffer = require('safe-buffer').Buffer;
+import _ from 'lodash';
+import { Buffer } from 'buffer/';
 
 /** Turning channels off */
 const obciChannelOff1 = '1';
@@ -1276,7 +1276,6 @@ const constantsModule = {
   OBCIRegisterQuerySizeCytonFirmwareV3: obciRegisterQuerySizeCytonFirmwareV3,
   OBCIRegisterQuerySizeCytonDaisyFirmwareV3: obciRegisterQuerySizeCytonDaisyFirmwareV3
 };
-module.exports = constantsModule;
 
 /**
 * @description To add a usability abstraction layer above channel setting commands. Due to the
@@ -1720,13 +1719,23 @@ function rawDataToSampleObjectDefault (numChannels) {
   return {
     accelArray: [0, 0, 0],
     channelSettings: constantsModule.channelSettingsArrayInit(numChannels),
+    decompressedSamples: decompressedSamplesInit(numChannels),
     lastSampleNumber: 0,
     rawDataPacket: Buffer.alloc(33),
     rawDataPackets: [],
     scale: true,
+    sendCounts: false,
     timeOffset: 0,
     verbose: false
   };
+}
+
+function decompressedSamplesInit (numChannels) {
+  let output = [];
+  for (let i = 0; i < 3; i++) {
+    output.push(new Array(numChannels));
+  }
+  return output;
 }
 
 /**
@@ -1894,3 +1903,5 @@ function isPeripheralGanglion (peripheral) {
   }
   return false;
 }
+
+export default constantsModule;
