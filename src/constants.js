@@ -4,7 +4,6 @@
 *     OpenBCI Board
 */
 'use strict';
-import _ from 'lodash';
 import { Buffer } from 'buffer/';
 
 /** Turning channels off */
@@ -1715,7 +1714,7 @@ function channelSettingsObjectDefault (channelNumber) {
  * @returns {RawDataToSample} - A new object
  */
 function rawDataToSampleObjectDefault (numChannels) {
-  if (_.isUndefined(numChannels)) numChannels = obciNumberOfChannelsDefault;
+  if (numChannels === undefined) numChannels = obciNumberOfChannelsDefault;
   return {
     accelArray: [0, 0, 0],
     channelSettings: constantsModule.channelSettingsArrayInit(numChannels),
@@ -1846,7 +1845,7 @@ function commandBoardModeForMode (boardMode) {
 function getPeripheralLocalNames (pArray) {
   return new Promise((resolve, reject) => {
     var list = [];
-    _.forEach(pArray, (perif) => {
+    pArray.forEach(perif => {
       list.push(perif.advertisement.localName);
     });
     if (list.length > 0) {
@@ -1865,7 +1864,7 @@ function getPeripheralLocalNames (pArray) {
 function getPeripheralWithLocalName (pArray, localName) {
   return new Promise((resolve, reject) => {
     if (typeof (pArray) !== 'object') return reject(Error(`pArray must be of type Object`));
-    _.forEach(pArray, (perif) => {
+    pArray.forEach(perif => {
       if (perif.advertisement.hasOwnProperty('localName')) {
         if (perif.advertisement.localName === localName) {
           return resolve(perif);
