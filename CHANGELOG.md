@@ -1,3 +1,9 @@
+# v0.3.1
+
+### Enhancements 
+
+* Removed `lodash` from dependencies to reduce bundle size (thanks @alexcastillo!!)
+
 # v0.3.0
 
 You can now use this module in the browser!! Huge should out to @alexcastillo for help with making with refactoring the project!
