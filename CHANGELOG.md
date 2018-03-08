@@ -1,3 +1,10 @@
+# v0.3.3
+
+### Enhancements 
+
+* Add raw of version to `getFirmware` 
+* Bump mathjs to 4.0.0 to resolve insecurity
+
 # v0.3.1
 
 ### Enhancements 

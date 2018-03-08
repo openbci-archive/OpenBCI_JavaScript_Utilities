@@ -2125,7 +2125,8 @@ $$$`);
       expect(openBCIUtilities.getFirmware(buf)).to.deep.equal({
         major: 2,
         minor: 0,
-        patch: 1
+        patch: 1,
+        raw: 'v2.0.1'
       });
     });
     it('should find a v3', function () {
@@ -2139,7 +2140,23 @@ $$$`);
       expect(openBCIUtilities.getFirmware(buf)).to.deep.equal({
         major: 3,
         minor: 0,
-        patch: 1
+        patch: 1,
+        raw: 'v3.0.1'
+      });
+    });
+    it('should find a v3 and remove rc', function () {
+      let buf = new Buffer(`OpenBCI V3 Simulator
+On Board ADS1299 Device ID: 0x12345
+On Daisy ADS1299 Device ID: 0xFFFFF
+LIS3DH Device ID: 0x38422
+Firmware: v3.0.1-rc1
+$$$`);
+
+      expect(openBCIUtilities.getFirmware(buf)).to.deep.equal({
+        major: 3,
+        minor: 0,
+        patch: 1,
+        raw: 'v3.0.1'
       });
     });
   });

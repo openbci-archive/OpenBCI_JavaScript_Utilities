@@ -1,6 +1,6 @@
 {
   "name": "openbci-utilities",
-  "version": "0.3.1",
+  "version": "0.3.3",
   "description": "The official utility package of Node.js SDK for the OpenBCI Biosensor Boards.",
   "main": "dist/openbci-utilities.js",
   "module": "src/index.js",
@@ -30,7 +30,7 @@
     "buffer-equal": "^1.0.0",
     "clone": "^2.0.0",
     "gaussian": "^1.0.0",
-    "mathjs": "^3.3.0",
+    "mathjs": "^4.0.0",
     "performance-now": "^2.1.0",
     "streamsearch": "^0.1.2"
   },
