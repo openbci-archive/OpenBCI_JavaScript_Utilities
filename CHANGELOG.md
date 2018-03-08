@@ -1,3 +1,9 @@
+# v0.3.3
+
+### Enhancements 
+
+* Add raw of version to `getFirmware` 
+
 # v0.3.1
 
 ### Enhancements 

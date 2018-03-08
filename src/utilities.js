@@ -2164,7 +2164,8 @@ function getFirmware (dataBuffer) {
     return {
       major: Number(elems[0][1]),
       minor: Number(elems[1]),
-      patch: Number(elems[2])
+      patch: Number(elems[2]),
+      raw: ret[0]
     };
   } else return ret;
 }
