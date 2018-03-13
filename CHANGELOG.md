@@ -1,3 +1,9 @@
+# v0.3.4
+
+### Bug Fixes 
+
+* Protect and ensure buffer returned for raw data packets
+
 # v0.3.3
 
 ### Enhancements 

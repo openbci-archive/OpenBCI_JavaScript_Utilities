@@ -98,9 +98,12 @@ let utilitiesModule = {
           // Overwrite the dataBuffer with a new buffer
           let tempBuf;
           if (parsePosition > 0) {
-            tempBuf = Buffer.concat([dataBuffer.slice(0, parsePosition), dataBuffer.slice(parsePosition + k.OBCIPacketSize)], dataBuffer.byteLength - k.OBCIPacketSize);
+            tempBuf = Buffer.concat([
+              Buffer.from(dataBuffer.slice(0, parsePosition)),
+              Buffer.from(dataBuffer.slice(parsePosition + k.OBCIPacketSize))
+            ]);
           } else {
-            tempBuf = dataBuffer.slice(k.OBCIPacketSize);
+            tempBuf = Buffer.from(dataBuffer.slice(k.OBCIPacketSize));
           }
           if (tempBuf.length === 0) {
             dataBuffer = null;
