@@ -1,3 +1,9 @@
+# v0.3.5
+
+### Bug Fixes 
+
+* Fix bug where `getFirmware` failed for patch or minor versions over 9 (aka double digits)
+
 # v0.3.4
 
 ### Bug Fixes 
