@@ -2160,7 +2160,7 @@ function doesBufferHaveEOT (dataBuffer) {
  * @return {*}
  */
 function getFirmware (dataBuffer) {
-  const regexPattern = /v\d.\d.\d/;
+  const regexPattern = /v\d.\d*.\d*/;
   const ret = dataBuffer.toString().match(regexPattern);
   if (ret) {
     const elems = ret[0].split('.');
