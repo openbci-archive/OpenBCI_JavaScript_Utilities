@@ -728,7 +728,9 @@ let utilitiesModule = {
         0b00000111  // 19
       ]);
   },
-  parseGanglion
+  parseGanglion,
+  processMultiBytePacket,
+  processMultiBytePacketStop
 };
 
 /**

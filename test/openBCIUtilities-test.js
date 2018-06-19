@@ -37,6 +37,43 @@ describe('openBCIUtilities', function () {
     accelArray = [0, 0, 0];
   });
   afterEach(() => bluebirdChecks.noPendingPromises());
+  describe('#processMultiBytePacketStop', function () {
+    it('should output the message', function () {
+      const rawBuf = Buffer.from([0xCF, 0x65, 0x64, 0x0A]);
+
+      const expectedOutput = 'ed\n';
+
+      const actualOutput = openBCIUtilities.processMultiBytePacketStop({
+        multiPacketBuffer: null,
+        rawDataPacket: rawBuf
+      });
+      expect(actualOutput.message).to.equal(expectedOutput);
+    });
+  });
+  describe('#processMultiBytePacket', function () {
+    it('should be convert raw data packtet to string', function () {
+      const rawBufMulti = Buffer.from([0xCE, 0x61, 0x63, 0x63, 0x65, 0x6C, 0x65, 0x72, 0x6F, 0x6D, 0x65, 0x74, 0x65, 0x72, 0x20, 0x65, 0x6E, 0x61, 0x62, 0x6C]);
+
+      const expectedRawBufMulti = Buffer.from([0x61, 0x63, 0x63, 0x65, 0x6C, 0x65, 0x72, 0x6F, 0x6D, 0x65, 0x74, 0x65, 0x72, 0x20, 0x65, 0x6E, 0x61, 0x62, 0x6C]);
+
+      const o = {};
+      o.rawDataPacket = rawBufMulti;
+      openBCIUtilities.processMultiBytePacket(o);
+      expect(o.multiPacketBuffer.toString()).to.equal(expectedRawBufMulti.toString());
+    });
+    it('should be able to concat multi byte messages', function () {
+      const rawBufMulti = Buffer.from([0xCE, 0x61, 0x63, 0x63, 0x65, 0x6C, 0x65, 0x72, 0x6F, 0x6D, 0x65, 0x74, 0x65, 0x72, 0x20, 0x65, 0x6E, 0x61, 0x62, 0x6C]);
+      const o = {
+        multiPacketBuffer: rawBufMulti.slice(1).toString()
+      };
+      const rawBufStop = Buffer.from([0xCF, 0x65, 0x64, 0x0A]);
+      const expectedRawBufMulti = Buffer.from([0x61, 0x63, 0x63, 0x65, 0x6C, 0x65, 0x72, 0x6F, 0x6D, 0x65, 0x74, 0x65, 0x72, 0x20, 0x65, 0x6E, 0x61, 0x62, 0x6C, 0x65, 0x64, 0x0A]);
+
+      o.rawDataPacket = rawBufStop;
+      openBCIUtilities.processMultiBytePacket(o);
+      expect(o.multiPacketBuffer.toString()).to.equal(expectedRawBufMulti.toString());
+    });
+  });
   describe('#convertGanglionArrayToBuffer', function () {
     it('should fill the packet with values from data', function () {
       const numChannels = k.numberOfChannelsForBoardType(k.OBCIBoardGanglion);
