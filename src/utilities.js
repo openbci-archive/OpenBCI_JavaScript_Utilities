@@ -860,7 +860,7 @@ function processImpedanceData (o) {
  */
 function processMultiBytePacket (o) {
   if (o.multiPacketBuffer) {
-    o.multiPacketBuffer = Buffer.concat([o.multiPacketBuffer, o.rawDataPacket.slice(k.OBCIGanglionPacket19Bit.dataStart, k.OBCIGanglionPacket19Bit.dataStop)]);
+    o.multiPacketBuffer = Buffer.concat([Buffer.from(o.multiPacketBuffer), Buffer.from(o.rawDataPacket.slice(k.OBCIGanglionPacket19Bit.dataStart, k.OBCIGanglionPacket19Bit.dataStop))]);
   } else {
     o.multiPacketBuffer = o.rawDataPacket.slice(k.OBCIGanglionPacket19Bit.dataStart, k.OBCIGanglionPacket19Bit.dataStop);
   }
@@ -873,9 +873,11 @@ function processMultiBytePacket (o) {
  */
 function processMultiBytePacketStop (o) {
   processMultiBytePacket(o);
-  const str = o.multiPacketBuffer;
+  const str = o.multiPacketBuffer.toString();
   o.multiPacketBuffer = null;
-  return str;
+  return {
+    'message': str
+  };
 }
 
 /**

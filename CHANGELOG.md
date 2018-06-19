@@ -1,3 +1,9 @@
+# v0.3.6
+
+### Bug Fixes 
+
+* Fix bug where parseGanglion could result in a concat of non-buffer types
+
 # v0.3.5
 
 ### Bug Fixes 
