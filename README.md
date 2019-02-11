@@ -21,21 +21,21 @@ Thank you for visiting the OpenBCI JavaScript Utilities Library repository.
 
 This document (the README file) is a hub to give you some information about the project. Jump straight to one of the sections below, or just scroll down to find out more.
 
-* [What are we doing? (And why?)](#what-are-we-doing)
-* [Who are we?](#who-are-we)
-* [What do we need?](#what-do-we-need)
-* [How can you get involved?](#get-involved)
-* [Get in touch](#contact-us)
-* [Find out more](#find-out-more)
-* [Understand the jargon](#glossary)
+- [What are we doing? (And why?)](#what-are-we-doing)
+- [Who are we?](#who-are-we)
+- [What do we need?](#what-do-we-need)
+- [How can you get involved?](#get-involved)
+- [Get in touch](#contact-us)
+- [Find out more](#find-out-more)
+- [Understand the jargon](#glossary)
 
 ## What are we doing?
 
 ### The problem
 
-* The first javascript libraries for OpenBCI was the [NodeJS Cyton SDK][link_nodejs], then the [NodeJS Ganglion SDK][link_nodejs_ganglion], then the [NodeJS for WiFi][link_nodejs_wifi], each with their own interfaces, serial, bluetooth, and wifi respectively.
-* The ganglion's raw data is incredibly complex and must be decompressed and carefully parsed, in less words, it takes time to learn to parse this stream
-* People want to use the [Ganglion][link_shop_ganglion] in the web browser
+- The first javascript libraries for OpenBCI was the [NodeJS Cyton SDK][link_nodejs], then the [NodeJS Ganglion SDK][link_nodejs_ganglion], then the [NodeJS for WiFi][link_nodejs_wifi], each with their own interfaces, serial, bluetooth, and wifi respectively.
+- The ganglion's raw data is incredibly complex and must be decompressed and carefully parsed, in less words, it takes time to learn to parse this stream
+- People want to use the [Ganglion][link_shop_ganglion] in the web browser
 
 So, if even developers are interested in working with [OpenBCI][link_shop_openbci] devices with javascript, they have a huge burden to overcome before they can parse the data.
 
@@ -43,13 +43,13 @@ So, if even developers are interested in working with [OpenBCI][link_shop_openbc
 
 The OpenBCI JavaScript Utilities Library will:
 
-* Provide a nice cozy home to all the horror of parsing raw binary byte streams
-* Use automated testing extensively and don't let untested code be released!
-* Work in the browser and NodeJS!
-* Be able to parse ganglion and cyton data.
-* Store a constants file so every module agrees on names of keys and such
+- Provide a nice cozy home to all the horror of parsing raw binary byte streams
+- Use automated testing extensively and don't let untested code be released!
+- Work in the browser and NodeJS!
+- Be able to parse ganglion and cyton data.
+- Store a constants file so every module agrees on names of keys and such
 
-Using a single unified JavaScript library solves the challenges of parsing raw brainwave data. Our main goal is to ***provide a stable javascript library for OpenBCI***
+Using a single unified JavaScript library solves the challenges of parsing raw brainwave data. Our main goal is to **_provide a stable javascript library for OpenBCI_**
 
 ## Who are we?
 
@@ -67,7 +67,7 @@ Our primary goal is to provide a stable javascript library for OpenBCI, and we'r
 
 ## Get involved
 
-If you think you can help in any of the areas listed above (and we bet you can) or in any of the many areas that we haven't yet thought of (and here we're *sure* you can) then please check out our [contributors' guidelines](CONTRIBUTING.md) and our [roadmap](ROADMAP.md).
+If you think you can help in any of the areas listed above (and we bet you can) or in any of the many areas that we haven't yet thought of (and here we're _sure_ you can) then please check out our [contributors' guidelines](CONTRIBUTING.md) and our [roadmap](ROADMAP.md).
 
 Please note that it's very important to us that we maintain a positive and supportive environment for everyone who wants to participate. When you join us we ask that you follow our [code of conduct](CODE_OF_CONDUCT.md) in all interactions both on and offline.
 
@@ -79,12 +79,12 @@ If you want to report a problem or suggest an enhancement we'd love for you to [
 
 You might be interested in:
 
-* What is [OpenBCI][link_openbci]?
+- What is [OpenBCI][link_openbci]?
 
 And of course, you'll want to know our:
 
-* [Contributors' guidelines](CONTRIBUTING.md)
-* [Roadmap](ROADMAP.md)
+- [Contributors' guidelines](CONTRIBUTING.md)
+- [Roadmap](ROADMAP.md)
 
 ## Thank you
 
@@ -93,19 +93,20 @@ Thank you so much (Danke schön! Merci beaucoup!) for visiting the project and w
 # Documentation
 
 ### Table of Contents:
+
 ---
 
 1. [Installation](#install)
 2. [Usage](#usage)
-2. [Developing](#developing)
-3. [Testing](#developing-testing)
-4. [Contribute](#contribute)
-5. [License](#license)
+3. [Developing](#developing)
+4. [Testing](#developing-testing)
+5. [Contribute](#contribute)
+6. [License](#license)
 
 ## <a name="install"></a> Installation:
 
 ```
-npm install openbci-utilities
+npm install @openbci/utilities
 ```
 
 ## <a name="usage"></a> Usage:
@@ -113,9 +114,9 @@ npm install openbci-utilities
 ### In NodeJS
 
 ```node
-const { constants, debug, utilities } = require('openbci-utilities');
+const { constants, debug, utilities } = require("openbci-utilities");
 
-console.log('OpenBCIUtilities', OpenBCIUtilities);
+console.log("OpenBCIUtilities", OpenBCIUtilities);
 ```
 
 ### In Web Browser
@@ -123,19 +124,22 @@ console.log('OpenBCIUtilities', OpenBCIUtilities);
 **index.html**
 
 ```html
-<!doctype html>
+<!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="X-UA-Compatible" content="ie=edge">
-        <title>OpenBCI Utilities</title>
-    </head>
-    <body>
-        <pre>See data in the console</pre>
-        <script src="../../dist/openbci-utilities.var.js"></script>
-        <script src="./index.js"></script>
-    </body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>OpenBCI Utilities</title>
+  </head>
+  <body>
+    <pre>See data in the console</pre>
+    <script src="../../dist/openbci-utilities.var.js"></script>
+    <script src="./index.js"></script>
+  </body>
 </html>
 ```
 
@@ -145,8 +149,8 @@ console.log('OpenBCIUtilities', OpenBCIUtilities);
 console.log(OpenBCIUtilities);
 ```
 
-
 ## <a name="developing"></a> Developing:
+
 ### <a name="developing-running"></a> Running:
 
 ```
@@ -163,13 +167,13 @@ npm test
 
 1. Fork it!
 2. Branch off of `development`: `git checkout development`
-2. Create your feature branch: `git checkout -b my-new-feature`
-3. Make changes
-4. If adding a feature, please add test coverage.
-5. Ensure tests all pass. (`npm test`)
-6. Commit your changes: `git commit -m 'Add some feature'`
-7. Push to the branch: `git push origin my-new-feature`
-8. Submit a pull request. Make sure it is based off of the `development` branch when submitting! :D
+3. Create your feature branch: `git checkout -b my-new-feature`
+4. Make changes
+5. If adding a feature, please add test coverage.
+6. Ensure tests all pass. (`npm test`)
+7. Commit your changes: `git commit -m 'Add some feature'`
+8. Push to the branch: `git push origin my-new-feature`
+9. Submit a pull request. Make sure it is based off of the `development` branch when submitting! :D
 
 ## <a name="license"></a> License:
 
