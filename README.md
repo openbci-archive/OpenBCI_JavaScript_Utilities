@@ -1,3 +1,5 @@
+**THIS REPOSITORY HAS BEEN DEPRECATED AND IS NO LONGER IN ACTIVE DEVELOPMENT.**
+
 # OpenBCI JavaScript Utilities Library
 
 <p align="center">
